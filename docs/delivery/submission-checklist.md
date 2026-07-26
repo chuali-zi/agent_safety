@@ -2,6 +2,8 @@
 
 > 目标：提交前一张表看清楚 D1-D4、补充材料、证据 hash、红线检查。
 > **交付口径**：[../acceptance/DELIVERY-v2.md](../acceptance/DELIVERY-v2.md)
+> **收口计划与排期**：[D1-D3-submission-plan.md](D1-D3-submission-plan.md)（2026-07-26 制定；冻结顺序为 数字 → 视频 → PDF）
+> **本轮评审意见**：[REVIEW-2026-07-26.md](REVIEW-2026-07-26.md)（D1 有 6 项 P0 缺口待补，下表 D1 行的 `DONE` 仅指“当前 14 页 PDF 可提交”，不代表内容已定稿）
 > 官方赛题依据：[../source-of-truth/XA-202620中国雄安集团数字城市科技有限公司-面向政企场景的大模型智能体安全关键技术研究比赛方案.pdf](../source-of-truth/XA-202620中国雄安集团数字城市科技有限公司-面向政企场景的大模型智能体安全关键技术研究比赛方案.pdf)
 
 ## D1-D4（Tier A）

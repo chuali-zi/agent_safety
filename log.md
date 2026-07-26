@@ -1,3 +1,15 @@
+# 2026-07-26 07:40 PDT D1 草稿评分维度审阅与提交材料收口计划
+
+- 按负责人要求对照赛题 PDF 全文（评分权重、答题要求 4 项、四个技术目标、提交口径）审阅两份 D1 稿、D3 脚本、submission-checklist、Delivery v2 与支撑证据；未改动产品、测试、证据或 D1/D3 交付稿，未重跑任何实验。
+- 实测确认 `docs/delivery/D1-technical-report-review-draft.md`（v0.2）**当前无法构建 PDF**：无 `<!-- pagebreak -->`、5 处 mermaid / 0 处 `[DIAGRAM:x]`，`scripts/build_d1_pdf.py:154` 的 `lines.index("<!-- pagebreak -->")` 直接 ValueError；`SOURCE` 仍指向 v1 稿。两稿中文正文分别为 3,269 字（→14 页）与 6,658 字。
+- 关键发现（占 30% 权重的"实际效果"）：赛题点名的"攻击识别准确率、误报漏报情况"在两稿中均缺失，`召回`/`误报`/`准确率` grep 命中 0 次，且 v0.2 第 148 行主动写明 holdout 已退役。但 `docs/evidence/gate1-l3-evaluation-2026-06-18.json` 的 `gate1_scope` 已含可用数字：声明范围 6 个输入攻击族 60 例，`detection_recall=1.0`、`blocking_recall=1.0`、`asr=0.0`、`fpr_any_detection=0.0`（Wilson 95% 上界 0.0621）、规则层 p50 0.02ms / p95 0.04ms；`calibration_holdout` 为 `independent_holdout=false`、指纹重叠 0，两侧 recall 均 1.0。
+- 拆解 `by_attack_type` 确认总体 `detection_recall=0.3575` 系**归属误配**而非能力弱：193 例攻击中 60 例属 Gate1 输入攻击族（dangerous_command 15、jailbreak_or_prompt_leak 12、indirect_injection 10、forbidden_generation 8、secret_exfil 8、pii_leak 7，漏报全为 0），其余 133 例为 log_retention_below_6m、encryption_downgrade、restart_requires_approval、cii_external_transfer、malicious_plugin 等治理/策略类，由 Gate2/Gate3/Gate5 + AIBOM 裁决，不属 Gate1 判定面。建议改为分层表并附四条范围声明。
+- 其余 P0 缺口：答题要求点名的"指标体系""算法设计""预期效果"与目标(4)五维度（"内容安全""合规风险" grep 0 次）无对应章节；赛题原文"兼容 OpenClaw 类智能体"在两稿 0 次出现（PRD/项目总览有）；创新性维度无横向对比表（`Lakera`/`LlamaFirewall`/`对比` 均 0 次）；30 页预算仅用 14 页；免责声明密度过高且有自我否定式表述。
+- D3 复核：现行八镜头全为身份→intent-first→Undo→证据工程闭环，无 live 攻击拦截与 AIBOM 画面，方向一/三 0 秒出镜。给出重排镜头表：前 4 分钟改为四方向实拍（live A/B 注入拦截、识别量化表、高风险命令拒绝/批准对照、AIBOM deny），身份与 Undo 闭环后移，kind/compose 压缩，保留 clean/tampered 验签 exit 0 / exit 1 对照。现行脚本 §2/§4/§5 仍有效。
+- 明确冻结依赖链为 **数字 → 视频 → PDF**（非视频 → PDF），排期：7/27–8/2 定案 + 修管线 + 产废弃 PDF 量页数；8/3–8/9 唯一一次 OAR 重跑（建议 N=3→10）后冻结数字并建 `FROZEN-NUMBERS.md`；8/10–8/23 内容完成；8/24–9/6 录像；9/7–9/11 冻 PDF；9/12–14 提交。
+- 新增 `docs/delivery/D1-D3-submission-plan.md`（5 项决策、6 项 P0、4 项 P1、3 项 P2、镜头表、8 条风险登记、进度勾选）与 `docs/delivery/REVIEW-2026-07-26.md`（负责人视角评审意见）；新增 `docs/delivery/.log/worklog.md`；全面更新 `status.md`（口径改为 SUBMISSION-PLANNED，D1 行改为 REVIEW-GAPS-OPEN，D3 行改为 SCRIPT-REVISION-NEEDED，新增收口计划章节与 Gate1 指标边界行）。
+- 口径约束已写入 status：缺口为**材料表述缺口而非新功能缺陷**，补缺只允许引用已封存证据，不得为凑指标重测、改阈值或改断言；产品仍不新增功能，唯一允许的实验变更是 OAR 的 N 值调参重跑。
+
 # 2026-07-26 06:05 PDT 攻击证明 provenance 修复、clean 重跑与 D1 5.5 同步
 
 - 修复 `scripts/run_attack_proof_set.py` 的提交级 provenance：新增 `--require-clean`，运行初始化与封存两端校验 Git dirty/head/tree；修复 Git 输出尾部处理和 dirty path 首行截断；封存 runner、case manifest 与 record-only target 三份源码快照，并记录 Git blob、SHA-256、git head/tree。
