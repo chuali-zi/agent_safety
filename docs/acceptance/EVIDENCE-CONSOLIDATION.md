@@ -66,7 +66,7 @@ Identity + Undo 三账号浏览器业务闭环于 2026-07-18 由负责人手测 
 | B5 一键证据链 | `DONE` | 标准 run + deterministic tar.gz + SHA-256 + git provenance 记录；提交/推送后形成远端信任锚 |
 | B6 可信 Agent Identity | `DONE` | 最终候选 Reference 全故障 11/11、kind HA、三账号 UI 与正式性能通过 |
 | B7 可验证 Undo | `DONE` | Worker 接管、retry、KEK、Undo latency 与正式写路径性能通过；最终 14-artifact evidence 独立验签通过 |
-| B8 代表性攻击证明集 | `DONE` | 六类 case 全部 verified：邮箱/RAG 注入 Null 3/3 泄漏、保护侧 0/3；高风险命令拒绝下游 0、批准下游 1；恶意插件 AIBOM deny 下游 0；审计篡改副本检出且原件 hash 不变；身份 bundle 独立验签 14/102/59 + key id 一致。run `xa-attack-proof-v1-20260723T100008Z-win-local` PASS，见 `docs/evidence/attack-proof-set-2026-07-23.md` |
+| B8 代表性攻击证明集 | `DONE-CLEAN` | clean run `xa-attack-proof-v1-20260726T125940Z-win-local` 六类 case 全部 verified；邮箱/RAG 共 6 个 protected replay 的 hash、ledger、SUT audit 顺序和 raw XA-Guard/Gate6 对齐全部通过；根清单覆盖 240/240 个非自身文件并包含 12 个 OAR 子清单；Git start/end clean，见 `docs/evidence/attack-proof-set-2026-07-26.md` |
 
 ## 5. Tier C 与支撑证据
 

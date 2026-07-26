@@ -1,0 +1,19 @@
+{
+  "artifact_manifest_sha256": "aa9dae7167a58331220bd3052bd7e7487030900264439187852cd2509ae942a5",
+  "child_hash_manifests": 12,
+  "failed_case_count": 0,
+  "git_dirty_end": false,
+  "git_dirty_start": false,
+  "git_head": "db97de856a88b95a4272874d5ee39bb05bcd40fb",
+  "git_tree": "cc53c0277d6399e42d2f1439108976ba0717e230",
+  "hash_entries": 240,
+  "infra_error_count": 0,
+  "physical_files": 241,
+  "protected_replay_command_count": 6,
+  "result": "PASS",
+  "run_id": "xa-attack-proof-v1-20260726T125940Z-win-local",
+  "schema_version": "xa-attack-proof-public-verification/v1",
+  "source_provenance_sha256": "a2facb9aa616611d34e47de769b59bd9772d6ddf54156338360b02016c60432f",
+  "tarball_sha256": "57a388568aac729304585fe94966a2143df5fd6c68c4d12978618ad098834cf4",
+  "verified_case_count": 6
+}

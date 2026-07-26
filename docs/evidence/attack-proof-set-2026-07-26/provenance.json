@@ -1,0 +1,16 @@
+{
+  "artifact_manifest_sha256": "aa9dae7167a58331220bd3052bd7e7487030900264439187852cd2509ae942a5",
+  "end_utc": "2026-07-26T13:00:01.530590Z",
+  "file_count": 241,
+  "git_dirty": false,
+  "git_end_dirty": false,
+  "git_head": "db97de856a88b95a4272874d5ee39bb05bcd40fb",
+  "git_tree": "cc53c0277d6399e42d2f1439108976ba0717e230",
+  "host": "win-local",
+  "result": "PASS",
+  "run_id": "xa-attack-proof-v1-20260726T125940Z-win-local",
+  "source_provenance_sha256": "a2facb9aa616611d34e47de769b59bd9772d6ddf54156338360b02016c60432f",
+  "tarball_sha256": "57a388568aac729304585fe94966a2143df5fd6c68c4d12978618ad098834cf4",
+  "target": "XA-ATTACK-PROOF-SET-V1",
+  "total_bytes": 827287
+}

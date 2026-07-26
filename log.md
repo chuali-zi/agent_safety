@@ -1,3 +1,16 @@
+# 2026-07-26 06:05 PDT 攻击证明 provenance 修复、clean 重跑与 D1 5.5 同步
+
+- 修复 `scripts/run_attack_proof_set.py` 的提交级 provenance：新增 `--require-clean`，运行初始化与封存两端校验 Git dirty/head/tree；修复 Git 输出尾部处理和 dirty path 首行截断；封存 runner、case manifest 与 record-only target 三份源码快照，并记录 Git blob、SHA-256、git head/tree。
+- 修复根逐文件 hash 清单：只排除根 `artifact-hashes.json` 自身，不再误排除 OAR 子目录的同名清单；tar 条目改为稳定排序；provenance 增加 artifact manifest、source provenance、Git start/end clean 锚点。
+- 把邮箱/RAG 共 6 个 XA-Guard protected attempt 的 `range_cli replay --verify-hashes --verify-ledger --verify-sut-audit --json` 纳入 runner 命令记录、case oracle、case evidence 和聚合 report；固定检查 artifact hash、ledger hash/projection、SUT audit 顺序和 raw XA-Guard/Gate6 对齐。
+- 为形成 clean 源码锚点，提交攻击证明既有实现、历史公开材料与本轮修复为 commit `db97de856a88b95a4272874d5ee39bb05bcd40fb`（`evidence: add reproducible attack proof set`）；提交前定向测试 10/10 PASS、Python 编译、dry-run 和 diff check 通过，未修改既有测试断言或阈值。
+- 在 start/end Git 均 clean、HEAD/tree 不变条件下完成真实六类重跑：run `xa-attack-proof-v1-20260726T125940Z-win-local` 为 6/6 verified、0 failed、0 infra_error；邮箱/RAG protected replay 各 3/3 全检查通过；raw 241 文件，根清单覆盖其余 240/240 并包含 12 个 OAR 子清单，逐文件 SHA-256/bytes 重算无差异。
+- sealed tarball SHA-256、sidecar、provenance 三者一致，值为 `57a388568aac729304585fe94966a2143df5fd6c68c4d12978618ad098834cf4`；artifact manifest SHA-256 为 `aa9dae7167a58331220bd3052bd7e7487030900264439187852cd2509ae942a5`；source provenance SHA-256 为 `a2facb9aa616611d34e47de769b59bd9772d6ddf54156338360b02016c60432f`；tarball 可列出，旧 2026-07-23 dirty run 未覆盖、保留为历史功能结果。
+- 新增标准库公开导出/校验脚本 `scripts/publish_attack_proof_set.py`，先重算 raw 清单、tarball 与 provenance，再生成路径脱敏材料并拒绝绝对路径或 credential-shaped 文本；发布 `docs/evidence/attack-proof-set-2026-07-26.md` 及 report、240 项 hash、source provenance、provenance、verification summary、repro commands。
+- 已同步 D1 v0.2 的 5.5 与附录 A、Delivery v2、Evidence Consolidation、Evidence Index、remote provenance JSONL、实施交接完成态和 `status.md`；公开口径明确 clean Git 锚点、6/6 replay 和 240/240 根清单，不公开 raw payload/audit。
+- 最终复核中，定向 pytest 首次因沙箱拒绝创建 `D:/tmp` basetemp 出现 5 个 setup error；未修改测试，按原命令提升文件权限后 10/10 PASS。全部公开 JSON 与 provenance JSONL 可解析，脱敏扫描无绝对路径/credential-shaped 文本；三份源码 Git blob 与 commit 一致；公开导出在独立目录重跑，六个文件 SHA-256 逐一一致；`git diff --check` PASS。
+- 本轮未替换或重建当前 14 页 D1 PDF，未录制 D3，未创建 tag/release；攻击证明源码锚点与公开材料均未推送。公开材料由本轮收口提交承载；下一步由负责人审阅 D1 v0.2、决定是否换 PDF并录制 D3。
+
 # 2026-07-26 05:28 PDT 进度只读核对（status + log）
 
 - 用户要求查看 `status.md` 与最近 `log.md`，汇总当前进度；未改产品、测试、证据或交付物。

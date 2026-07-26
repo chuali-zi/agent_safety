@@ -1,6 +1,6 @@
 {
   "schema_version": "xa-guard-evidence-index/v1",
-  "snapshot_utc": "2026-07-23T10:05:00Z",
+  "snapshot_utc": "2026-07-26T13:04:00Z",
   "delivery_authority": "docs/acceptance/DELIVERY-v2.md",
   "canonical": {
     "run_id": "oar-delivery-v2-20260711T123124Z-win-local",
@@ -98,12 +98,25 @@
       "reason": "contains demo private keys; external TSA/HSM absent"
     },
     {
+      "id": "attack-proof-set-2026-07-26",
+      "classification": "tier-a-current-clean-pass",
+      "path": "docs/evidence/attack-proof-set-2026-07-26",
+      "run_id": "xa-attack-proof-v1-20260726T125940Z-win-local",
+      "git_head": "db97de856a88b95a4272874d5ee39bb05bcd40fb",
+      "git_dirty_start": false,
+      "git_dirty_end": false,
+      "tarball_sha256": "57a388568aac729304585fe94966a2143df5fd6c68c4d12978618ad098834cf4",
+      "artifact_manifest_sha256": "aa9dae7167a58331220bd3052bd7e7487030900264439187852cd2509ae942a5",
+      "verification": "6/6 cases verified; 6/6 protected replays PASS; root manifest 240/240 non-self files including 12 OAR child manifests; targeted tests 10/10 PASS",
+      "publish": true
+    },
+    {
       "id": "attack-proof-set-2026-07-23",
-      "classification": "tier-a-current-pass",
+      "classification": "tier-a-historical-functional-pass",
       "path": "docs/evidence/attack-proof-set-2026-07-23",
       "run_id": "xa-attack-proof-v1-20260723T100008Z-win-local",
       "tarball_sha256": "bb472da919fed5fc4788242338a87b574a0e919b38a0f8c9028f27a7a7380d31",
-      "verification": "6/6 cases verified (D1 mail, D1 RAG, D2 exec, D3 supply, D4 audit tamper, identity boundary); targeted tests 10/10 PASS",
+      "verification": "historical functional PASS retained; dirty Git source anchor and incomplete root per-file manifest superseded by the 2026-07-26 clean run",
       "publish": true
     }
   ],
@@ -113,13 +126,9 @@
     "open-agent-range/.runtime except the canonical source directory",
     "enterprise-agent-range/reports"
   ],
-  "automatic_remaining": [
-    "Identity + Undo 10-concurrency incremental p95 and bootstrap upper <= 50 ms",
-    "Reseal Identity + Undo evidence after performance passes",
-    "D2 clean release commit and final release manifest"
-  ],
+  "automatic_remaining": [],
   "manual_remaining": [
-    "D1 final PDF <=30 pages",
+    "D1 v0.2 review approval and decision whether to replace the current 14-page PDF",
     "D3 final video <=10 minutes"
   ],
   "manual_completed": [

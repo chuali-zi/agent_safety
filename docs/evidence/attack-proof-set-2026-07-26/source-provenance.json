@@ -1,0 +1,27 @@
+{
+  "git_dirty": false,
+  "git_head": "db97de856a88b95a4272874d5ee39bb05bcd40fb",
+  "git_tree": "cc53c0277d6399e42d2f1439108976ba0717e230",
+  "manifest": {
+    "path": "<repo>\\bench\\cases\\xa-attack-proof-set-v1.yaml",
+    "sha256": "867c2fdac688a125264491048333f7bc4d71933d200ace97b4110e3d0884e73c"
+  },
+  "schema_version": "xa-source-provenance/v1",
+  "snapshots": {
+    "bench/cases/xa-attack-proof-set-v1.yaml": {
+      "bytes": 3392,
+      "git_blob": "d25b5bfdbf7c420890f8a4a2024943dd0c807299",
+      "sha256": "867c2fdac688a125264491048333f7bc4d71933d200ace97b4110e3d0884e73c"
+    },
+    "demo/targets/attack_proof_target.py": {
+      "bytes": 3026,
+      "git_blob": "95da49dcc0bd98319b4020d9f84788a1441acd37",
+      "sha256": "534eda81dcbc0d9f6c3950a35a1f0975d7b85df078d9fc0782d63e2422be2230"
+    },
+    "scripts/run_attack_proof_set.py": {
+      "bytes": 47493,
+      "git_blob": "44284ff57da30a7ce314a61b9fde280239e4a662",
+      "sha256": "2cf4ed1714a695002cf264bde678155b7c527d424d41b9b23d9202425682d7ad"
+    }
+  }
+}

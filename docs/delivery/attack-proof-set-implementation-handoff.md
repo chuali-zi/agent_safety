@@ -1,8 +1,13 @@
 # 攻击证明集实施交接计划
 
+> 2026-07-26 完成说明：本交接中的实现项已经收口。最终 clean run 为
+> `xa-attack-proof-v1-20260726T125940Z-win-local`，6/6 verified，Git start/end clean，
+> 6/6 protected replay PASS，根清单覆盖 240/240 个非自身文件。当前公开入口为
+> `docs/evidence/attack-proof-set-2026-07-26.md`；下文保留为历史实施约束与设计记录。
+>
 > 日期：2026-07-23（America/Los_Angeles）
 > 接手对象：后续实现者（Kimi）
-> 状态：`PARTIAL-IMPLEMENTATION / NO-PROOF-RUN / HANDOFF-READY`
+> 状态：`COMPLETED / CLEAN-PROOF-PASS / HISTORICAL-HANDOFF`
 
 ## 1. 目标与取舍
 
