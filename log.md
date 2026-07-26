@@ -1,3 +1,21 @@
+# 2026-07-26 07:27 PDT D1 P0-1/P0-2/P0-3 源稿补写
+
+- 补写 `docs/delivery/D1-technical-report-review-draft.md`：新增 §3.3「算法设计」七项表，新增 §5.1「指标体系与预期效果」五维表，新增 §5.2 Gate1 分层识别指标，并将后续章节顺延编号。
+- 修正 D1 中 Gate3 predicate 失败行为表述，避免把运行期单条 predicate 异常误写为全局 fail-closed；Gate1 误报口径使用 FPR 0/58 + Wilson 上界，当前 OAR N=3 数字标为封存草稿值，N=10 重跑后再冻结。
+- 同步 `status.md` 与 `docs/delivery/D1-D3-submission-plan.md`：P0-1/P0-2/P0-3 标为已入 v0.2 源稿，下一动作改为 P0-4 OpenClaw 与 P0-5 横向对比表。
+- 本轮未修改产品代码、测试、断言、阈值或证据，未重跑实验，未替换正式 `output/pdf/`。
+
+# 2026-07-26 08:55 PDT P0-6 完成核实与页数余量更新
+
+- 在冻结五项决策的提交（`07c0611`）之后发现工作树存在并行会话对 `scripts/build_d1_pdf.py` 的改动（mtime 07:16，早于本次核对、晚于 `36a33b8`），改动内容为 P0-6：`SOURCE` 切到 v0.2 审阅稿、`parse` 对缺失 `<!-- pagebreak -->` 容错、新增离线 Mermaid 渲染（graph 与 sequence 两类，覆盖 v0.2 的 5 个块）、支持 fenced code 块，并保留原 `[DIAGRAM:x]` 通路以兼容 v1 稿。`scripts/.log/worklog.md` 已由该会话留痕。
+- 该改动**未与决策冻结提交混合**：先 `git restore --staged scripts/build_d1_pdf.py` 单独摘出，`07c0611` 只含文档决策冻结。
+- 独立复核（未采信他方日志结论）：`python -m py_compile` PASS；`python scripts/build_d1_pdf.py --output <临时路径>` 产出 **13 页**；以 `--source docs/delivery/D1-technical-report-draft.md` 构建仍为 **14 页**，v1 通路未回归。两次验证均写入 `.runtime/` 临时路径，`output/pdf/` 下的 14 页兜底 PDF 与 sidecar 未被覆盖（`git status` 确认 `output/pdf/` 无变更），验证后删除临时文件。
+- **关键更新：v0.2 实测 13 页，远低于原预估 22–26 页，页数余量 17 页。** 原计划"P0-1..P0-5 约 8 页、落地后 22–26 页接近上限"的判断作废；改为"落地后约 21 页、仍留 9 页缓冲"，P0-1..P0-5 无需为省页数压缩表格。
+- 风险登记 **R1 关闭**（PDF 管线构建不出目标稿）。P0-6 由硬前置转为 DONE；**下一动作改为 P0-1**（Gate1 分层识别指标）。
+- 新增口径：正式 `output/pdf/` 暂不用 v0.2 重建，统一放到内容完成后的 8/10–8/23 一次性重建并记录最终页数与 SHA-256，避免中途产生多个版本的 PDF 与 hash；在那之前现有 14 页 PDF 保留为兜底不得删除。
+- 同步 `docs/delivery/D1-D3-submission-plan.md`（页眉下一动作、§0 页数行、P0-6 标 DONE 并记录改动与验收、§6 排期、§8 R1 关闭、§9 勾选与新增"重建正式 PDF"项）、`status.md`（总体结论新增 P0-6 完成段与四条当前口径、D1 行改为 BASE-FROZEN / BUILDABLE / CONTENT-OPEN、P0 摘要表 P0-6 划掉、排期表、剩余事项 1–2 项重写）与 `docs/delivery/.log/worklog.md`。
+- 本轮未改产品代码、测试、断言、阈值、证据或 D1/D3 正文，未重跑任何实验。
+
 # 2026-07-26 08:20 PDT 五项交付决策定案与冻结
 
 - 负责人就收口计划 §1 的 DEC-1..DEC-5 全部拍板，本轮只固化决策与连带口径，未改产品、测试、证据、D1 正文或 D3 脚本正文，未重跑实验。

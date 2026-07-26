@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import re
 from pathlib import Path
 
@@ -23,7 +24,7 @@ from reportlab.platypus import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "docs/delivery/D1-technical-report-draft.md"
+SOURCE = ROOT / "docs/delivery/D1-technical-report-review-draft.md"
 OUTPUT = ROOT / "output/pdf/XA-Guard-XA-202620-technical-report.pdf"
 NAVY, BLUE, CYAN = colors.HexColor("#0B1F3A"), colors.HexColor("#1769AA"), colors.HexColor("#00A6A6")
 INK, MUTED, PALE = colors.HexColor("#172033"), colors.HexColor("#596579"), colors.HexColor("#EAF2F8")
@@ -77,6 +78,259 @@ class Diagram(Flowable):
                 self.canv.line(ax + arrow - 2 * mm, 11 * mm, ax + arrow, 12.5 * mm)
 
 
+class MermaidDiagram(Flowable):
+    def __init__(self, source: str):
+        super().__init__()
+        self.source = source
+        self.lines = [line.strip() for line in source.splitlines() if line.strip()]
+        self.kind = self.lines[0] if self.lines else "mermaid"
+        self.width, self.height = 168 * mm, 50 * mm
+
+    def wrap(self, avail_width, _avail_height):
+        self.width = min(avail_width, 168 * mm)
+        if self.kind.startswith("sequenceDiagram"):
+            _participants, messages = self._sequence()
+            self.height = 24 * mm + max(1, len(messages)) * 7 * mm
+        else:
+            nodes, _edges = self._graph()
+            cols = self._cols(len(nodes))
+            rows = max(1, math.ceil(len(nodes) / cols))
+            self.height = 14 * mm + rows * 25 * mm
+        return self.width, self.height
+
+    def draw(self):
+        self.canv.saveState()
+        self.canv.setFillColor(colors.HexColor("#FBFDFF"))
+        self.canv.setStrokeColor(colors.HexColor("#D5DEE7"))
+        self.canv.roundRect(0, 0, self.width, self.height, 3 * mm, fill=1, stroke=1)
+        if self.kind.startswith("sequenceDiagram"):
+            self._draw_sequence()
+        else:
+            self._draw_graph()
+        self.canv.restoreState()
+
+    @staticmethod
+    def _cols(count: int) -> int:
+        count = max(1, count)
+        if count <= 6:
+            return count
+        return min(count, 4 if count <= 8 else 5)
+
+    @staticmethod
+    def _wrap_lines(text: str, max_width: float, font_size: float, max_lines: int) -> list[str]:
+        text = re.sub(r"\s+", " ", text.strip().strip('"'))
+        if not text:
+            return [""]
+        lines, pos = [], 0
+        for _ in range(max_lines):
+            line = ""
+            while pos < len(text):
+                candidate = line + text[pos]
+                if not line or pdfmetrics.stringWidth(candidate, "CN", font_size) <= max_width:
+                    line = candidate
+                    pos += 1
+                else:
+                    break
+            if line:
+                lines.append(line)
+            if pos >= len(text):
+                break
+        if pos < len(text) and lines:
+            while lines[-1] and pdfmetrics.stringWidth(lines[-1] + "...", "CN", font_size) > max_width:
+                lines[-1] = lines[-1][:-1]
+            lines[-1] += "..."
+        return lines or [text[:1]]
+
+    def _draw_center(self, text: str, cx: float, cy: float, max_width: float,
+                     font_size: float = 7.2, max_lines: int = 2):
+        lines = self._wrap_lines(text, max_width, font_size, max_lines)
+        leading = font_size + 1.4
+        y = cy + (len(lines) - 1) * leading / 2 - font_size / 3
+        self.canv.setFont("CN", font_size)
+        self.canv.setFillColor(INK)
+        for line in lines:
+            self.canv.drawCentredString(cx, y, line)
+            y -= leading
+
+    def _draw_arrow(self, x1: float, y1: float, x2: float, y2: float,
+                    color=CYAN, width: float = 0.7):
+        dx, dy = x2 - x1, y2 - y1
+        length = math.hypot(dx, dy)
+        if length < 2:
+            return
+        self.canv.setStrokeColor(color)
+        self.canv.setLineWidth(width)
+        self.canv.line(x1, y1, x2, y2)
+        angle = math.atan2(dy, dx)
+        head, spread = 2.2 * mm, 0.75
+        for sign in (-1, 1):
+            hx = x2 - head * math.cos(angle + sign * spread)
+            hy = y2 - head * math.sin(angle + sign * spread)
+            self.canv.line(x2, y2, hx, hy)
+
+    @staticmethod
+    def _node(token: str) -> tuple[str, str]:
+        token = token.strip().strip(";")
+        if token == "[*]":
+            return "__start__", "start"
+        match = re.match(r"([A-Za-z][\w-]*)", token)
+        node_id = match.group(1) if match else re.sub(r"\W+", "_", token)[:20]
+        label = None
+        for pattern in (r'\["([^"]+)"\]', r'\{"([^"]+)"\}', r'\("([^"]+)"\)',
+                        r"\[([^\]]+)\]", r"\{([^}]+)\}", r"\(([^)]+)\)"):
+            found = re.search(pattern, token)
+            if found:
+                label = found.group(1)
+                break
+        return node_id, (label or node_id.replace("_", " ")).strip()
+
+    def _split_edge(self, line: str):
+        match = re.match(r"(.+?)\s*-->\s*(?:\|([^|]+)\|\s*)?(.+)", line)
+        if not match:
+            return None
+        left, label, right = match.group(1), match.group(2), match.group(3)
+        if self.kind.startswith("stateDiagram") and ":" in right:
+            right, state_label = right.split(":", 1)
+            label = label or state_label.strip()
+        return left.strip(), (label or "").strip(), right.strip()
+
+    def _graph(self) -> tuple[list[tuple[str, str]], list[tuple[str, str, str]]]:
+        labels, order, edges = {}, [], []
+
+        def add(node_id: str, label: str):
+            if node_id == "__start__":
+                return
+            if node_id not in labels:
+                labels[node_id] = label
+                order.append(node_id)
+            elif label and labels[node_id] == node_id:
+                labels[node_id] = label
+
+        for line in self.lines[1:]:
+            if line.startswith("%%"):
+                continue
+            split = self._split_edge(line)
+            if split:
+                left, label, right = split
+                src, src_label = self._node(left)
+                dst, dst_label = self._node(right)
+                add(src, src_label)
+                add(dst, dst_label)
+                if src != "__start__" and dst != "__start__":
+                    edges.append((src, dst, label))
+                continue
+            node_id, node_label = self._node(line)
+            add(node_id, node_label)
+        return [(node_id, labels[node_id]) for node_id in order], edges
+
+    def _edge_points(self, src, dst):
+        x1, y1, w1, h1 = src
+        x2, y2, w2, h2 = dst
+        c1x, c1y = x1 + w1 / 2, y1 + h1 / 2
+        c2x, c2y = x2 + w2 / 2, y2 + h2 / 2
+        dx, dy = c2x - c1x, c2y - c1y
+        if abs(dx) >= abs(dy):
+            sign = 1 if dx >= 0 else -1
+            return c1x + sign * w1 / 2, c1y, c2x - sign * w2 / 2, c2y
+        sign = 1 if dy >= 0 else -1
+        return c1x, c1y + sign * h1 / 2, c2x, c2y - sign * h2 / 2
+
+    def _draw_graph(self):
+        nodes, edges = self._graph()
+        if not nodes:
+            self._draw_center("Mermaid diagram", self.width / 2, self.height / 2, self.width - 12 * mm)
+            return
+        cols = self._cols(len(nodes))
+        gap, margin = 4 * mm, 5 * mm
+        box_w = (self.width - 2 * margin - (cols - 1) * gap) / cols
+        box_h, row_gap = 14 * mm, 11 * mm
+        top = self.height - 7 * mm
+        positions = {}
+        for index, (node_id, label) in enumerate(nodes):
+            row, col = divmod(index, cols)
+            if row % 2:
+                col = cols - 1 - col
+            x = margin + col * (box_w + gap)
+            y = top - (row + 1) * box_h - row * row_gap
+            positions[node_id] = (x, y, box_w, box_h, label)
+        for src, dst, label in edges:
+            if src not in positions or dst not in positions:
+                continue
+            x1, y1, x2, y2 = self._edge_points(positions[src][:4], positions[dst][:4])
+            self._draw_arrow(x1, y1, x2, y2)
+            if label:
+                self.canv.setFont("CN", 5.9)
+                self.canv.setFillColor(BLUE)
+                self.canv.drawCentredString((x1 + x2) / 2, (y1 + y2) / 2 + 1.5 * mm, label)
+        for index, (node_id, label) in enumerate(nodes):
+            x, y, w, h, _label = positions[node_id]
+            self.canv.setFillColor(PALE if index % 2 == 0 else colors.HexColor("#DDF5F2"))
+            self.canv.setStrokeColor(BLUE)
+            self.canv.roundRect(x, y, w, h, 2 * mm, fill=1, stroke=1)
+            self._draw_center(label, x + w / 2, y + h / 2, w - 4 * mm, 6.7, 2)
+
+    def _sequence(self):
+        labels, order, messages = {}, [], []
+
+        def add(identifier: str, label: str | None = None):
+            if identifier not in labels:
+                labels[identifier] = label or identifier
+                order.append(identifier)
+            elif label:
+                labels[identifier] = label
+
+        for line in self.lines[1:]:
+            participant = re.match(r"participant\s+(\w+)\s+as\s+(.+)", line)
+            if participant:
+                add(participant.group(1), participant.group(2).strip())
+                continue
+            message = re.match(r"(\w+)\s*[-.]+>>\s*(\w+)\s*:\s*(.+)", line)
+            if message:
+                src, dst, label = message.group(1), message.group(2), message.group(3).strip()
+                add(src)
+                add(dst)
+                messages.append((src, dst, label))
+        return [(identifier, labels[identifier]) for identifier in order], messages
+
+    def _draw_sequence(self):
+        participants, messages = self._sequence()
+        if not participants:
+            self._draw_center("Sequence diagram", self.width / 2, self.height / 2, self.width - 12 * mm)
+            return
+        margin, top = 5 * mm, self.height - 6 * mm
+        usable = self.width - 2 * margin
+        step = usable / max(1, len(participants) - 1)
+        xs = {identifier: margin + index * step for index, (identifier, _label) in enumerate(participants)}
+        box_w = min(22 * mm, usable / max(1, len(participants)) - 1 * mm)
+        box_h = 9 * mm
+        for identifier, label in participants:
+            x = xs[identifier]
+            self.canv.setFillColor(PALE)
+            self.canv.setStrokeColor(BLUE)
+            self.canv.roundRect(x - box_w / 2, top - box_h, box_w, box_h, 1.5 * mm, fill=1, stroke=1)
+            self._draw_center(label, x, top - box_h / 2, box_w - 2 * mm, 6.2, 2)
+            self.canv.setStrokeColor(colors.HexColor("#B9C8D6"))
+            self.canv.setDash(1, 2)
+            self.canv.line(x, top - box_h, x, 5 * mm)
+            self.canv.setDash()
+        y = top - box_h - 7 * mm
+        for src, dst, label in messages:
+            x1, x2 = xs[src], xs[dst]
+            if src == dst:
+                loop = 9 * mm
+                self.canv.setStrokeColor(CYAN)
+                self.canv.line(x1, y, x1 + loop, y)
+                self.canv.line(x1 + loop, y, x1 + loop, y - 3 * mm)
+                self._draw_arrow(x1 + loop, y - 3 * mm, x1, y - 3 * mm, CYAN, 0.6)
+                self._draw_center(label, x1 + loop / 2, y + 2.3 * mm, 34 * mm, 5.7, 1)
+            else:
+                end_pad = 2 * mm if x2 >= x1 else -2 * mm
+                self._draw_arrow(x1, y, x2 - end_pad, y, CYAN, 0.6)
+                self._draw_center(label, (x1 + x2) / 2, y + 2.3 * mm,
+                                  max(18 * mm, abs(x2 - x1) - 3 * mm), 5.7, 1)
+            y -= 6.8 * mm
+
+
 def esc(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
@@ -92,6 +346,8 @@ def styles(font: str):
     return {
         "h2": ParagraphStyle("h2", parent=base["Heading2"], fontName=font, fontSize=14, leading=19,
                               textColor=NAVY, spaceBefore=2 * mm, spaceAfter=4 * mm),
+        "h1": ParagraphStyle("h1", parent=base["Heading1"], fontName=font, fontSize=16, leading=22,
+                              textColor=NAVY, spaceBefore=1 * mm, spaceAfter=5 * mm),
         "h3": ParagraphStyle("h3", parent=base["Heading3"], fontName=font, fontSize=11, leading=15,
                               textColor=BLUE, spaceBefore=2 * mm, spaceAfter=2 * mm),
         "body": ParagraphStyle("body", parent=base["BodyText"], fontName=font, fontSize=9.2, leading=15,
@@ -151,7 +407,8 @@ def table_from(lines: list[str], st) -> Table:
 
 def parse(markdown: str, st) -> list:
     lines = markdown.splitlines()
-    lines = lines[lines.index("<!-- pagebreak -->") + 1:]
+    if "<!-- pagebreak -->" in lines:
+        lines = lines[lines.index("<!-- pagebreak -->") + 1:]
     story, index = [], 0
     while index < len(lines):
         raw, stripped = lines[index], lines[index].strip()
@@ -166,6 +423,21 @@ def parse(markdown: str, st) -> list:
         if match:
             story.extend([Spacer(1, 2 * mm), Diagram(match.group(1)), Spacer(1, 3 * mm)])
             index += 1
+            continue
+        if stripped.startswith("```"):
+            lang = stripped[3:].strip().split(maxsplit=1)[0].lower() if stripped[3:].strip() else ""
+            block = []
+            index += 1
+            while index < len(lines) and not lines[index].strip().startswith("```"):
+                block.append(lines[index])
+                index += 1
+            if index < len(lines):
+                index += 1
+            if lang == "mermaid":
+                story.extend([Spacer(1, 2 * mm), MermaidDiagram("\n".join(block)), Spacer(1, 3 * mm)])
+            else:
+                code = [esc(line.rstrip()) or "&#160;" for line in block]
+                story.append(Paragraph("<br/>".join(code), st["code"]))
             continue
         if stripped.startswith("|"):
             block = []
@@ -182,6 +454,10 @@ def parse(markdown: str, st) -> list:
                 index += 1
             story.append(Paragraph("<br/>".join(block), st["code"]))
             continue
+        if stripped.startswith("# "):
+            story.append(Paragraph(inline(stripped[2:]), st["h1"]))
+            index += 1
+            continue
         if stripped.startswith("### "):
             story.append(Paragraph(inline(stripped[4:]), st["h3"]))
             index += 1
@@ -197,7 +473,7 @@ def parse(markdown: str, st) -> list:
             continue
         paragraph = [stripped]
         index += 1
-        special = r"^(?:#{2,3} |\| |    |[-*] |\d+\. |<!--|\[DIAGRAM:)"
+        special = r"^(?:#{1,3} |\| |    |```|[-*] |\d+\. |<!--|\[DIAGRAM:)"
         while index < len(lines) and lines[index].strip() and not re.match(special, lines[index]):
             paragraph.append(lines[index].strip())
             index += 1

@@ -203,16 +203,32 @@ Gate1 的 Detector 接口允许组合规则检测与模型后端；Gate3 使用�
 Gate4 把数据来源与敏感度带入后续工具调用；Gate5 根据能力选择执行环境。各关卡的命中规则、
 风险标签和最终决策统一进入 Gate6。
 
-### 3.3 双层策略与决策约束
+### 3.3 算法设计
+
+XA-Guard 的算法不是单点分类器，而是围绕“输入识别、策略判定、可恢复副作用和可验证证据”形成的组合判定链。
+每项算法均绑定输入、输出和失败行为，便于在证据中复核。
+
+| 算法 | 输入 | 处理与输出 | 失败行为 |
+|---|---|---|---|
+| 规则与模型融合评分 + 阈值标定 | `GateContext`、输入文本、来源、YAML 规则、可选模型 detector 标签、评估样本 | Gate1 先归一化为 `DetectionInput`，规则 detector 产生风险标签，模型 detector 可按阈值和 category map 补充标签；Fusion 按 `DENY > WARN > ALLOW` 聚合。评估脚本在 `fpr_limit=0.01` 约束下选 `selected_threshold=1.0`，并报告召回、误报和 Wilson 区间。 | 当前封存 Gate1 数字来自 `detectors=rule`，不归因给模型；模型后端不可用时默认 fail-open 不投票；非 fail-open detector 异常时转为拒绝。 |
+| Spotlighting 不可信内容结构隔离 | 输入来源、工具返回、检索片段、网页或文档内容 | 对非 user 来源内容包裹 `<untrusted_source type="...">...</untrusted_source>`，把结构化来源写入检测输入和审计元数据，后续规则与模型在同一格式上判定。 | 纯 user 输入或空来源不处理；Spotlighting 本身不直接阻断，阻断由后续 detector 与 Fusion 决定。 |
+| 参数谓词受限表达式与 AST 白名单 | baseline/overlay 策略谓词、身份、工具、参数和数据域 | baseline 只在无 builtins 的受限环境求值；overlay 先经过 AST 白名单，只允许比较、布尔、常量、属性、下标和白名单函数；Gate3 对命中工具执行谓词并聚合决策。 | overlay 语法错误或不安全 AST 在加载期拒绝该 overlay；Gate3 后端不可用时写路径失败关闭；单条 predicate 运行异常按未命中处理，不宣称全局 fail-closed。 |
+| baseline ∩ overlay 策略合并与 bundle hash | baseline manifest、租户 overlay、工具风险、能力和敏感模式 | 先加载全局 baseline，再加载租户 overlay；单调性检查阻止 overlay 覆盖 baseline、弱化风险、放宽能力或重复敏感模式；合并结果带 `bundle_sha`，写入决策元数据。 | overlay 加载或单调性失败时拒绝该 overlay；reload 异常保留旧 snapshot；运行时可用期望 bundle hash 检测漂移。 |
+| 双链定序加锁 + 链尾 CAS + 同租户微批 | Effect mutation、Gate6 mutation、tenant、trace 和业务引用 | 同租户请求先进入进程内微批队列，再在 PostgreSQL 事务中按固定顺序写 Effect/Gate6；`xa_chain_tails` 保存期望链尾，CAS 推进 Effect 链和 Gate6 链。 | CAS 冲突时刷新链尾并重试；仍失败则返回写入异常；签名或链完整性错误阻止记录提交。 |
+| 增量时延 5000 次非参数 bootstrap | 成对 direct baseline latency、protected latency、AB/BA 顺序和随机 seed | 对每个样本计算 `protected_ms - direct_business_baseline_ms`，用线性插值求 p95；bootstrap 5000 次有放回抽样，每次重算 p95，并取 95% 分位作为单侧上界。 | 非 reference-ready 参数、样本数不足或 bootstrap 参数非法会使脚本失败；`--dev` 结果不作为正式证据。 |
+| AIBOM A-F 风险评级与签名验证 | `install_plugin` 请求、artifact/url/code snippet、expected SHA-256、离线漏洞/信誉库和签名信任根 | 扫描源码 AST、危险 API、依赖、外联痕迹、provenance 和能力声明；生成 CycloneDX 1.6 BOM；按指标评为 A/B/C/D/F，A/B 放行，C 人工复核，D/F 拒绝，并校验签名。 | 远程 artifact 无离线缓存、SHA-256 mismatch、schema invalid 或签名不可信会降级并拒绝高风险安装。 |
+
+### 3.4 双层策略与决策约束
 
 政企组织既需要统一底线，也需要部门和业务域差异。XA-Guard 将策略分为 baseline 与 overlay。
 baseline 定义全局禁止项和智能体能力上限；overlay 可以收紧工具、数据域或参数条件，
 其约束范围始终位于 baseline 以内。合并结果带有 bundle hash，便于在审计中定位实际生效的策略版本。
 
-参数谓词采用受限表达式和 AST 白名单。无法解析、字段缺失或策略后端异常时，写路径按照失败关闭处理。
+参数谓词采用受限表达式和 AST 白名单。overlay 无法解析或不满足白名单时在加载期拒绝该 overlay；
+策略后端不可用时写路径按照失败关闭处理。单条 predicate 运行期异常按未命中处理，避免把异常表达式误写为已授权。
 策略还可以导出为 OPA/Rego bundle，用于与外部策略执行环境做一致性检查。
 
-### 3.4 intent-first Effect 与可验证 Undo
+### 3.5 intent-first Effect 与可验证 Undo
 
 审计记录负责说明发生过什么，Effect 负责保存恢复业务状态所需的上下文。XA-Guard 把每次写操作建模为 Effect，
 其中包含人员、智能体、工具、数据域、原始 trace、幂等键、恢复窗口、合同摘要和当前状态。
@@ -251,7 +267,7 @@ Worker 使用 60 秒 lease 和 20 秒 heartbeat。持有 lease 的 Worker 失效
 恢复材料由随机 DEK 加密，DEK 使用版本化 KEK 包裹。Keyring 同时支持当前写入 key 和历史解密 key，
 并能够在线 rewrap。错误 KEK 会阻止补偿任务继续执行。
 
-### 3.5 AIBOM 供应链准入
+### 3.6 AIBOM 供应链准入
 
 插件、Skill 和脚本可能通过源码、依赖、远程下载、隐蔽外联或能力声明引入风险。AIBOM gateway
 在组件安装和执行之前完成准入：
@@ -272,7 +288,7 @@ flowchart LR
 生成 A–F 评级并验证签名。离线安装路径检查路径穿越、危险隐藏文件和能力声明不一致。
 CycloneDX 的组件、依赖、服务、漏洞和 provenance 模型为 AIBOM 的交换格式提供了基础[9]。
 
-### 3.6 Gate6 与证据链
+### 3.7 Gate6 与证据链
 
 Gate6 记录人员、智能体、租户、工具、参数摘要、策略、审批、风险、结果摘要、trace 和前驱 hash。
 Effect 事件链保存 prepared、available、undo_requested、approved、compensation_started 和
@@ -385,7 +401,54 @@ DSN 仅保存在 gitignored 运行目录，并通过 Secret 挂载；公开证�
 
 ## 5. 实验设计与结果
 
-### 5.1 Open Agent Range
+### 5.1 指标体系与预期效果
+
+本文按赛题目标(4)将效果指标拆为数据安全、内容安全、执行安全、供应链安全和合规风险五个维度。
+指标体系不把不同风险合并为单一总分，而是分别观察攻击是否被识别、是否触发下游动作、是否改变业务状态，
+以及证据是否可复验。预期效果是在声明范围内降低真实业务后果，而不是只给出文本分类分数。
+
+| 维度 | 指标 | 测法 | 当前结果 | 证据 |
+|---|---|---|---|---|
+| 数据安全 | 合成市民数据外发次数 | OAR live A/B，邮箱与 RAG 间接注入对照 | 当前封存 N=3：邮箱 Null 3、XA-Guard 0；RAG Null 3、XA-Guard 0；protected infra error 0。N=10 重跑后替换为冻结数字 | `docs/evidence/attack-proof-set-2026-07-26.md` |
+| 内容安全 | 输入攻击族召回、阻断召回、误报率 | Gate1 isolated evaluation，限定 6 个输入攻击族与 negative controls | 60/60 检测并阻断；FPR any-detection 0/58，Wilson 95% upper 0.0621；规则层 p95 0.04ms | `docs/evidence/gate1-l3-evaluation-2026-06-18.json` |
+| 执行安全 | 未批准高风险动作下游执行数 | Null / 拒绝 / 批准三路对照 | Null 下游 1；拒绝路径下游 0 且 `require_approval -> deny`；批准对照下游 1 且 `require_approval -> allow` | `docs/evidence/attack-proof-set-2026-07-26.md` |
+| 供应链安全 | 恶意组件准入与下游执行 | AIBOM 恶意 snippet / 干净 artifact 对照 | 恶意 snippet AIBOM deny、下游 0；干净 artifact 批准后下游 1 | `docs/evidence/attack-proof-set-2026-07-26.md` |
+| 合规风险 | 审计链完整性、篡改可检出、签名 evidence | clean / tampered 审计副本对照与最终 evidence 验签 | clean verifier exit 0；tampered verifier exit 1；原始 audit hash 不变；最终 evidence 14 artifacts、102 Effect、59 Gate6，SM2-with-SM3 | `docs/evidence/agent-identity-undo-final-2026-07-21.md` |
+
+上述五维度对应的预期效果是：内容安全维度减少恶意输入进入工具链；数据安全维度减少受保护数据外发；
+执行安全维度让未审批高风险动作不产生下游副作用；供应链安全维度把恶意插件拦在安装入口；
+合规风险维度保证事后审计、篡改检测和证据验签可以独立复核。
+
+### 5.2 Gate1 分层识别指标
+
+Gate1 只回答“输入与工具输出进入后，是否识别并阻断声明范围内的输入攻击”。为避免把审批、策略、供应链、
+留存和加密降级等治理问题误计入 Gate1，本文将 Gate1 判定面限定为 6 个输入攻击族：
+`dangerous_command`、`forbidden_generation`、`indirect_injection`、`jailbreak_or_prompt_leak`、
+`pii_leak`、`secret_exfil`。
+
+| 判定面 | 攻击族 / 控制集 | 样本数 | 漏报 / 误报 | 当前结果 |
+|---|---|---:|---:|---|
+| Gate1 | `dangerous_command` | 15 | 0 | 召回 1.000 |
+| Gate1 | `jailbreak_or_prompt_leak` | 12 | 0 | 召回 1.000 |
+| Gate1 | `indirect_injection` | 10 | 0 | 召回 1.000 |
+| Gate1 | `forbidden_generation` | 8 | 0 | 召回 1.000 |
+| Gate1 | `secret_exfil` | 8 | 0 | 召回 1.000 |
+| Gate1 | `pii_leak` | 7 | 0 | 召回 1.000 |
+| Gate1 小计 | 6 个输入攻击族 | 60 | 0 | detection recall 1.0；blocking recall 1.0；ASR 0.0 |
+| Gate1 negative controls | expected `allow` 控制样本 | 58 | 0 | FPR any-detection 0.0，Wilson 95% upper 0.0621；FPR blocking 0.0 |
+| Gate1 calibration/holdout | payload 指纹诊断切分 | 60 attack / 58 negative controls | 0 fingerprint overlap | `selected_threshold=1.0`；calibration 29/29 recall；holdout 31/31 recall；两侧 FPR 0.0 |
+| 非 Gate1 | 审批、留存、加密降级、跨域、供应链等治理样本 | 133 | — | 由 Gate2/Gate3/Gate5 + AIBOM 裁决，不作为 Gate1 输入识别召回分母 |
+
+因此，`docs/evidence/gate1-l3-evaluation-2026-06-18.json` 中全量 290 例的 `detection_recall=0.3575`
+不能解释为 Gate1 对输入攻击能力较弱。该总表混入了大量非 Gate1 治理类样本；在 Gate1 声明范围内，
+当前结果为 60/60 识别并阻断、false negatives 0、FPR any-detection 0/58。规则层延迟为 p50 0.02ms、p95 0.04ms。
+
+该指标只在以下边界内成立：第一，60 例规模较小，仅覆盖上述 6 个输入攻击族；第二，seed 与规则开发同源，
+`independent_holdout=false`，payload 指纹切分是诊断性切分，不是独立泛化评估；第三，误报结果必须与
+Wilson 区间一起报告，不能只报告 0.0 点值；第四，0.02/0.04ms 是规则层延迟，不包含模型后端推理、
+完整网关链路或下游工具时延。当前封存 Gate1 数字来自 rule detector 口径，不能归因于可选模型后端。
+
+### 5.3 Open Agent Range
 
 OAR 是面向企业任务链的红队评测环境。它包含人员、智能体、工具面、数据域、业务状态、攻击 finding、
 attempt ledger 和 replay。与只判断一句输入是否恶意相比，OAR 关注攻击是否真正触发工具、
@@ -397,12 +460,13 @@ OAR 设计了三类实验：
 - **live A/B**：同一 finding 分别运行在 Null 和真实 XA-Guard MCP session；
 - **replay**：验证 artifact hash、ledger 投影、工具事件和原始 SUT 审计。
 
-live A/B 每侧独立重复 3 次。保护效果按两侧泄漏率之差计算，基础设施错误单独记录。
-这可以区分“安全网关主动阻断”和“服务没有正常运行”。
+当前封存 live A/B 证据为每侧独立重复 3 次。保护效果按两侧泄漏率之差计算，基础设施错误单独记录。
+这可以区分“安全网关主动阻断”和“服务没有正常运行”。按提交收口决策，最终提交前会把邮箱与 RAG
+两类 live A/B 各重跑到每侧 N=10；重跑前，本节 N=3 数字只作为当前封存草稿值，不作为最终冻结数字。
 
-### 5.2 OAR 结果
+### 5.4 OAR 结果
 
-| 指标 | Null | XA-Guard |
+| 指标（当前封存 N=3 草稿值） | Null | XA-Guard |
 |---|---:|---:|
 | 独立 attempts | 3 | 3 |
 | 合成数据泄漏 | 3 | 0 |
@@ -414,7 +478,7 @@ full-day 场景完成 41 次工具尝试，产生 43 条 ledger 记录，ledger 
 7/7 次 attempt replay 均通过。XA-Guard 侧的工具事件、range audit、ledger 和原始 Gate6 记录
 可以逐序对齐。
 
-### 5.3 故障实验
+### 5.5 故障实验
 
 Reference all-fault 将身份拒绝、授权撤销、租户隔离、数据库中断、API 崩溃恢复、并发审批、
 Worker 接管、持久化重试、错误 KEK、密钥轮换和历史记录恢复组合为 11 个场景，最终结果为 11/11。
@@ -422,7 +486,7 @@ Worker 接管、持久化重试、错误 KEK、密钥轮换和历史记录恢复
 故障实验同时检查业务有效副作用数量。例如并发审批和 Worker 重试可以产生多次调度尝试，
 但业务接口只能观察到一次有效取消。这使测试结果同时覆盖控制面状态和实际业务后果。
 
-### 5.4 性能实验
+### 5.6 性能实验
 
 每个性能样本由一次 XA-Guard 受保护写和一次直接业务写组成。AB/BA 顺序平衡并打乱，
 新增开销定义为：
@@ -443,7 +507,7 @@ incremental_latency =
 
 三轮点估计与上界均低于 50ms。相同实验中完成 10 次 Undo，批准到业务取消约为 0.45–0.94s。
 
-### 5.5 代表性攻击链与业务后果验证
+### 5.7 代表性攻击链与业务后果验证
 
 在 OAR 主评测之外，本文从赛题四个方向选取六类代表性攻击链，固化为可复现证明集
 （`xa-attack-proof-set-v1`）。证明集关注攻击是否跨越安全边界、是否触发下游动作以及业务状态是否改变，
@@ -478,7 +542,7 @@ MCP 下游为只记账的安全合成 target，不执行命令、插件或网络
 `docs/evidence/attack-proof-set-2026-07-26.md`。D1 正文不复制原始注入 payload、危险命令、插件攻击代码、
 原始审计记录、审批令牌或运行环境绝对路径，避免把攻击文本的新颖性误写成系统防护能力。
 
-### 5.6 证据完整性
+### 5.8 证据完整性
 
 最终 evidence 从同一候选环境采集，包含身份、assignment、业务对象、Undo 请求、Effect 链、
 Gate6 链和三份验收报告。Collector 执行 secret scan、hash 重算、链间引用检查和业务状态断言，
