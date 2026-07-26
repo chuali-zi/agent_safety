@@ -1,6 +1,6 @@
 {
   "schema_version": "xa-guard-evidence-index/v1",
-  "snapshot_utc": "2026-07-18T16:59:41Z",
+  "snapshot_utc": "2026-07-23T10:05:00Z",
   "delivery_authority": "docs/acceptance/DELIVERY-v2.md",
   "canonical": {
     "run_id": "oar-delivery-v2-20260711T123124Z-win-local",
@@ -96,6 +96,15 @@
       "verification": "10/10 PASS; SM3/SM2/anchor PASS",
       "publish": false,
       "reason": "contains demo private keys; external TSA/HSM absent"
+    },
+    {
+      "id": "attack-proof-set-2026-07-23",
+      "classification": "tier-a-current-pass",
+      "path": "docs/evidence/attack-proof-set-2026-07-23",
+      "run_id": "xa-attack-proof-v1-20260723T100008Z-win-local",
+      "tarball_sha256": "bb472da919fed5fc4788242338a87b574a0e919b38a0f8c9028f27a7a7380d31",
+      "verification": "6/6 cases verified (D1 mail, D1 RAG, D2 exec, D3 supply, D4 audit tamper, identity boundary); targeted tests 10/10 PASS",
+      "publish": true
     }
   ],
   "retired_or_legacy": [

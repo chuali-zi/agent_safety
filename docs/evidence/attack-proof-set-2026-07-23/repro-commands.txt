@@ -1,0 +1,19 @@
+# XA-Guard 攻击证明集复现命令（Windows PowerShell）
+# run id: xa-attack-proof-v1-20260723T100008Z-win-local
+
+# 1) 定向单元测试
+python -m pytest -q -p no:cacheprovider tests/unit/test_attack_proof_set.py
+
+# 2) 计划校验（不创建目录）
+python scripts/run_attack_proof_set.py --dry-run
+
+# 3) 正式六类证明（live，repeat=3，复用最终 Identity 封存 bundle）
+python scripts/run_attack_proof_set.py `
+  --manifest bench/cases/xa-attack-proof-set-v1.yaml `
+  --output-root D:/xa-evidence/runs `
+  --live `
+  --repeat 3 `
+  --reuse-identity-evidence
+
+# 4) 单类执行示例
+python scripts/run_attack_proof_set.py --case AP-D1-MAIL --live --repeat 3

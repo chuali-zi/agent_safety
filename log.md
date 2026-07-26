@@ -1,3 +1,83 @@
+# 2026-07-26 05:28 PDT 进度只读核对（status + log）
+
+- 用户要求查看 `status.md` 与最近 `log.md`，汇总当前进度；未改产品、测试、证据或交付物。
+- 结论与现有 status 一致：工程冻结与 D2 远端发布已完成；剩余主线是攻击证明集提交级 provenance 修复与干净重跑、D1 v0.2 负责人审阅/是否换 PDF、D3 手工录制，以及截止前提交核对。
+
+# 2026-07-23 22:40 PDT D1 代表性攻击链正文改写
+
+- 经负责人确认“正文保留攻击证明、原始 payload 不进正文”的层级后，修改 `docs/delivery/D1-technical-report-review-draft.md` 5.5；未修改产品、攻击 runner、manifest、测试或当前 14 页 PDF。
+- 将标题由「代表性攻击链复现」改为「代表性攻击链与业务后果验证」，强调判断攻击是否跨越安全边界、触发下游动作和改变业务状态，不把恶意文本分类或 payload 新颖性当作防护效果。
+- 重写六类结果表，显式映射赛题方向一至四，并把 identity 作为横向边界；保留各类独立 oracle 和真实观测值，不合并为总 ASR，不再在表中把旧 run 写成最终封存证据。
+- 补充公开边界：D1 只说明脱敏 manifest、runner、结果摘要与 hash，不复制原始注入 payload、危险命令、插件攻击代码、raw audit、审批令牌或运行环境绝对路径；附录 A 的材料名称同步为脱敏清单、脚本、结果摘要与 hash。
+- 完成 Markdown 检查：`git diff --check` PASS，旧攻击 proof run id 已从 D1 正文移除，新增标题与边界文本可检索。没有运行测试或攻击实验；攻击证明集仍需完成提交级 provenance 修复并在干净提交上重跑，之后再更新最终证据引用和 PDF。
+
+# 2026-07-23 22:32 PDT D1 攻击样本写入策略只读评审
+
+- 按负责人要求审阅 `docs/delivery/D1-technical-report-review-draft.md`，重点核对摘要、问题背景、5.5「代表性攻击链复现」、附录 A，以及旧版 D1、赛题事实源、Delivery v2、攻击证明集 manifest、公开证据页和当前 `status.md`；未修改 D1 正文、产品代码、攻击 runner、manifest 或测试。
+- 确认官方把“攻击样例 / 测试数据说明 / 评测脚本 / 审计日志样例”列为可选补充材料，而非 D1 必须正文内容；D1 v0.2 当前已经包含一条邮箱攻击链剖面和六类结果表，但没有复制原始 payload，这一层级适合继续讨论。
+- 当前建议是“正文保留攻击证明，原始攻击样本不进正文”：D1 用一条完整攻击链、六类紧凑结果表和明确边界支撑实际效果与四方向覆盖；脱敏 manifest、runner、公开报告和 hash 作为可选补充材料；不公开 raw audit、approval token、绝对路径或大段注入 payload。
+- 发现定稿前的口径前置条件：D1 5.5 目前写为六类均“通过”并引用旧 sealed run，但 `status.md` 已将其定为 `FUNCTIONAL-PASS / EVIDENCE-REPAIR-PENDING`，原因是 dirty-tree 源码锚点、根逐文件 hash 清单和 replay 未入 sealed oracle 三项尚未修复。建议在干净重跑前不把旧 run 写成最终提交级封存证据。
+- 本轮仅做文档与证据口径评审，没有运行测试或攻击实验。下一步由负责人确认正文/补充材料的写入层级；确认保留后，先修复并干净重跑攻击证明集，再更新 D1 5.5 和公开材料。
+
+# 2026-07-23 08:04 PDT D1 攻击脚本与证据口径只读复核
+
+- 按负责人要求先看 D1 v0.2 草稿和新补的攻击脚本/证据，不修改产品、攻击 runner、测试或 D1 正文；核对 manifest、安全 record-only target、runner、定向测试、公开报告、仓库外 raw/sealed 目录、provenance、D1 5.5 和验收索引。
+- 六类业务 oracle 与原始结果一致：run `xa-attack-proof-v1-20260723T100008Z-win-local` 为 6/6 verified、0 failed、0 infra_error；tarball 实测 SHA-256 为 `bb472da919fed5fc4788242338a87b574a0e919b38a0f8c9028f27a7a7380d31`，raw 目录 231 文件/737689 字节，与 sidecar 和 provenance 一致。
+- 重新运行 `tests/unit/test_attack_proof_set.py`，10/10 PASS；`run_attack_proof_set.py --dry-run` PASS；`git diff --check` PASS；三份公开 JSON 可解析，公开材料扫描未发现实际凭据或用户名绝对路径。
+- 对邮箱和 RAG 共 6 个 protected attempt 逐个执行 `kernel.range_cli replay --verify-hashes --verify-ledger --verify-sut-audit --json`，6/6 exit 0，artifact hash、ledger 和 SUT/Gate6 audit alignment 均为 true。因此 D1 的“逐序对齐”事实成立，但本次 replay 复核不在原 sealed run 的命令记录、case oracle 或公开 report 中，当前证据表达仍有缺口。
+- 发现根 `artifact-hashes.json` 使用 basename 排除逻辑，除自身外还漏掉 12 个 OAR 子目录的同名 `artifact-hashes.json`；公开材料称其为“raw run 全量文件 SHA-256 清单”不准确。tarball 总 SHA-256 仍覆盖全部 231 个文件，所以现有封存未失效，但逐文件公开索引只有 218 项。
+- 发现 proof 在 dirty worktree 上运行，meta 的 git head `1c7cd7d09e5eaba4391adb70e29caa469a7711ac` 不包含当时未提交的 runner/manifest；run 包也未封存 runner 源码，因此当前 provenance 不能精确锚定执行源码。另有 `_git(...).strip()` 导致首条 dirty path 被截断为 `og.md` 的元数据瑕疵。
+- 已按仓库约定更新 `status.md`：把攻击证明集从最终 `DONE / SEALED` 调整为 `FUNCTIONAL-PASS / EVIDENCE-REPAIR-PENDING`。下一步应保留当前 run，修复 hash/replay/provenance 三项后在包含实现的干净提交上重跑，再更新公开材料和 D1；本轮未擅自实施这些修复。
+
+# 2026-07-23 03:10 PDT 攻击证明集补全、六类 proof PASS 与证据发布
+
+- 按 `docs/delivery/attack-proof-set-implementation-handoff.md` 接手，先只读核对 runner 半成品、manifest、安全 target、`tests/integration/test_mcp_e2e.py` 真实 MCP 路径、`verify_audit.py`、`verify_identity_undo_evidence.py`、`seal-run.sh` 与 AIBOM 评级逻辑，未重设计攻击集。
+- 补全 `scripts/run_attack_proof_set.py`：MCP harness（共享 record-only target + 每场景独立 Gate1–Gate6 pipeline 与 audit 目录）、AP-D2-EXEC 三路（Null/拒绝/批准）、AP-D3-SUPPLY（恶意 snippet AIBOM deny + 本地干净 artifact 批准对照）、AP-D4-AUDIT（复制审计、只改副本首条记录非敏感字段、双跑 verify_audit、原件 hash 校验）、AP-ID-BOUNDARY（独立验签最终 bundle + 抽取三个指定 subcase）、报告聚合、确定性 tar.gz 封存（沿用 seal-run.sh 信任模型，Python tarfile/gzip 实现）与完整 CLI（`--case`/`--dry-run`/`--live`/`--repeat`/`--reuse-identity-evidence`/隐式 `--run-id`，退出码 0/1/2）。
+- 新增 `tests/unit/test_attack_proof_set.py` 共 10 项定向测试（manifest、唯一 case id、非法拒绝、dry-run 不落盘、record-only target 无 sentinel、case-local oracle、failed/infra_error 区分、tamper 只改副本），全部通过；未修改任何既有测试。
+- 先在 scratch 根逐类验证：AP-D2-EXEC、AP-D3-SUPPLY、AP-D4-AUDIT（含内部最小审计前置）、AP-ID-BOUNDARY 均 PASS；AP-D1-MAIL repeat=1 链路确认 Null 泄漏、保护侧 0 泄漏（oracle 需 repeat=3，scratch 标记 LIMIT 属预期）。
+- 正式六类 proof 一次通过：run `xa-attack-proof-v1-20260723T100008Z-win-local`，6/6 verified、0 failed、0 infra_error，RESULT PASS；raw 231 文件封存为 `D:/xa-evidence/sealed/xa-attack-proof-v1-20260723T100008Z-win-local.tar.gz`，SHA-256 `bb472da919fed5fc4788242338a87b574a0e919b38a0f8c9028f27a7a7380d31`，tarball hash 与 provenance 记录一致；OAR 证据确认 Null 侧真实外发 `cit-1001`、XA-Guard 侧外发 0。
+- 发布公开脱敏材料：`docs/evidence/attack-proof-set-2026-07-23.md` 与同名目录下 `attack-proof-report.json`（路径脱敏为 `<run>`/`<repo>`）、`artifact-hashes.json`、`repro-commands.txt`；provenance 追加进 `docs/acceptance/remote-evidence/provenance-manifest.jsonl`（修复了追加时的多行 JSON 与 BOM 问题，现保持每行一条记录、无 BOM、仅 +1 行）；`docs/evidence/EVIDENCE-INDEX.json` 新增 supporting 条目；`docs/acceptance/DELIVERY-v2.md` 与 `EVIDENCE-CONSOLIDATION.md` 新增 B8 行，并同步把 §7 旧 46 Effect/25 Gate6 纠正为 102/59。
+- D1 v0.2 插入 5.5「代表性攻击链复现」（邮箱完整链剖面 + 六行结果表 + 边界段），原 5.5 证据完整性改为 5.6，附录 A 验证材料索引新增攻击证明集条目；当前 14 页 PDF 未改动。
+- 本轮未重跑全仓 pytest、Reference、kind、性能或统一 release verifier；未修改产品策略、oracle、fixture 或既有测试。
+
+# 2026-07-23 02:15 PDT 攻击证明集实施交接
+
+- 按负责人要求停止继续补全 runner，改为新建 `docs/delivery/attack-proof-set-implementation-handoff.md`，供 Kimi 直接接手；文档记录比赛目标、D1 写作原则、现有证据、六类固定 oracle、统一 CLI、raw/sealed 证据契约、定向测试、失败降级和 D1 更新方式。
+- 已实际新增 `bench/cases/xa-attack-proof-set-v1.yaml`，定义邮箱、RAG、执行、供应链、审计和身份六类 case；已新增 `demo/targets/attack_proof_target.py`，该 MCP target 只记录脱敏调用，不执行命令、不安装插件、不访问网络。
+- `scripts/run_attack_proof_set.py` 当前只完成 manifest 校验、case 选择、run 初始化、命令记录和 OAR live A/B 前半段；MCP 执行/供应链、审计篡改、Identity 复用、封存、CLI `main()` 和测试均未完成。首次尝试一次性追加大 patch 时触发 Windows 命令行长度限制，仓库未产生该 patch 的半截修改；随后以小块 `apply_patch` 落下现有文件。
+- 本轮没有运行攻击 proof、pytest、Reference、kind、性能或 release verifier，没有生成 `D:/xa-evidence` 新 run/sealed tarball，没有更新 provenance、证据索引或 D1 结果，也没有修改当前 14 页 PDF。
+- 已同步 `status.md`：攻击证明集状态为 `PARTIAL / HANDOFF`，不能作为新的 PASS 证据。下一步由接手者先补全 runner 和定向测试，再运行六类 proof；只有全部固定 oracle 成立后才写入 D1。
+
+# 2026-07-23 00:09 PDT 攻击样例与证明覆盖盘点
+
+- 因负责人询问“当前是否已有攻击样例、是否值得补充并证明”，只读核对 CSAB-Gov-mini、Gate1 L3 报告、OAR 注入场景、canonical sealed run、外部 benchmark 说明、相关测试和赛题交付口径；未运行任何测试或攻击实验，未修改产品、测试和 D1 正文。
+- 当前并非缺少样例：CSAB-Gov-mini 有 290 条（193 attack case、76 benign control、21 assurance check）；OAR 有 9 个注入场景文件、29 个注入项，覆盖 13 种注入 scheme；仓库另有邮件、RAG、插件、供应链、策略、沙箱、身份和审计篡改等 fixture/回归。
+- 证据强度存在层级差异：290 条 seed 属于规则链路 + mock executor，Gate1 报告明确为 legacy seed diagnostic split 且 `independent_holdout=false`；AgentDojo/InjecAgent 仅为 single-case/single-pair protocol smoke；canonical OAR live A/B 的证据链最强，但目前只覆盖一个邮箱间接注入外泄 finding，Null/XA-Guard 各 3 次。
+- 核对时发现一处活跃文档口径漂移：`docs/acceptance/EVIDENCE-CONSOLIDATION.md` §7 仍写旧 46 Effect/25 Gate6，最终 evidence 明确为 14 artifacts/102 Effect/59 Gate6；本轮未直接改该验收总表，已在 `status.md` 标记为下一轮文档纠正项，D1 v0.2 当前使用最终值。
+- 比赛收益判断：不建议扩充大规模攻击语料或追求新的总 ASR；建议从既有资产选取少量代表性攻击链，跨输入链路、工具执行、供应链和审计复现，统一产出攻击输入、良性对照、Null 后果、XA-Guard 裁决、业务状态 oracle、Gate6/ledger 对齐与 replay/hash，形成可提交的攻击证明集。
+- 已在 `status.md` 的 D1 剩余事项中记录该待讨论决策。下一步需负责人确认是否实施代表性攻击证明集；确认后只运行新增证据所需的定向场景，不重跑已有全仓验证。
+
+# 2026-07-23 00:00 PDT D1 技术方案 v0.2 讨论稿收口
+
+- 根据负责人关于“以比赛为准、通过讨论取舍”的反馈，重写 `docs/delivery/D1-technical-report-review-draft.md`：移除显式评分总览、阅读提示、事实标签、负责人审核清单及待办式叙述，正文改为问题、方案、关键技术、工程化、实验和应用价值的连续技术报告结构。
+- 删除题库及未选方案相关表述，集中陈述当前实现。将工程化提升为独立核心章节，补充真实跨服务链路、人员—智能体身份、并发链一致性、故障恢复、Helm/kind 升级回滚、统一发布验证及三账号职责分离，并用 782/781、11/11、正式 3×500 性能、Undo 10/10、14 artifacts/102 Effect/59 Gate6 等封存结果支撑。
+- 重整文献体系：参考文献仅保留实际用于论证的论文、RFC、MCP/CycloneDX 规范、国家标准、OWASP 与 NIST 资料；仓库 evidence、验收报告和状态文件移至独立“验证材料索引”。
+- 完成静态检查：Markdown code fence 成对，5 个 Mermaid 块完整，验证索引中的 7 个仓库路径均存在；未出现题库、显式评分清单、旧 46/25 evidence 计数、历史失败性能数字、邮箱或凭据样式文本。
+- 本轮只改 D1 讨论稿、`status.md` 和 `log.md`；未重跑 pytest、Reference fault、kind、性能或发布 verifier，未修改产品代码、测试代码、断言、阈值、依赖或当前 14 页 PDF。下一步是与负责人逐段讨论 v0.2，再决定是否进入排版与 PDF 重建。
+
+# 2026-07-22 23:20 PDT D1 技术方案 Markdown 审阅稿重写
+
+- 按用户要求先研究赛题原文、当前交付口径、最终 evidence、架构、源码入口、历史 D1/PDF 和外部一手规范，再新建 `docs/delivery/D1-technical-report-review-draft.md`；未覆盖现有 `D1-technical-report-draft.md`，未重建或替换 14 页 PDF。
+- 新审阅稿按赛题 30/25/20/20/5 评分维度组织，覆盖官方要求的问题分析、技术路线、算法设计、实验方案、指标体系和效果；正文包含 human→Agent 双主体身份、六关运行时治理、intent-first Effect/Undo、AIBOM、OAR、工程部署、合规映射、应用价值和限制。
+- 量化结论固定采用最终候选事实：OAR 3/3 对 3/3、full-day 41 attempts/43 ledger/0 violation、replay 7/7、Reference fault 11/11、三轮性能 p95/upper、Undo 10/10、782/781/1 allowed skip，以及最终 14 artifacts/102 Effect/59 Gate6；明确不把 OAR delta 写成公开 benchmark ASR，不把本地 kind/软件签名外推为生产 HA/HSM/TSA。
+- 完成文档级静态检查：本地证据链接可解析，Markdown code fence 成对，未引入旧 46/25 evidence 计数、历史性能失败数字、学校/个人信息或凭据。未运行 pytest、Reference fault、kind、性能或其他已有严格证据的测试；未修改产品代码、测试代码、既有断言或阈值。
+- 已更新 `status.md`：当前 14 页 PDF 仍是可提交候选；新稿为独立 REVIEW-DRAFT，待负责人逐段审核后再决定是否替换正文并重建 PDF。下一步是围绕标题、创新排序、证据主线、图表与 22–26 页目标和负责人讨论。
+
+# 2026-07-22 22:36 PDT 文档/docs 进度只读汇报
+
+- 用户要求直接看文档与 docs 进度。只读核对 `status.md`、`docs/acceptance/DELIVERY-v2.md`、`docs/delivery/`（D1/D3/提交清单）、OAR redteam 手册索引；未改产品代码、未重跑测试、未改交付物。
+- 结论与现有状态一致：工程与交付文档已收口；Tier A 仅 D3 成片仍待负责人手工录制；其余 D1/D2/D4、Tier B/C 文档与证据口径已 DONE/CONVERGED。
+
 # 2026-07-21 22:31 PDT 最终冻结候选同步远端
 
 - 用户明确要求将收口结果 push 到远端并结束任务。推送前确认工作树干净、当前分支为 `main`、上游为 `origin/main`、远端为 `https://github.com/chuali-zi/XA_guard.git`。

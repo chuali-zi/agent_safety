@@ -1,0 +1,879 @@
+{
+  "algorithm": "SHA-256",
+  "evidence_dir": "<run>",
+  "files": {
+    "RESULTS.md": {
+      "bytes": 561,
+      "sha256": "3a7bbf69d8a8d749f26017b1018fb27a7520922e1a33236937119d9a55b9cf90"
+    },
+    "artifacts/AP-D1-MAIL/case-result.json": {
+      "bytes": 721,
+      "sha256": "1a675342978f58a2fc03ef548c9c785ce7a44f2b8776660f7da77437b1c06c1e"
+    },
+    "artifacts/AP-D1-MAIL/finding.json": {
+      "bytes": 1562,
+      "sha256": "3b56820149db2eb20f40b6c89d4ca0bbd9256e69503352df630d8bdb671ad384"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/null/accountability-report.json": {
+      "bytes": 673,
+      "sha256": "89f7452bb9f74c3677409aee0064803bbb1e023bc0718def9d174db49cea1f3d"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/null/audit.jsonl": {
+      "bytes": 284,
+      "sha256": "c3fbce70d45183d09fc6b19c109e5e0a516afa8b08d5a0f9e39f6c8d9ffbb319"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/null/ledger-replay.json": {
+      "bytes": 1041,
+      "sha256": "95f748bdb9d7a2a99207e8ac17201096e9d71e50ae996256b2498dc65a9b97ff"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/null/ledger.jsonl": {
+      "bytes": 2422,
+      "sha256": "82ef1f9568ac80a0c41e409388d1a6c034717fdd1781143ad8d20ffad473bf33"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/null/prompt.txt": {
+      "bytes": 175,
+      "sha256": "40cd0b5f60ac9b3a922fc5d3d51ac6097f91372d2f990d71578dfa90e4804ee0"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/null/run-manifest.json": {
+      "bytes": 208,
+      "sha256": "2ba2c13a167a6064d5755394aa1cb8275628164962d338a9be7b975150338b88"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/null/timeline.jsonl": {
+      "bytes": 2426,
+      "sha256": "6bb92b07677181046cdb7bd59f46d4e0e682fe05c42e4add8e07226a60a1331e"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/null/tool-events.jsonl": {
+      "bytes": 305,
+      "sha256": "2213fccbe8dbaf30391fed4164e73108c1beb8d3a066233bb5dde7c9fcb1d0fc"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/null/verdict.json": {
+      "bytes": 510,
+      "sha256": "1361544d1493de36ea165063f27ea0d3a96e2ba6b36839d3efb9605438255d93"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/null/world-diff.json": {
+      "bytes": 1402,
+      "sha256": "4f8e4aab0e3463fb03f609a24ae5f56268447b7f4730a1a8618183a4f676be15"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/null/world-effects.jsonl": {
+      "bytes": 148,
+      "sha256": "391a5fbe38381207686a631c72d8d99ad43952fc72eacf93ce9ac02c119b5968"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/null/world-in.json": {
+      "bytes": 1650,
+      "sha256": "878cf97be77c648c3e5f0ff6511b5c24e3ccee64beaba470098a566e0a545381"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/null/world-out.json": {
+      "bytes": 2582,
+      "sha256": "a7f5749b918f9b3ce7f659eb3d06a81aaf4281098a5e8a1cb957664c9b16c453"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/accountability-report.json": {
+      "bytes": 80,
+      "sha256": "85a328dcdbd5d60497c44d299655799fe6c0c452b8d590ac7727aa5580a78b2d"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/audit.jsonl": {
+      "bytes": 272,
+      "sha256": "a3b4872898f3639d42a60bd5fec089366b54fd6a02c4c8f479f7a9540c85d558"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/gate3-rules.yaml": {
+      "bytes": 16315,
+      "sha256": "390f03d9e94c109e1afe089e3883604fba84ff40eb7054a1120f83e371692dbb"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/gate4-capabilities.yaml": {
+      "bytes": 6623,
+      "sha256": "8cbd77c5ecc1bdbc9496c0fba8590eaf8fb61c9c07edc2fef86e1b1703eb79e3"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/ledger-replay.json": {
+      "bytes": 2062,
+      "sha256": "8f0087c5e99af5525b7a45550f9d1350d1d712ccf13d83e19fcffef7e0a6da85"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/ledger.jsonl": {
+      "bytes": 4904,
+      "sha256": "b23bf71382d5eeb4e55bbac1aec466b96f49a94db666f99f0a94a6d5cd536371"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/mcp-tool-schemas.json": {
+      "bytes": 10948,
+      "sha256": "9a72c9d1f453ec01b9aaabe6e6e6f129843b88d5f513a9fe8d501cfeed4006fc"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/prompt.txt": {
+      "bytes": 175,
+      "sha256": "40cd0b5f60ac9b3a922fc5d3d51ac6097f91372d2f990d71578dfa90e4804ee0"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/run-manifest.json": {
+      "bytes": 188,
+      "sha256": "c0e80480f622c988c039c6bff3ea9fab87e3092e5e3cf4c7c537641aca0d73ba"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/sut-session.json": {
+      "bytes": 898,
+      "sha256": "66b535adb310c0c4274f366c6cb24559161d3126ec1da5b7848b8a32dab6d725"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/timeline.jsonl": {
+      "bytes": 4070,
+      "sha256": "5ba14f647cc1561e8e82694af49d3d6dd61596a76f6b1a5785e0c88385100d89"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/tool-events.jsonl": {
+      "bytes": 305,
+      "sha256": "2213fccbe8dbaf30391fed4164e73108c1beb8d3a066233bb5dde7c9fcb1d0fc"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/verdict.json": {
+      "bytes": 173,
+      "sha256": "4eefb7e77b2385872875c39d4d71205062f287cd96483b86c7121ea3aab85449"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/world-diff.json": {
+      "bytes": 1027,
+      "sha256": "8234c88f039f041e80a9f9b8d399eee3112bfa5c09f478d359842319002a452e"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/world-effects.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/world-in.json": {
+      "bytes": 1650,
+      "sha256": "878cf97be77c648c3e5f0ff6511b5c24e3ccee64beaba470098a566e0a545381"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/world-out.json": {
+      "bytes": 2379,
+      "sha256": "fc995d1070a5c5e6c05e64524fa25b2439343e00800f9948ee05c7663629e7ec"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/xa-guard-audit/audit.jsonl": {
+      "bytes": 7830,
+      "sha256": "0203b46efc422928e3b86b90b114b8d18e8c1c245392e9ef9202bbe36c2e7707"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-001/xaguard/xa-guard.yaml": {
+      "bytes": 1910,
+      "sha256": "92a62dcc97c24418245c7567ec41a6506e88dd6492c860187a91896ad22d892f"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/null/accountability-report.json": {
+      "bytes": 673,
+      "sha256": "89f7452bb9f74c3677409aee0064803bbb1e023bc0718def9d174db49cea1f3d"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/null/audit.jsonl": {
+      "bytes": 284,
+      "sha256": "c3fbce70d45183d09fc6b19c109e5e0a516afa8b08d5a0f9e39f6c8d9ffbb319"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/null/ledger-replay.json": {
+      "bytes": 1041,
+      "sha256": "95f748bdb9d7a2a99207e8ac17201096e9d71e50ae996256b2498dc65a9b97ff"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/null/ledger.jsonl": {
+      "bytes": 2422,
+      "sha256": "82ef1f9568ac80a0c41e409388d1a6c034717fdd1781143ad8d20ffad473bf33"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/null/prompt.txt": {
+      "bytes": 175,
+      "sha256": "40cd0b5f60ac9b3a922fc5d3d51ac6097f91372d2f990d71578dfa90e4804ee0"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/null/run-manifest.json": {
+      "bytes": 208,
+      "sha256": "0752e2b247f6bdda51e28f98d258f7eb2075a26d5c7f7bdc70ffed38ac700219"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/null/timeline.jsonl": {
+      "bytes": 2426,
+      "sha256": "6bb92b07677181046cdb7bd59f46d4e0e682fe05c42e4add8e07226a60a1331e"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/null/tool-events.jsonl": {
+      "bytes": 305,
+      "sha256": "2213fccbe8dbaf30391fed4164e73108c1beb8d3a066233bb5dde7c9fcb1d0fc"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/null/verdict.json": {
+      "bytes": 510,
+      "sha256": "1361544d1493de36ea165063f27ea0d3a96e2ba6b36839d3efb9605438255d93"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/null/world-diff.json": {
+      "bytes": 1402,
+      "sha256": "4f8e4aab0e3463fb03f609a24ae5f56268447b7f4730a1a8618183a4f676be15"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/null/world-effects.jsonl": {
+      "bytes": 148,
+      "sha256": "391a5fbe38381207686a631c72d8d99ad43952fc72eacf93ce9ac02c119b5968"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/null/world-in.json": {
+      "bytes": 1650,
+      "sha256": "878cf97be77c648c3e5f0ff6511b5c24e3ccee64beaba470098a566e0a545381"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/null/world-out.json": {
+      "bytes": 2582,
+      "sha256": "a7f5749b918f9b3ce7f659eb3d06a81aaf4281098a5e8a1cb957664c9b16c453"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/accountability-report.json": {
+      "bytes": 80,
+      "sha256": "85a328dcdbd5d60497c44d299655799fe6c0c452b8d590ac7727aa5580a78b2d"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/audit.jsonl": {
+      "bytes": 272,
+      "sha256": "a3b4872898f3639d42a60bd5fec089366b54fd6a02c4c8f479f7a9540c85d558"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/gate3-rules.yaml": {
+      "bytes": 16315,
+      "sha256": "390f03d9e94c109e1afe089e3883604fba84ff40eb7054a1120f83e371692dbb"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/gate4-capabilities.yaml": {
+      "bytes": 6623,
+      "sha256": "8cbd77c5ecc1bdbc9496c0fba8590eaf8fb61c9c07edc2fef86e1b1703eb79e3"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/ledger-replay.json": {
+      "bytes": 2062,
+      "sha256": "8f0087c5e99af5525b7a45550f9d1350d1d712ccf13d83e19fcffef7e0a6da85"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/ledger.jsonl": {
+      "bytes": 4904,
+      "sha256": "b23bf71382d5eeb4e55bbac1aec466b96f49a94db666f99f0a94a6d5cd536371"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/mcp-tool-schemas.json": {
+      "bytes": 10948,
+      "sha256": "9a72c9d1f453ec01b9aaabe6e6e6f129843b88d5f513a9fe8d501cfeed4006fc"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/prompt.txt": {
+      "bytes": 175,
+      "sha256": "40cd0b5f60ac9b3a922fc5d3d51ac6097f91372d2f990d71578dfa90e4804ee0"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/run-manifest.json": {
+      "bytes": 188,
+      "sha256": "33423021051c702d21facd64f781a772428fb73517db15bfa83acfff7b97a9b3"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/sut-session.json": {
+      "bytes": 898,
+      "sha256": "d5bc53af83f54f6b78137063a78631eb35456adffc1352cb0cc451b9314743c0"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/timeline.jsonl": {
+      "bytes": 4070,
+      "sha256": "5ba14f647cc1561e8e82694af49d3d6dd61596a76f6b1a5785e0c88385100d89"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/tool-events.jsonl": {
+      "bytes": 305,
+      "sha256": "2213fccbe8dbaf30391fed4164e73108c1beb8d3a066233bb5dde7c9fcb1d0fc"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/verdict.json": {
+      "bytes": 173,
+      "sha256": "4eefb7e77b2385872875c39d4d71205062f287cd96483b86c7121ea3aab85449"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/world-diff.json": {
+      "bytes": 1027,
+      "sha256": "8234c88f039f041e80a9f9b8d399eee3112bfa5c09f478d359842319002a452e"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/world-effects.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/world-in.json": {
+      "bytes": 1650,
+      "sha256": "878cf97be77c648c3e5f0ff6511b5c24e3ccee64beaba470098a566e0a545381"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/world-out.json": {
+      "bytes": 2379,
+      "sha256": "fc995d1070a5c5e6c05e64524fa25b2439343e00800f9948ee05c7663629e7ec"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/xa-guard-audit/audit.jsonl": {
+      "bytes": 7830,
+      "sha256": "8e712c912c2670be5a21d2e070bfbd7b72db1c649a172e7c1b733f68ed31f803"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-002/xaguard/xa-guard.yaml": {
+      "bytes": 1910,
+      "sha256": "68334761c4389800f5853b0349f7f11527d2f0f9f53424924a5e234a6c35ef5c"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/null/accountability-report.json": {
+      "bytes": 673,
+      "sha256": "89f7452bb9f74c3677409aee0064803bbb1e023bc0718def9d174db49cea1f3d"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/null/audit.jsonl": {
+      "bytes": 284,
+      "sha256": "c3fbce70d45183d09fc6b19c109e5e0a516afa8b08d5a0f9e39f6c8d9ffbb319"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/null/ledger-replay.json": {
+      "bytes": 1041,
+      "sha256": "95f748bdb9d7a2a99207e8ac17201096e9d71e50ae996256b2498dc65a9b97ff"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/null/ledger.jsonl": {
+      "bytes": 2422,
+      "sha256": "82ef1f9568ac80a0c41e409388d1a6c034717fdd1781143ad8d20ffad473bf33"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/null/prompt.txt": {
+      "bytes": 175,
+      "sha256": "40cd0b5f60ac9b3a922fc5d3d51ac6097f91372d2f990d71578dfa90e4804ee0"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/null/run-manifest.json": {
+      "bytes": 208,
+      "sha256": "3b2a25a6f36b6b6d4cd64d1d5c42548e87ec9f1beacd9a25c21dc05fb6f31b0d"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/null/timeline.jsonl": {
+      "bytes": 2426,
+      "sha256": "6bb92b07677181046cdb7bd59f46d4e0e682fe05c42e4add8e07226a60a1331e"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/null/tool-events.jsonl": {
+      "bytes": 305,
+      "sha256": "2213fccbe8dbaf30391fed4164e73108c1beb8d3a066233bb5dde7c9fcb1d0fc"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/null/verdict.json": {
+      "bytes": 510,
+      "sha256": "1361544d1493de36ea165063f27ea0d3a96e2ba6b36839d3efb9605438255d93"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/null/world-diff.json": {
+      "bytes": 1402,
+      "sha256": "4f8e4aab0e3463fb03f609a24ae5f56268447b7f4730a1a8618183a4f676be15"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/null/world-effects.jsonl": {
+      "bytes": 148,
+      "sha256": "391a5fbe38381207686a631c72d8d99ad43952fc72eacf93ce9ac02c119b5968"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/null/world-in.json": {
+      "bytes": 1650,
+      "sha256": "878cf97be77c648c3e5f0ff6511b5c24e3ccee64beaba470098a566e0a545381"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/null/world-out.json": {
+      "bytes": 2582,
+      "sha256": "a7f5749b918f9b3ce7f659eb3d06a81aaf4281098a5e8a1cb957664c9b16c453"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/accountability-report.json": {
+      "bytes": 80,
+      "sha256": "85a328dcdbd5d60497c44d299655799fe6c0c452b8d590ac7727aa5580a78b2d"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/audit.jsonl": {
+      "bytes": 272,
+      "sha256": "a3b4872898f3639d42a60bd5fec089366b54fd6a02c4c8f479f7a9540c85d558"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/gate3-rules.yaml": {
+      "bytes": 16315,
+      "sha256": "390f03d9e94c109e1afe089e3883604fba84ff40eb7054a1120f83e371692dbb"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/gate4-capabilities.yaml": {
+      "bytes": 6623,
+      "sha256": "8cbd77c5ecc1bdbc9496c0fba8590eaf8fb61c9c07edc2fef86e1b1703eb79e3"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/ledger-replay.json": {
+      "bytes": 2062,
+      "sha256": "8f0087c5e99af5525b7a45550f9d1350d1d712ccf13d83e19fcffef7e0a6da85"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/ledger.jsonl": {
+      "bytes": 4904,
+      "sha256": "b23bf71382d5eeb4e55bbac1aec466b96f49a94db666f99f0a94a6d5cd536371"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/mcp-tool-schemas.json": {
+      "bytes": 10948,
+      "sha256": "9a72c9d1f453ec01b9aaabe6e6e6f129843b88d5f513a9fe8d501cfeed4006fc"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/prompt.txt": {
+      "bytes": 175,
+      "sha256": "40cd0b5f60ac9b3a922fc5d3d51ac6097f91372d2f990d71578dfa90e4804ee0"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/run-manifest.json": {
+      "bytes": 188,
+      "sha256": "4836a4658d9e3fa2efdbfa73cffcb45ed9b182e6aae4a5c6dcf4386b970a5ab5"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/sut-session.json": {
+      "bytes": 898,
+      "sha256": "abdf4df6fa0a0fc9e7394d945fc64246e086458a5a55b1859681c64c178bca36"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/timeline.jsonl": {
+      "bytes": 4070,
+      "sha256": "5ba14f647cc1561e8e82694af49d3d6dd61596a76f6b1a5785e0c88385100d89"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/tool-events.jsonl": {
+      "bytes": 305,
+      "sha256": "2213fccbe8dbaf30391fed4164e73108c1beb8d3a066233bb5dde7c9fcb1d0fc"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/verdict.json": {
+      "bytes": 173,
+      "sha256": "4eefb7e77b2385872875c39d4d71205062f287cd96483b86c7121ea3aab85449"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/world-diff.json": {
+      "bytes": 1027,
+      "sha256": "8234c88f039f041e80a9f9b8d399eee3112bfa5c09f478d359842319002a452e"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/world-effects.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/world-in.json": {
+      "bytes": 1650,
+      "sha256": "878cf97be77c648c3e5f0ff6511b5c24e3ccee64beaba470098a566e0a545381"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/world-out.json": {
+      "bytes": 2379,
+      "sha256": "fc995d1070a5c5e6c05e64524fa25b2439343e00800f9948ee05c7663629e7ec"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/xa-guard-audit/audit.jsonl": {
+      "bytes": 7830,
+      "sha256": "73d0d2ad7ed96f808bcf11ba4243d53cdb0d702d2404e6780c929ca925875cca"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/run-003/xaguard/xa-guard.yaml": {
+      "bytes": 1910,
+      "sha256": "e7d68d30db28f3849d7c49f9e13699c162b6e9cfbc9fcb0182040f9f89c105de"
+    },
+    "artifacts/AP-D1-MAIL/live-ab/summary.json": {
+      "bytes": 8101,
+      "sha256": "efe55d7cf2588e9a9adb6a2052c2ffb5801977109aef8d06668da21e05e0df3e"
+    },
+    "artifacts/AP-D1-RAG/case-result.json": {
+      "bytes": 718,
+      "sha256": "662ae2d7595cd1abc45b931cac3b1df716aa483f2cad7d47f34814a29c0bef8c"
+    },
+    "artifacts/AP-D1-RAG/finding.json": {
+      "bytes": 1555,
+      "sha256": "6749e4e5f46e261405c2fa4773fca31bb1f5b3c66d23ca1a95a00514e4851911"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/null/accountability-report.json": {
+      "bytes": 675,
+      "sha256": "e731ae1707f73674b1470f266f21069814812479fcbcb4c6f365e997870f97e5"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/null/audit.jsonl": {
+      "bytes": 846,
+      "sha256": "d372a1af7b9c8779a6590d7d33e2a22f111bbd4868af775f5e1d0d27d4c36266"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/null/ledger-replay.json": {
+      "bytes": 1148,
+      "sha256": "4c5e5fc86b173ff3e3fd88ac49f0bfa14eeb1673b54b365b2bcdfc5640b5059d"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/null/ledger.jsonl": {
+      "bytes": 5398,
+      "sha256": "f78cf9b31b6e2f8605991c02a5f6d8ea85f86ed21086072c76df531d47e91856"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/null/prompt.txt": {
+      "bytes": 193,
+      "sha256": "f14ea8ca529722afe8190c0b6e7089f11ab122a99b40573763f2bab8e339a2f4"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/null/run-manifest.json": {
+      "bytes": 208,
+      "sha256": "c2f06d36eab55425a088d804c01b34b5e6ba682144bd89d5aed2439163d51e43"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/null/timeline.jsonl": {
+      "bytes": 5536,
+      "sha256": "ac883c41117047b9d4a4fc8c3e5278abc34e463d6f1686421905fa84f5ae7f07"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/null/tool-events.jsonl": {
+      "bytes": 721,
+      "sha256": "87021e057ef2d96598d90ff79a8f4c678416f057320bd8b5e328936f769e2af5"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/null/verdict.json": {
+      "bytes": 511,
+      "sha256": "5896fe892a509ea95fb374a5e2dcc40a67dbfb463b2206162d3e579c7e499b98"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/null/world-diff.json": {
+      "bytes": 1368,
+      "sha256": "286df44d031013ae09f959e9db0d6d45a16e6fe345bb92adf58d2b43be60bf46"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/null/world-effects.jsonl": {
+      "bytes": 148,
+      "sha256": "391a5fbe38381207686a631c72d8d99ad43952fc72eacf93ce9ac02c119b5968"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/null/world-in.json": {
+      "bytes": 1759,
+      "sha256": "f0fa3f3ab3d807c80df9fcf9f8dd4a5b9028117baed43ce54e7e71ff1496c8ef"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/null/world-out.json": {
+      "bytes": 2661,
+      "sha256": "ee659ce96b7d4c299c9c4d23e9536ecdfb6aca7b1cea766e49728f7573e3c1d4"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/accountability-report.json": {
+      "bytes": 80,
+      "sha256": "85a328dcdbd5d60497c44d299655799fe6c0c452b8d590ac7727aa5580a78b2d"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/audit.jsonl": {
+      "bytes": 739,
+      "sha256": "8dae077a782a1bad731359896f0bf2c819aeb5c19fb2bcdbceccbf0a26f9bad7"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/gate3-rules.yaml": {
+      "bytes": 16316,
+      "sha256": "73b321fd490c7b42619ec73aa0e59fa34d76f68691e208ec92ee4dc12ced3371"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/gate4-capabilities.yaml": {
+      "bytes": 6623,
+      "sha256": "8cbd77c5ecc1bdbc9496c0fba8590eaf8fb61c9c07edc2fef86e1b1703eb79e3"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/ledger-replay.json": {
+      "bytes": 4631,
+      "sha256": "b58641e21152cee84ad677774c56cd4381dcd739192c548253453b46bb68beaf"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/ledger.jsonl": {
+      "bytes": 13894,
+      "sha256": "cf8bf41b462d9166aa5440a8a9eee268637f2237de2fe199db84c57443fbb73e"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/mcp-tool-schemas.json": {
+      "bytes": 10948,
+      "sha256": "9a72c9d1f453ec01b9aaabe6e6e6f129843b88d5f513a9fe8d501cfeed4006fc"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/prompt.txt": {
+      "bytes": 193,
+      "sha256": "f14ea8ca529722afe8190c0b6e7089f11ab122a99b40573763f2bab8e339a2f4"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/run-manifest.json": {
+      "bytes": 188,
+      "sha256": "f10bc79c65630ff6ecb9ce63ac464ec1965ba73cb5fee5a1a38927d069ceb13b"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/sut-session.json": {
+      "bytes": 1308,
+      "sha256": "7f35379e6d1a71f934d394da97efae03c75c9895c972bfcca53601caeec06032"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/timeline.jsonl": {
+      "bytes": 11131,
+      "sha256": "d9aff537652ee8fc0d08af0b7a59add8790532a887b601011fc06d0af0e6ace0"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/tool-events.jsonl": {
+      "bytes": 721,
+      "sha256": "87021e057ef2d96598d90ff79a8f4c678416f057320bd8b5e328936f769e2af5"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/verdict.json": {
+      "bytes": 173,
+      "sha256": "4eefb7e77b2385872875c39d4d71205062f287cd96483b86c7121ea3aab85449"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/world-diff.json": {
+      "bytes": 993,
+      "sha256": "43360d39e45362cf00f4abf46c77ee7756d9ce84465eeaede5a6d63d71f2abc1"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/world-effects.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/world-in.json": {
+      "bytes": 1759,
+      "sha256": "f0fa3f3ab3d807c80df9fcf9f8dd4a5b9028117baed43ce54e7e71ff1496c8ef"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/world-out.json": {
+      "bytes": 2458,
+      "sha256": "b99f8931b8f789a2817a3fa007039a9be7893943b80cdcd25e415c3b5547e4ee"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/xa-guard-audit/audit.jsonl": {
+      "bytes": 23286,
+      "sha256": "adbdeefe400c7b2d3f9c5f5d8fff996e7ead025160fc1c8c421b3714e53f15c8"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-001/xaguard/xa-guard.yaml": {
+      "bytes": 1905,
+      "sha256": "cec6cad1bb78f7bcf3180e9e0a5337d03893a4ccb1bcd1817cc4c7ff57b3ec8f"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/null/accountability-report.json": {
+      "bytes": 675,
+      "sha256": "e731ae1707f73674b1470f266f21069814812479fcbcb4c6f365e997870f97e5"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/null/audit.jsonl": {
+      "bytes": 846,
+      "sha256": "d372a1af7b9c8779a6590d7d33e2a22f111bbd4868af775f5e1d0d27d4c36266"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/null/ledger-replay.json": {
+      "bytes": 1148,
+      "sha256": "4c5e5fc86b173ff3e3fd88ac49f0bfa14eeb1673b54b365b2bcdfc5640b5059d"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/null/ledger.jsonl": {
+      "bytes": 5398,
+      "sha256": "f78cf9b31b6e2f8605991c02a5f6d8ea85f86ed21086072c76df531d47e91856"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/null/prompt.txt": {
+      "bytes": 193,
+      "sha256": "f14ea8ca529722afe8190c0b6e7089f11ab122a99b40573763f2bab8e339a2f4"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/null/run-manifest.json": {
+      "bytes": 208,
+      "sha256": "080bf2ddee6dbe8b6f5b67d3481b35f7d2ac50ef00df114e9cc6b0ac9d0a327f"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/null/timeline.jsonl": {
+      "bytes": 5536,
+      "sha256": "ac883c41117047b9d4a4fc8c3e5278abc34e463d6f1686421905fa84f5ae7f07"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/null/tool-events.jsonl": {
+      "bytes": 721,
+      "sha256": "87021e057ef2d96598d90ff79a8f4c678416f057320bd8b5e328936f769e2af5"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/null/verdict.json": {
+      "bytes": 511,
+      "sha256": "5896fe892a509ea95fb374a5e2dcc40a67dbfb463b2206162d3e579c7e499b98"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/null/world-diff.json": {
+      "bytes": 1368,
+      "sha256": "286df44d031013ae09f959e9db0d6d45a16e6fe345bb92adf58d2b43be60bf46"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/null/world-effects.jsonl": {
+      "bytes": 148,
+      "sha256": "391a5fbe38381207686a631c72d8d99ad43952fc72eacf93ce9ac02c119b5968"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/null/world-in.json": {
+      "bytes": 1759,
+      "sha256": "f0fa3f3ab3d807c80df9fcf9f8dd4a5b9028117baed43ce54e7e71ff1496c8ef"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/null/world-out.json": {
+      "bytes": 2661,
+      "sha256": "ee659ce96b7d4c299c9c4d23e9536ecdfb6aca7b1cea766e49728f7573e3c1d4"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/accountability-report.json": {
+      "bytes": 80,
+      "sha256": "85a328dcdbd5d60497c44d299655799fe6c0c452b8d590ac7727aa5580a78b2d"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/audit.jsonl": {
+      "bytes": 739,
+      "sha256": "8dae077a782a1bad731359896f0bf2c819aeb5c19fb2bcdbceccbf0a26f9bad7"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/gate3-rules.yaml": {
+      "bytes": 16316,
+      "sha256": "73b321fd490c7b42619ec73aa0e59fa34d76f68691e208ec92ee4dc12ced3371"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/gate4-capabilities.yaml": {
+      "bytes": 6623,
+      "sha256": "8cbd77c5ecc1bdbc9496c0fba8590eaf8fb61c9c07edc2fef86e1b1703eb79e3"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/ledger-replay.json": {
+      "bytes": 4631,
+      "sha256": "b58641e21152cee84ad677774c56cd4381dcd739192c548253453b46bb68beaf"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/ledger.jsonl": {
+      "bytes": 13894,
+      "sha256": "cf8bf41b462d9166aa5440a8a9eee268637f2237de2fe199db84c57443fbb73e"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/mcp-tool-schemas.json": {
+      "bytes": 10948,
+      "sha256": "9a72c9d1f453ec01b9aaabe6e6e6f129843b88d5f513a9fe8d501cfeed4006fc"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/prompt.txt": {
+      "bytes": 193,
+      "sha256": "f14ea8ca529722afe8190c0b6e7089f11ab122a99b40573763f2bab8e339a2f4"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/run-manifest.json": {
+      "bytes": 188,
+      "sha256": "8fe25aad171892f113a20ea00e67257d32fce533ae802dcd558963ca4b6b8a0e"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/sut-session.json": {
+      "bytes": 1308,
+      "sha256": "2aae668c2b65bb756e0e944b60a6a474924ae0ef0904b3ed858f3f26562d7061"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/timeline.jsonl": {
+      "bytes": 11131,
+      "sha256": "d9aff537652ee8fc0d08af0b7a59add8790532a887b601011fc06d0af0e6ace0"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/tool-events.jsonl": {
+      "bytes": 721,
+      "sha256": "87021e057ef2d96598d90ff79a8f4c678416f057320bd8b5e328936f769e2af5"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/verdict.json": {
+      "bytes": 173,
+      "sha256": "4eefb7e77b2385872875c39d4d71205062f287cd96483b86c7121ea3aab85449"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/world-diff.json": {
+      "bytes": 993,
+      "sha256": "43360d39e45362cf00f4abf46c77ee7756d9ce84465eeaede5a6d63d71f2abc1"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/world-effects.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/world-in.json": {
+      "bytes": 1759,
+      "sha256": "f0fa3f3ab3d807c80df9fcf9f8dd4a5b9028117baed43ce54e7e71ff1496c8ef"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/world-out.json": {
+      "bytes": 2458,
+      "sha256": "b99f8931b8f789a2817a3fa007039a9be7893943b80cdcd25e415c3b5547e4ee"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/xa-guard-audit/audit.jsonl": {
+      "bytes": 23286,
+      "sha256": "108ca159efd5b8bf844d5724e786813134e92764aaff88764242180d59bdb86e"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-002/xaguard/xa-guard.yaml": {
+      "bytes": 1905,
+      "sha256": "85f107222a92a2cf1bce87a9c9adff5244072bc2031a17aa4a46675648110f25"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/null/accountability-report.json": {
+      "bytes": 675,
+      "sha256": "e731ae1707f73674b1470f266f21069814812479fcbcb4c6f365e997870f97e5"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/null/audit.jsonl": {
+      "bytes": 846,
+      "sha256": "d372a1af7b9c8779a6590d7d33e2a22f111bbd4868af775f5e1d0d27d4c36266"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/null/ledger-replay.json": {
+      "bytes": 1148,
+      "sha256": "4c5e5fc86b173ff3e3fd88ac49f0bfa14eeb1673b54b365b2bcdfc5640b5059d"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/null/ledger.jsonl": {
+      "bytes": 5398,
+      "sha256": "f78cf9b31b6e2f8605991c02a5f6d8ea85f86ed21086072c76df531d47e91856"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/null/prompt.txt": {
+      "bytes": 193,
+      "sha256": "f14ea8ca529722afe8190c0b6e7089f11ab122a99b40573763f2bab8e339a2f4"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/null/run-manifest.json": {
+      "bytes": 208,
+      "sha256": "91fc4bd801f589069b9ea221bcca36a1ec7dfc3d406d4125022b89e043241719"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/null/timeline.jsonl": {
+      "bytes": 5536,
+      "sha256": "ac883c41117047b9d4a4fc8c3e5278abc34e463d6f1686421905fa84f5ae7f07"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/null/tool-events.jsonl": {
+      "bytes": 721,
+      "sha256": "87021e057ef2d96598d90ff79a8f4c678416f057320bd8b5e328936f769e2af5"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/null/verdict.json": {
+      "bytes": 511,
+      "sha256": "5896fe892a509ea95fb374a5e2dcc40a67dbfb463b2206162d3e579c7e499b98"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/null/world-diff.json": {
+      "bytes": 1368,
+      "sha256": "286df44d031013ae09f959e9db0d6d45a16e6fe345bb92adf58d2b43be60bf46"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/null/world-effects.jsonl": {
+      "bytes": 148,
+      "sha256": "391a5fbe38381207686a631c72d8d99ad43952fc72eacf93ce9ac02c119b5968"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/null/world-in.json": {
+      "bytes": 1759,
+      "sha256": "f0fa3f3ab3d807c80df9fcf9f8dd4a5b9028117baed43ce54e7e71ff1496c8ef"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/null/world-out.json": {
+      "bytes": 2661,
+      "sha256": "ee659ce96b7d4c299c9c4d23e9536ecdfb6aca7b1cea766e49728f7573e3c1d4"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/accountability-report.json": {
+      "bytes": 80,
+      "sha256": "85a328dcdbd5d60497c44d299655799fe6c0c452b8d590ac7727aa5580a78b2d"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/audit.jsonl": {
+      "bytes": 739,
+      "sha256": "8dae077a782a1bad731359896f0bf2c819aeb5c19fb2bcdbceccbf0a26f9bad7"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/gate3-rules.yaml": {
+      "bytes": 16316,
+      "sha256": "73b321fd490c7b42619ec73aa0e59fa34d76f68691e208ec92ee4dc12ced3371"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/gate4-capabilities.yaml": {
+      "bytes": 6623,
+      "sha256": "8cbd77c5ecc1bdbc9496c0fba8590eaf8fb61c9c07edc2fef86e1b1703eb79e3"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/ledger-replay.json": {
+      "bytes": 4631,
+      "sha256": "b58641e21152cee84ad677774c56cd4381dcd739192c548253453b46bb68beaf"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/ledger.jsonl": {
+      "bytes": 13894,
+      "sha256": "cf8bf41b462d9166aa5440a8a9eee268637f2237de2fe199db84c57443fbb73e"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/mcp-tool-schemas.json": {
+      "bytes": 10948,
+      "sha256": "9a72c9d1f453ec01b9aaabe6e6e6f129843b88d5f513a9fe8d501cfeed4006fc"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/prompt.txt": {
+      "bytes": 193,
+      "sha256": "f14ea8ca529722afe8190c0b6e7089f11ab122a99b40573763f2bab8e339a2f4"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/run-manifest.json": {
+      "bytes": 188,
+      "sha256": "af428a4e4f1dbc91ded290e1736f28b2ebfb9ee78faf9666d58240d79661fb68"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/sut-session.json": {
+      "bytes": 1308,
+      "sha256": "a1561a4d98e8c8e4bdc2fd44653acc5b5e84765dae0496ec20cd22b8faac2dd9"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/timeline.jsonl": {
+      "bytes": 11131,
+      "sha256": "d9aff537652ee8fc0d08af0b7a59add8790532a887b601011fc06d0af0e6ace0"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/tool-events.jsonl": {
+      "bytes": 721,
+      "sha256": "87021e057ef2d96598d90ff79a8f4c678416f057320bd8b5e328936f769e2af5"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/verdict.json": {
+      "bytes": 173,
+      "sha256": "4eefb7e77b2385872875c39d4d71205062f287cd96483b86c7121ea3aab85449"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/world-diff.json": {
+      "bytes": 993,
+      "sha256": "43360d39e45362cf00f4abf46c77ee7756d9ce84465eeaede5a6d63d71f2abc1"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/world-effects.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/world-in.json": {
+      "bytes": 1759,
+      "sha256": "f0fa3f3ab3d807c80df9fcf9f8dd4a5b9028117baed43ce54e7e71ff1496c8ef"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/world-out.json": {
+      "bytes": 2458,
+      "sha256": "b99f8931b8f789a2817a3fa007039a9be7893943b80cdcd25e415c3b5547e4ee"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/xa-guard-audit/audit.jsonl": {
+      "bytes": 23286,
+      "sha256": "0292d915706ec1df2c10c794f800225f81bb90d7bb617da532b45e6de12d8330"
+    },
+    "artifacts/AP-D1-RAG/live-ab/run-003/xaguard/xa-guard.yaml": {
+      "bytes": 1905,
+      "sha256": "72639b776d71f62fc2459536861f9d4e38f63b2bfef192eb4814d7a11e1e29ee"
+    },
+    "artifacts/AP-D1-RAG/live-ab/summary.json": {
+      "bytes": 8077,
+      "sha256": "bcc94b9679fa9437e65293d524535b70fcbfb19f93625de0e677a6b6e4d26b71"
+    },
+    "artifacts/AP-D2-EXEC/approved/audit/audit.jsonl": {
+      "bytes": 5390,
+      "sha256": "4b4a0ff4618002306e120929d2839cfddbfb3f96d735a95069a6a489a8c299df"
+    },
+    "artifacts/AP-D2-EXEC/case-result.json": {
+      "bytes": 1932,
+      "sha256": "9a1a1e8744205854207a05a63cb1860d69a228dfeb36fa2c771346dc88934401"
+    },
+    "artifacts/AP-D2-EXEC/rejected/audit/audit.jsonl": {
+      "bytes": 5193,
+      "sha256": "d9b8c222e1995794267e267303996ff2543dd7db605fe9437b92f9d3ae5b83f8"
+    },
+    "artifacts/AP-D3-SUPPLY/case-result.json": {
+      "bytes": 1891,
+      "sha256": "e7603ef3fd39ec0ec9db6476ff2e96f734340451a21c0657b9660faaee784cfa"
+    },
+    "artifacts/AP-D3-SUPPLY/clean-plugin/clean_plugin.py": {
+      "bytes": 131,
+      "sha256": "3489e3114ace950ad86f9f6b825d73f9e22104fecd98ca2e73eed88366bd28d3"
+    },
+    "artifacts/AP-D3-SUPPLY/clean/audit/audit.jsonl": {
+      "bytes": 5724,
+      "sha256": "a0b318d27fc3586b11ae2f81eb90527c8d103a66e776370310c47e902cc59874"
+    },
+    "artifacts/AP-D3-SUPPLY/malicious/audit/audit.jsonl": {
+      "bytes": 2888,
+      "sha256": "b304012db453d4f228df07f0f29b99bbc56d4d509b084cb66aae2546c4c630fa"
+    },
+    "artifacts/AP-D4-AUDIT/audit-clean-copy.jsonl": {
+      "bytes": 5390,
+      "sha256": "4b4a0ff4618002306e120929d2839cfddbfb3f96d735a95069a6a489a8c299df"
+    },
+    "artifacts/AP-D4-AUDIT/audit-tampered-copy.jsonl": {
+      "bytes": 5545,
+      "sha256": "f8ae670e5ff2fea80707461af8aa4d1d8d0cab303c6aa159ec00104dcbd742d6"
+    },
+    "artifacts/AP-D4-AUDIT/case-result.json": {
+      "bytes": 1057,
+      "sha256": "d62030afa197c52a97a18c08b49b6c031e297ca88ee78f7b88ce39f115d966fc"
+    },
+    "artifacts/AP-ID-BOUNDARY/case-result.json": {
+      "bytes": 1238,
+      "sha256": "b8822867868e6296415a49de39f1076c68ce28d8eb8aa8cad7f0c8b670300df8"
+    },
+    "artifacts/AP-ID-BOUNDARY/verifier-output.txt": {
+      "bytes": 266,
+      "sha256": "100ca4e63fab3da7a61c9e1b91bbdfe9e1a791769903dc1d4cdb22dad6a11a1b"
+    },
+    "artifacts/mcp-suite/synthetic-downstream-calls.jsonl": {
+      "bytes": 984,
+      "sha256": "ac02f5419bd084d1111ffc8746fedc1260d17c71ade0c15c8a0a8902d86b36c6"
+    },
+    "attack-proof-report.json": {
+      "bytes": 9453,
+      "sha256": "336e02cb9d0c6358f7cfe7a8b9330fccecd37a167aa3a8ce37ae3e4b73331c67"
+    },
+    "commands.txt": {
+      "bytes": 1722,
+      "sha256": "fd32937e7794f832a8c58621bed037bd6628ffb9664d7b12263df7913c2412a8"
+    },
+    "console.log": {
+      "bytes": 24929,
+      "sha256": "b206e814a532208206e62aa2abbcc1c2b617be3192f27578a2d71aa3e7b5cf02"
+    },
+    "environment.txt": {
+      "bytes": 88,
+      "sha256": "743acb8f5868ce8f5814fb4997b1dd278228a0a1e2b71d7002db7880b362afac"
+    },
+    "manifest.yaml": {
+      "bytes": 2834,
+      "sha256": "46388637fb338ef475e09c72b63bbcb1043baeccbc11eac815abf647491c9f56"
+    },
+    "meta.json": {
+      "bytes": 1243,
+      "sha256": "0d99a09eda517d43de61024fe131f2c1075590451dd24ee9a7a21e81783bcb12"
+    }
+  },
+  "generated_utc": "2026-07-23T10:00:28.508822Z"
+}
