@@ -151,7 +151,7 @@ def publish(run_dir: Path, provenance_path: Path, output_dir: Path) -> dict[str,
         "# Run only from a clean checkout of the git_head in provenance.json.\n"
         "python -m pytest -q -p no:cacheprovider tests/unit/test_attack_proof_set.py\n"
         "python scripts/run_attack_proof_set.py --dry-run --require-clean\n"
-        "python scripts/run_attack_proof_set.py --live --repeat 3 --require-clean "
+        "python scripts/run_attack_proof_set.py --live --repeat 10 --require-clean "
         "--reuse-identity-evidence\n",
         encoding="utf-8",
         newline="\n",

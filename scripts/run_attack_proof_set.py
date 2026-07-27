@@ -1012,7 +1012,7 @@ def build_report(
             "heterogeneous_metrics_combined": False,
         },
         "limitations": [
-            "synthetic deterministic proof set; OAR live A/B uses N=3 per case "
+            "synthetic deterministic proof set; OAR live A/B uses N=10 per case "
             "and is not extrapolated to a general attack rate",
             "MCP downstream target only records redacted calls; no command, "
             "plugin, or network execution",
