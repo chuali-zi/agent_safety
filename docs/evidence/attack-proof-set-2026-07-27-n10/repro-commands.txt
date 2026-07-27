@@ -1,0 +1,4 @@
+# Run only from a clean checkout of the git_head in provenance.json.
+python -m pytest -q -p no:cacheprovider tests/unit/test_attack_proof_set.py
+python scripts/run_attack_proof_set.py --dry-run --require-clean
+python scripts/run_attack_proof_set.py --live --repeat 10 --require-clean --reuse-identity-evidence

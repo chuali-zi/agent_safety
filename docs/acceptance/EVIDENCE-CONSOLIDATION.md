@@ -9,7 +9,7 @@
 
 比赛产品证据已收敛为一条 OAR 主链、一组 Identity + Undo 当前证据和四组附录：
 
-1. **主链**：OAR full-day + live Null/XA-Guard N=3 A/B + replay/audit alignment，已标准封存。
+1. **主链**：OAR full-day + live Null/XA-Guard A/B + replay/audit alignment，已标准封存；代表性攻击证明集已按 DEC-3 重跑为 **N=10**（2026-07-27 clean run，当前有效证据），旧 N=3 run 保留为历史。
 2. **产品闭环**：六关 demo、MCP e2e、Gate6 audit 与当前全仓测试。
 3. **工程附录**：R4 性能、R7 OPA、R8 AIBOM、R6 system runsc。
 4. **密码审计附录**：R9 本地 SM3/SM2/anchor 为 `LIMIT`，仅作 demo，不宣称第三方 TSA/HSM。
@@ -61,12 +61,12 @@ Identity + Undo 三账号浏览器业务闭环于 2026-07-18 由负责人手测 
 |---|---|---|
 | B1 六关拦截 | `DONE` | `demo/`、`tests/integration/test_mcp_e2e.py`、`scripts/verify_audit.py`；全仓测试本轮通过（1 个 Docker image skip） |
 | B2 企业场景 | `DONE` | canonical full-day：六域、41 tool attempts、43 ledger、0 violations |
-| B3 live A/B | `DONE` | canonical N=3：Null 3/3 leak、XA-Guard 3/3 block、0 infra error、delta 1.0 |
+| B3 live A/B | `DONE` | canonical N=3（2026-07-11）：Null 3/3 leak、XA-Guard 3/3 block、0 infra error、delta 1.0；攻击证明集 N=10 见 B8 |
 | B4 replay/audit | `DONE` | 7/7 attempt replay PASS；XA-Guard 侧 raw audit 逐序对齐 |
 | B5 一键证据链 | `DONE` | 标准 run + deterministic tar.gz + SHA-256 + git provenance 记录；提交/推送后形成远端信任锚 |
 | B6 可信 Agent Identity | `DONE` | 最终候选 Reference 全故障 11/11、kind HA、三账号 UI 与正式性能通过 |
 | B7 可验证 Undo | `DONE` | Worker 接管、retry、KEK、Undo latency 与正式写路径性能通过；最终 14-artifact evidence 独立验签通过 |
-| B8 代表性攻击证明集 | `DONE-CLEAN` | clean run `xa-attack-proof-v1-20260726T125940Z-win-local` 六类 case 全部 verified；邮箱/RAG 共 6 个 protected replay 的 hash、ledger、SUT audit 顺序和 raw XA-Guard/Gate6 对齐全部通过；根清单覆盖 240/240 个非自身文件并包含 12 个 OAR 子清单；Git start/end clean，见 `docs/evidence/attack-proof-set-2026-07-26.md` |
+| B8 代表性攻击证明集 | `DONE-CLEAN` | clean run `xa-attack-proof-v1-20260727T033934Z-win-local`（冻结 N=10）六类 case 全部 verified；邮箱/RAG 共 20 个 protected replay 的 hash、ledger、SUT audit 顺序和 raw XA-Guard/Gate6 对齐全部通过；根清单覆盖 730/730 个非自身文件并包含 40 个 OAR 子清单；Git start/end clean，见 `docs/evidence/attack-proof-set-2026-07-27-n10.md`（旧 N=3 run `...20260726T125940Z...` 保留为历史） |
 
 ## 5. Tier C 与支撑证据
 

@@ -25,12 +25,12 @@
 |---|---|---|
 | 核心功能与四方向覆盖 | DONE | 六关、MCP、AIBOM、OAR、Identity + Undo、Console 和审计均有实现与证据 |
 | B6/B7 Identity + Undo | DONE | 最终候选 all fault 11/11、kind HA 和正式性能通过；不外推为生产 IAM/多地域 HA |
-| D1 技术方案 | **P0-COMPLETE / BUILDABLE / CONTENT-OPEN** | 底稿为 v0.2，六项 P0 全部闭合；当前临时构建 **16 页**、余量 14 页，`py_compile` PASS，v1 兼容 14 页且 hash 未变；OpenClaw 仅声明 MCP/HTTP 协议层兼容，不声称专有适配完成；正式 `output/pdf/` 尚未用 v0.2 重建，现有 14 页 PDF 保留为兜底 |
+| D1 技术方案 | **P0-COMPLETE / BUILDABLE / CONTENT-OPEN** | 底稿为 v0.2，六项 P0 全部闭合；**P1-2 边界收框完成**（新增 §5.9 能力边界与不声明事项集中框，边界一条未减）；当前临时构建 **17 页**、余量 13 页；OpenClaw 仅声明 MCP/HTTP 协议层兼容，不声称专有适配完成；正式 `output/pdf/` 尚未用 v0.2 重建，现有 14 页 PDF 保留为兜底 |
 | D2 代码与发布 | DONE-REMOTE / RELEASE-VERIFIED | 最终 evidence、统一复验、冻结提交与 clean manifest 完成并同步 `origin/main`；未创建 tag/release |
 | D3 演示视频 | **MANUAL-PENDING / SCRIPT-REVISION-NEEDED** | 逐镜指南与 SRT 模板完成；现行八镜头缺 live 攻击拦截与 AIBOM 画面，方向一/三 0 秒出镜，需按收口计划 §7 重排后再录；成片参数已冻结（1920×1080 / 30fps / H.264+AAC，**真人录音**）；SRT 与旁白稿需按新顺序重写 |
 | D4 报名表 | DONE-MANUAL | 负责人已确认审核/盖章完成；隐私材料在仓库外；建议提交前再核实一次系统审核状态 |
-| 代表性攻击证明集 | DONE-CLEAN / SEALED / PUBLIC | 六类 case 6/6 verified、0 failed、0 infra_error；Git start/end clean；6/6 protected replay PASS；根清单 240/240 非自身文件 |
-| 文档一致性 | P0-COMPLETE / REVIEW-OPEN | D1 v0.2 已同步 clean attack proof 并完成全部 P0；OAR N=10 数字冻结、P1-2 通读、D3 重排与正式 PDF 重建仍待完成 |
+| 代表性攻击证明集 | DONE-CLEAN / SEALED / PUBLIC / **N=10 冻结** | 六类 case 6/6 verified、0 failed、0 infra_error；Git start/end clean；20/20 protected replay PASS；根清单 730/730 非自身文件；run `xa-attack-proof-v1-20260727T033934Z-win-local`（旧 N=3 run 保留为历史） |
+| 文档一致性 | P0-COMPLETE / P1-1·P1-2 DONE | D1 v0.2 已同步 clean attack proof、完成全部 P0 与 P1-2 边界收框；**OAR N=10 数字已于 2026-07-27 冻结**（`FROZEN-NUMBERS.md`）；D3 重排/旁白稿/SRT 重写与正式 PDF 重建仍待完成 |
 
 ## 提交材料收口计划（2026-07-26 制定）
 
@@ -58,7 +58,7 @@
 |---|---|---|---|
 | DEC-1 | D1 底稿 | **v0.2 审阅稿 `D1-technical-report-review-draft.md`** | v1 稿 `D1-technical-report-draft.md` 转为历史参考与文本来源，**不再作为构建源**；P0-6 升级为硬前置 |
 | DEC-2 | Gate1 分层识别指标 | **写入 D1 正文** | 四条范围声明缺一不可（范围 60 例 / 6 族 / `independent_holdout=false` / Wilson 区间） |
-| DEC-3 | OAR live A/B 的 N | **由 3 提到 10** | 数字冻结日锁定 **8/9**；D1 可引用已封存 N=3 并标临时，N=10 完成前不得写成最终结果 |
+| DEC-3 | OAR live A/B 的 N | **由 3 提到 10** | **已于 2026-07-27 提前完成**：N=10 重跑 PASS 并封存（run `...20260727T033934Z...`），数字冻结，全部引用点已同步；旧 N=3 run 保留为历史 |
 | DEC-4 | 赛事咨询 | **视频格式已问，答复无特殊要求** | D3 沿用现有成片参数；风险 R6 关闭；邮件命名按赛题 PDF 原文照写 |
 | DEC-5 | D3 旁白 | **真人录音**，不用 TTS | 旁白稿须按新镜头表重写并逐段掐表；SRT 需重写；新增风险 R9（读超时长） |
 
@@ -116,7 +116,7 @@
 - 2026-07-26 D1 P0 收口仍为文档与构建器工作：P0-1..P0-5 已补入 v0.2，P0-6 已完成；未重跑产品、故障、kind、性能或攻击实验，未修改产品/测试代码，未替换当前 14 页正式 PDF。
 - 收口计划识别的缺口是**材料表述缺口，不是新发现的功能缺陷**；补缺方式为引用已封存证据，不允许为凑指标重测、改阈值或改断言。
 - Gate1 分层指标若写入 D1，必须同时声明：范围 60 例、6 个攻击族、seed 与规则开发同源、`independent_holdout=false`、诊断性切分、Wilson 区间、时延为规则层。
-- 攻击证明集为合成确定性场景：**当前已封存证据为 OAR live A/B 每类 N=3**，只说明本场景结果；MCP 下游 target 只记账不执行命令、插件或网络动作，身份边界复用独立验签的最终 bundle。按 DEC-3，N 将在 8/3–8/9 的一次性重跑中提到 10；在该重跑落地前，对外仍只能引用 N=3 的既有数字，旧 run 事后保留为历史、不覆盖。
+- 攻击证明集为合成确定性场景：**当前已封存证据为 OAR live A/B 每类 N=10**（2026-07-27 clean run，邮箱/RAG 各 Null 10/10 泄漏、XA-Guard 0/10、infra error 0、protected replay 20/20），只说明本场景结果；MCP 下游 target 只记账不执行命令、插件或网络动作，身份边界复用独立验签的最终 bundle。旧 N=3 run（2026-07-26）保留为历史、不覆盖。
 - OAR 重跑的红线：只改 N，不改阈值、断言、产品代码或 case oracle；若 protected 侧出现非零泄漏或 infra error，照实记录并按真实值调整 D1 表述，不重跑掩盖。
 - 2026-07-26 攻击证明 clean run 可由记录的 Git head 精确定位 runner/manifest/record-only target；公开仓库只含脱敏摘要、完整文件名/hash 索引和 provenance，不含 raw payload/audit。2026-07-23 dirty run 仅保留为历史功能结果。
 - 产品不再新增功能；唯一允许的实验变更是 OAR 的 N 值调参重跑，只有最终验证暴露真实缺陷时才回到修复流程。

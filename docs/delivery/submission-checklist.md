@@ -24,7 +24,7 @@
 - [x] 统一自动验证输出（2026-07-21：782 collected，781 passed、1 Windows directory-symlink capability skip、0 failure/error；产品 Ruff、L3 static、Compose、Console、最终证据验签均通过）。
 - [x] L3 static verifier 输出（工程参考，11/11 sections PASS）。
 - [x] **OAR canonical 证据目录**：`oar-delivery-v2-20260711T123124Z-win-local`。
-- [x] OAR live A/B summary：N=3、`protection_delta=1.0`、7/7 replay PASS。
+- [x] OAR live A/B summary：冻结 N=10、`protection_delta=1.0`、20/20 protected replay PASS（2026-07-27 run）。
 - [x] 六关 demo/audit 证据入口与本地 SM3/SM2 校验。
 - [x] 性能报告（Tier C 附录，可选）。
 - [x] R8 cdxgen / install_plugin 证据（Tier C 附录，可选）。

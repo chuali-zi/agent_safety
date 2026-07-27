@@ -10,7 +10,7 @@
 > - 视频格式已向赛事方确认，**无特殊要求** → 沿用本文第 1 节参数（1920×1080 / 30fps / H.264 + AAC）；
 > - 旁白采用**真人录音**，不使用 TTS；旁白稿须按新镜头表重写并逐段掐表（真人语速常比预估慢 10–15%）；
 > - `D3-video-subtitles.srt` 现有版本对应**旧镜头顺序，需重写**；
-> - 录像前须完成数字冻结（依赖链为 数字 → 视频 → PDF，目标 8/9），且 OAR 数字将由 N=10 重跑结果替换现有 3/3 口径。
+> - 录像前须完成数字冻结（依赖链为 数字 → 视频 → PDF）。**数字已于 2026-07-27 提前冻结**：OAR live A/B N=10 重跑 PASS 并封存（见 `FROZEN-NUMBERS.md`），上屏数字以该文件为唯一来源。
 
 > 目标：手工录制不超过 10 分钟的 16:9 视频。主线固定为“前有身份、途中六关、后有撤销、全程有证据”。
 > 当前只交付录制手册和字幕模板；最终 MP4、真人旁白和视频 SHA-256 由负责人完成。
@@ -63,7 +63,7 @@
 
 视频只展示脱敏摘要：status=passed、identity_rejections_before_execution=passed、business_create_attempt_delta=0、effect_delta=0。
 
-OAR 固定数字：Null 3/3 泄漏；XA-Guard 3/3 拦截；infra error 0；protection_delta 1.0；full-day 为 41 tool attempts、43 ledger records、0 violations；replay 7/7 PASS。
+OAR 固定数字（冻结 N=10）：Null 10/10 泄漏；XA-Guard 10/10 拦截；infra error 0；protection_delta 1.0；full-day 为 41 tool attempts、43 ledger records、0 violations；replay 7/7 PASS。
 
 ## 3. 八镜头操作
 
@@ -111,9 +111,9 @@ OAR 固定数字：Null 3/3 泄漏；XA-Guard 3/3 拦截；infra error 0；prote
 
 ### 镜头 7：双链证据与 OAR（6:15–7:50）
 
-打开“审计证据”，展示人员、Agent、两个 trace、业务引用、最终状态和 timeline；切到 OAR 摘要，展示 3/3 对 3/3、protection_delta=1.0、replay 7/7。
+打开“审计证据”，展示人员、Agent、两个 trace、业务引用、最终状态和 timeline；切到 OAR 摘要，展示 10/10 对 10/10、protection_delta=1.0、replay 7/7。
 
-> 原动作、审批和补偿进入 Gate6 与 Effect 两条哈希链，并用 trace、Effect 和业务引用交叉关联。OAR live A/B 中，Null 三次泄漏，XA-Guard 三次阻断，七次 replay 均通过哈希、ledger 和原始审计对齐。
+> 原动作、审批和补偿进入 Gate6 与 Effect 两条哈希链，并用 trace、Effect 和业务引用交叉关联。OAR live A/B（冻结 N=10）中，Null 十次泄漏，XA-Guard 十次阻断，七次 replay 均通过哈希、ledger 和原始审计对齐。
 
 若页面显示 CHAIN GAP，放弃旧数据；按 reset 流程用第一条干净 Effect 重录。
 

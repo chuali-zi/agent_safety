@@ -1,5 +1,11 @@
 # docs/delivery 工作日志
 
+## 2026-07-27 P1-1 N=10 冻结 + P1-2 边界收框完成
+
+P1-1：OAR live A/B 重跑为每侧 N=10。前两次 run 各遇一次 harness 子进程启动挂起（LIMIT，已封存保留）；修复 `kernel/sut.py` 增加唯一一次启动重试后，第三次 run `xa-attack-proof-v1-20260727T033934Z-win-local` PASS（6/6、replay 20/20、根清单 730/730、tarball `435d1705...8e5b`）。公开导出六件套复跑字节级一致；新叙述页 `docs/evidence/attack-proof-set-2026-07-27-n10.md` 建立，旧 N=3 页转为历史；D1/D3/checklist/DELIVERY-v2/EVIDENCE-CONSOLIDATION/status/handoff 全部同步；新建 `FROZEN-NUMBERS.md` 单一数字源，数字冻结（提前于原 8/9）。
+
+P1-2：子 agent 执行、主 agent 验收。v0.2 新增 §5.9「能力边界与不声明事项」集中框，正文改“结果 + 适用范围”表述；边界一条未减、数字零改动；临时构建 17 页。下一步：最终通读、D3 旁白稿与 SRT 重写、正式 PDF 重建。
+
 ## 2026-07-26 D1 六项 P0 全部闭合
 
 补入 §6.2 OpenClaw 协议层兼容边界与 §6.5 横向对比表，外部方案“未核验”不写成“没有”；补参考文献和验证索引。P0 全量稿临时构建 16 页，v1 兼容 14 页，完成页 13–16 抽检。未替换正式 PDF，未改产品、测试或证据。

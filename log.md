@@ -1,3 +1,14 @@
+# 2026-07-26 20:50 PDT P1-1 完成（OAR N=10 冻结）+ P1-2 完成（边界收框）
+
+- **P1-1 OAR live A/B N=3→10 重跑并封存（提前于原排期 8/9）**：按用户指示当日执行。先提交工作树（P0 收尾 6 文件）保证 `--require-clean`；只改 N（manifest 两 case 各 9 个计数 oracle 与 defaults.repeat 3→10 + runner/publish 两处文案），单测 10 passed、dry-run 通过后正式重跑。
+- **过程实录（不掩盖）**：第一次 run `...20260727T032104Z...` 在 AP-D1-MAIL 第 8 轮、第二次 `...20260727T033000Z...` 在 AP-D1-RAG 第 1 轮各遇一次 harness 子进程启动挂起（60s 就绪超时 `_queue.Empty`，发生在任何攻击执行之前，非防护失败），两次均以 LIMIT 封存并完整保留。负责人知情后批准补跑一次与根因排查。单独 40 轮会话启动压测未复现；判定为完整 run 上下文中的间歇性启动 flake（约 5–10% 命中率）。
+- **harness 修复**：对 `open-agent-range/kernel/sut.py` 做唯一一处改动——live 会话启动失败重试一次，失败与重试透明写入 `sut-session.json`（`process_start_count`/`errors`）。非产品代码、非阈值、非断言、非 case oracle；OAR 侧与证明集单测均通过。
+- **第三次 run `xa-attack-proof-v1-20260727T033934Z-win-local` PASS**：6/6 verified、0 infra_error；邮箱/RAG 各 Null 10/10 泄漏、XA-Guard 0/10；protected replay **20/20**；Git start/end clean（HEAD `6deacef`）；731 物理文件、根清单 730/730 含 40 个子清单；tarball SHA-256 `435d1705...8e5b`；20 个 protected 会话中 2 个实际使用重试（证据内可核验）。公开脱敏导出 `docs/evidence/attack-proof-set-2026-07-27-n10/` 六件套，独立目录复跑字节级一致；新叙述页已建，旧 N=3 页标注为历史。
+- **引用点全量同步**：D1 v0.2（摘要/§5.1/§5.3/§5.4/§5.7/附录 A）、D3 脚本、checklist、DELIVERY-v2 B8、EVIDENCE-CONSOLIDATION、status.md、handoff 头部、OAR status.md/log.md、收口计划；新建单一数字源 `docs/delivery/FROZEN-NUMBERS.md`（P2-3 提前落地）。
+- **P1-2 消化免责声明密度**：派单个子 agent 执行，主 agent 验收。v0.2 新增 **§5.9「能力边界与不声明事项」**集中框（五组），§5.1/§5.2/§5.7/§3.7/§6.2/§6.4/§7 正文改为“结果 + 适用范围”表述；验收脚本确认：全部边界短语可检索（一条未减）、正文散文无“不宣称/不外推/不等同于”式否定句（框内与表格除外）、Gate1 四条边界与 OpenClaw 两条不声明事项逐字完整、关键数字零改动、无残留 N=3。临时构建 **17 页**（+1），余量 13 页。
+- 未做/边界：子进程启动挂起的底层根因未深挖（重试为 harness 健壮性兜底）；正式 `output/pdf/` 未重建（按计划放在内容完成后）；v1 稿保持历史参考未动。
+- 下一步：D1 最终通读压口径；D3 按 §7 新镜头表重写旁白稿与 SRT（数字已对 `FROZEN-NUMBERS.md` 冻结）；8/10–8/23 重建正式 PDF。
+
 # 2026-07-26 07:34 PDT D1 六项 P0 全部闭合
 
 - 按 `docs/delivery/D1-D3-submission-plan.md` 实际范围完成剩余 P0-4/P0-5：在 v0.2 §6.2 补“兼容 OpenClaw 类智能体”，将兼容边界限定在 MCP stdio / Streamable HTTP / Control API 契约，列出 Claude Code、独立 stdio harness、OpenCode HTTP 与 pending approval fallback 的实测证据，并明确不宣称 OpenClaw 专有 SDK 已适配或国产 IDE 原生 HITL 全通。

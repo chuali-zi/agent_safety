@@ -46,7 +46,7 @@
 | **B5** | 一键可复现证据链 | 单命令或短脚本产出标准 evidence 目录 | `DONE` | [canonical run 与 hash](./EVIDENCE-CONSOLIDATION.md#2-canonical-主证据) |
 | **B6** | 可信 Agent Identity | PKCE 登录、Standard Token Exchange、双主体与动态 assignment | `DONE` | [Identity + Undo 架构](../architecture/agent-identity-and-undo.md)；最终候选全故障 11/11、kind HA、三账号 UI 与正式性能通过 |
 | **B7** | 可验证 Undo | PostgreSQL intent、独立审批、六关补偿、业务恢复与事件链 | `DONE` | 最终候选接管/retry/KEK/Undo 时延与正式 3×500 写路径性能通过；最终签名 evidence 收口中 |
-| **B8** | 代表性攻击证明集 | 六类攻击链固定判据复现：邮箱/RAG 注入、高风险命令、恶意插件、审计篡改、身份边界 | `DONE-CLEAN` | [clean 攻击证明集证据](../evidence/attack-proof-set-2026-07-26.md)；run `xa-attack-proof-v1-20260726T125940Z-win-local` PASS（6/6），Git start/end clean，6/6 protected replay PASS，sealed tarball SHA-256 `57a388568aac729304585fe94966a2143df5fd6c68c4d12978618ad098834cf4` |
+| **B8** | 代表性攻击证明集 | 六类攻击链固定判据复现：邮箱/RAG 注入、高风险命令、恶意插件、审计篡改、身份边界 | `DONE-CLEAN` | [clean 攻击证明集证据](../evidence/attack-proof-set-2026-07-27-n10.md)；run `xa-attack-proof-v1-20260727T033934Z-win-local` PASS（6/6，冻结 N=10），Git start/end clean，20/20 protected replay PASS，sealed tarball SHA-256 `435d170585e2266a65107db1bba3ee2705b5cfec8b29d76948d59898026e8e5b`（旧 N=3 run 保留为历史） |
 
 ### 赛题四方向映射（Tier B 为主叙事）
 

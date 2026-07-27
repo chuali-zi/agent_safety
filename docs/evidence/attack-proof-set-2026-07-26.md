@@ -1,5 +1,8 @@
 # XA-Guard 代表性攻击证明集（2026-07-26 clean run）
 
+> **历史记录（N=3）**：本页证据已被 2026-07-27 的 N=10 run 取代，当前有效证据见
+> [attack-proof-set-2026-07-27-n10.md](attack-proof-set-2026-07-27-n10.md)。本页保留为历史，不覆盖、不伪装。
+
 ## 结论
 
 最终 clean run `xa-attack-proof-v1-20260726T125940Z-win-local` 为 **PASS**：

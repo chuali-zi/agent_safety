@@ -1,9 +1,16 @@
 # 攻击证明集实施交接计划
 
-> 2026-07-26 完成说明：本交接中的实现项已经收口。最终 clean run 为
+> 2026-07-27 更新：按 DEC-3/P1-1 完成 N=10 重跑，当前有效 clean run 为
+> `xa-attack-proof-v1-20260727T033934Z-win-local`，6/6 verified，Git start/end clean，
+> 20/20 protected replay PASS，根清单覆盖 730/730 个非自身文件。当前公开入口为
+> `docs/evidence/attack-proof-set-2026-07-27-n10.md`。重跑过程中出现两次 harness 子进程启动超时
+> LIMIT run（已封存保留），定位为 range 启动 flake 后对 `kernel/sut.py` 做唯一一次启动重试修复
+>（非产品/阈值/断言/oracle 变更，重试记录透明写入 sut-session.json）。
+>
+> 2026-07-26 完成说明：本交接中的实现项已经收口。N=3 clean run 为
 > `xa-attack-proof-v1-20260726T125940Z-win-local`，6/6 verified，Git start/end clean，
-> 6/6 protected replay PASS，根清单覆盖 240/240 个非自身文件。当前公开入口为
-> `docs/evidence/attack-proof-set-2026-07-26.md`；下文保留为历史实施约束与设计记录。
+> 6/6 protected replay PASS，根清单覆盖 240/240 个非自身文件（保留为历史）。
+> 下文保留为历史实施约束与设计记录。
 >
 > 日期：2026-07-23（America/Los_Angeles）
 > 接手对象：后续实现者（Kimi）

@@ -1,5 +1,14 @@
 # 工作日志
 
+## 2026-07-27 P1-1：攻击证明集 OAR live A/B N=3→10 重跑与 harness 启动重试修复
+
+- 按 DEC-3 将 `AP-D1-MAIL`/`AP-D1-RAG` manifest oracle 计数与 `--repeat` 同步提到 10（只改 N）；单测 10 passed、dry-run 通过后正式重跑。
+- 第一次 run（`...20260727T032104Z...`）：AP-D1-MAIL 第 8 轮 protected 侧 `xa_guard.server` 子进程启动挂起，60s 就绪超时（`_queue.Empty`），发生在任何攻击执行之前；LIMIT 封存。第二次 run（`...20260727T033000Z...`）：MAIL 10/10 通过，但 RAG 第 1 轮命中同一挂起；LIMIT 封存。两次 run 均完整保留。
+- 定位：harness 子进程启动 flake（子进程 import 后无任何输出即挂起，非产品防护失败；40 轮单独会话压测未复现，完整 run 上下文中约 5–10% 命中率）。对 `kernel/sut.py` 做唯一一处修复：live 会话启动失败重试一次，失败与重试透明写入 `sut-session.json`（`process_start_count`、`errors`）。不改产品代码、阈值、断言、case oracle。
+- 第三次 run（`xa-attack-proof-v1-20260727T033934Z-win-local`）**PASS**：6/6 verified、0 infra_error；邮箱/RAG 各 Null 10/10 泄漏、XA-Guard 0/10；protected replay 20/20；根清单 730/730 含 40 个子清单；20 个 protected 会话中 2 个实际使用重试。tarball SHA-256 `435d1705...8e5b`。公开脱敏导出经独立目录复跑六文件字节级一致。
+- 未完成/边界：子进程启动挂起的底层根因（疑 Windows 下间歇性进程 spawn/初始化阻塞）未深挖；重试只是 harness 健壮性兜底。旧 N=3 run 与两次 LIMIT run 保留为历史，不覆盖。
+- 下一步：无（OAR 侧 P1-1 闭合）；根仓 D1/D3 引用点已同步，`FROZEN-NUMBERS.md` 已建立。
+
 ## 2026-07-12 Auto-RedTeam 持续运行维护层
 
 - 在 `auto-redteam/maintain.py` 新增跨平台前台 supervisor，监控 Conductor 进程和 `.state` 进度，异常退出/进度超时后指数退避恢复；正常完成不重启，一小时默认最多重启 5 次后熔断，避免故障循环烧费。
