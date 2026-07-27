@@ -30,7 +30,7 @@
 | D3 演示视频 | **MANUAL-PENDING / SCRIPT-REVISION-NEEDED** | 逐镜指南与 SRT 模板完成；现行八镜头缺 live 攻击拦截与 AIBOM 画面，方向一/三 0 秒出镜，需按收口计划 §7 重排后再录；成片参数已冻结（1920×1080 / 30fps / H.264+AAC，**真人录音**）；SRT 与旁白稿需按新顺序重写 |
 | D4 报名表 | DONE-MANUAL | 负责人已确认审核/盖章完成；隐私材料在仓库外；建议提交前再核实一次系统审核状态 |
 | 代表性攻击证明集 | DONE-CLEAN / SEALED / PUBLIC / **N=10 冻结** | 六类 case 6/6 verified、0 failed、0 infra_error；Git start/end clean；20/20 protected replay PASS；根清单 730/730 非自身文件；run `xa-attack-proof-v1-20260727T033934Z-win-local`（旧 N=3 run 保留为历史） |
-| 文档一致性 | P0-COMPLETE / P1-1·P1-2 DONE | D1 v0.2 已同步 clean attack proof、完成全部 P0 与 P1-2 边界收框；**OAR N=10 数字已于 2026-07-27 冻结**（`FROZEN-NUMBERS.md`）；D3 重排/旁白稿/SRT 重写与正式 PDF 重建仍待完成 |
+| 文档一致性 | P0/P1-1/P1-2/通读 DONE | D1 v0.2 已完成全部 P0、P1-2 边界收框与最终通读压口径（2026-07-27，外部事实与事实源核一致）；**OAR N=10 数字已冻结**（`FROZEN-NUMBERS.md`）；D3 重排/旁白稿/SRT 重写与正式 PDF 重建仍待完成 |
 
 ## 提交材料收口计划（2026-07-26 制定）
 

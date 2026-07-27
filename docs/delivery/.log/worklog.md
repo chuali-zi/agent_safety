@@ -1,5 +1,9 @@
 # docs/delivery 工作日志
 
+## 2026-07-27 D1 最终通读压口径
+
+全文通读 v0.2 并对照事实源/FROZEN-NUMBERS 核验：§6.5 外部数字与 F-4.1/F-4.4/F-5.2 全部一致。压口径 4 处：头部日期→2026-07-27、摘要“同一攻击任务”→两类注入 finding、摘要时延句加“在上述验证规模内”、§5.4 full-day 补 canonical run 归属。构建 17 页不变。下一步：D3 旁白稿/SRT 重写、正式 PDF 重建。
+
 ## 2026-07-27 P1-1 N=10 冻结 + P1-2 边界收框完成
 
 P1-1：OAR live A/B 重跑为每侧 N=10。前两次 run 各遇一次 harness 子进程启动挂起（LIMIT，已封存保留）；修复 `kernel/sut.py` 增加唯一一次启动重试后，第三次 run `xa-attack-proof-v1-20260727T033934Z-win-local` PASS（6/6、replay 20/20、根清单 730/730、tarball `435d1705...8e5b`）。公开导出六件套复跑字节级一致；新叙述页 `docs/evidence/attack-proof-set-2026-07-27-n10.md` 建立，旧 N=3 页转为历史；D1/D3/checklist/DELIVERY-v2/EVIDENCE-CONSOLIDATION/status/handoff 全部同步；新建 `FROZEN-NUMBERS.md` 单一数字源，数字冻结（提前于原 8/9）。

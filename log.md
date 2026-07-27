@@ -1,3 +1,11 @@
+# 2026-07-26 21:10 PDT D1 最终通读压口径完成
+
+- 全文通读 v0.2（750 行）并对照 `docs/source-of-truth/事实源.md` 与 `FROZEN-NUMBERS.md` 核验：§6.5 外部数字全部一致（Lakera >98%/<0.5% 出自 Check Point 官方稿 F-4.1；PromptGuard 2 86M 97.5% Recall@1% FPR 符 F-4.4；CaMeL 77% provable-secure 与 ShieldAgent 概率规则电路符 F-5.2），无 Cisco/DeepMind 旧错误；Gate1 fail-open 行为与 src 代码一致；OpenCode 1.17.8/GLM-5.2 有证据文档支撑；全部冻结数字与 FROZEN-NUMBERS 一致。
+- 压口径改动 4 处（最小改动）：头部日期 2026-07-22→2026-07-27；摘要“同一攻击任务”→“邮箱与 RAG 两类注入 finding”（与 N=10 证明集口径一致）；摘要“满足交互式业务的时延要求”加“在上述验证规模内”限定；§5.4 full-day 数字补归属“2026-07-11 canonical run”（避免误读为 N=10 同 run）。
+- 验证：临时构建 17 页不变，SHA-256 `9a79ce13...`；无数字改动，无新增/删除边界。
+- 未做：正式 `output/pdf/` 重建（按计划 8/10–8/23）；P1-3 页数按需微调（非凑页数）；D3 旁白稿/SRT 重写。
+- 下一步：D3 旁白稿与 SRT 按新镜头表重写（数字已对 FROZEN-NUMBERS 冻结），或按需推进 P2-1/P2-2。
+
 # 2026-07-26 20:50 PDT P1-1 完成（OAR N=10 冻结）+ P1-2 完成（边界收框）
 
 - **P1-1 OAR live A/B N=3→10 重跑并封存（提前于原排期 8/9）**：按用户指示当日执行。先提交工作树（P0 收尾 6 文件）保证 `--require-clean`；只改 N（manifest 两 case 各 9 个计数 oracle 与 defaults.repeat 3→10 + runner/publish 两处文案），单测 10 passed、dry-run 通过后正式重跑。
