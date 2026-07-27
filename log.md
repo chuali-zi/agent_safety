@@ -1,7 +1,17 @@
+# 2026-07-26 07:34 PDT D1 六项 P0 全部闭合
+
+- 按 `docs/delivery/D1-D3-submission-plan.md` 实际范围完成剩余 P0-4/P0-5：在 v0.2 §6.2 补“兼容 OpenClaw 类智能体”，将兼容边界限定在 MCP stdio / Streamable HTTP / Control API 契约，列出 Claude Code、独立 stdio harness、OpenCode HTTP 与 pending approval fallback 的实测证据，并明确不宣称 OpenClaw 专有 SDK 已适配或国产 IDE 原生 HITL 全通。
+- 在 §6.5 新增 Lakera Guard、Meta LlamaFirewall、CaMeL、AgentSpec、ShieldAgent、XA-Guard 的六能力横向对比，补 4 条外部参考文献；对外部能力统一使用“本次事实源未核验”，不把缺少证据解释为不存在。差异点收敛到 intent-first Effect、职责分离 Undo 与 Effect/Gate6 双链可验签证据。
+- 复核 P0-1 的原始 JSON，确认 FPR 正确分母为 58 个 expected-allow negative controls：76 benign controls 减 18 non-allow exclusions；`0/58` 与 Wilson 95% 上界 0.0621 一致，原计划的 `0/134` 已纠正。
+- 统一 OAR 过渡口径：D1 可引用已封存 N=3，但必须标为临时草稿值；N=10 唯一重跑完成前不得预写或冒充最终结果，D3 最终字幕等待数字冻结后填入。
+- 验证：`python -m py_compile scripts/build_d1_pdf.py` PASS；P0 全量 v0.2 临时构建 **16 页**，SHA-256 `372eea7abe469fc33fb8b6f0722d9f2ba80e60b2775c0d9d6564ccc1f04120f2`；v1 兼容构建仍为 **14 页**且 SHA-256 `c35f4df8a407e873f9fa741dee28f4303f33a9bcaa2566c5806c76870789f3b5`；抽检页 13–16，OpenClaw 段、七列表、参考文献与验证索引可读。
+- 同步计划、评审说明、`status.md` 和模块日志，P0-1..P0-6 全部标记完成。未修改产品代码、测试、断言、阈值或证据，未重跑实验，未替换 `output/pdf/` 的 14 页正式兜底。
+
 # 2026-07-26 07:27 PDT D1 P0-1/P0-2/P0-3 源稿补写
 
 - 补写 `docs/delivery/D1-technical-report-review-draft.md`：新增 §3.3「算法设计」七项表，新增 §5.1「指标体系与预期效果」五维表，新增 §5.2 Gate1 分层识别指标，并将后续章节顺延编号。
 - 修正 D1 中 Gate3 predicate 失败行为表述，避免把运行期单条 predicate 异常误写为全局 fail-closed；Gate1 误报口径使用 FPR 0/58 + Wilson 上界，当前 OAR N=3 数字标为封存草稿值，N=10 重跑后再冻结。
+- 临时构建验证：`python scripts/build_d1_pdf.py --output C:\Users\chual\AppData\Local\Temp\opencode\d1-v0.2-p0-123-check.pdf` 成功，v0.2 当前为 **15 页**，SHA-256 `8e5e4d0a0b8caf6b1a25597f5365301d69739042fb3e4079be8065540673ab9c`；未覆盖正式 `output/pdf/`。
 - 同步 `status.md` 与 `docs/delivery/D1-D3-submission-plan.md`：P0-1/P0-2/P0-3 标为已入 v0.2 源稿，下一动作改为 P0-4 OpenClaw 与 P0-5 横向对比表。
 - 本轮未修改产品代码、测试、断言、阈值或证据，未重跑实验，未替换正式 `output/pdf/`。
 

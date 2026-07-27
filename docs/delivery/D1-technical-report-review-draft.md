@@ -563,7 +563,22 @@ XA-Guard 采用网关方式接入。支持 MCP 的客户端可以把工具调用
 管理员修改 assignment 即可生效。YAML ceiling 保留平台级安全底线，业务部门的 overlay
 负责表达部门和场景差异。
 
-### 6.2 对安全与审计工作的价值
+### 6.2 兼容 OpenClaw 类智能体
+
+赛题要求兼容 OpenClaw 类智能体及其他具备工具调用能力的大模型应用。XA-Guard 将兼容边界放在
+工具调用协议层，而不是绑定某个基座模型或客户端插件：上游只要能把工具名、参数、身份上下文和
+目标数据域经 MCP stdio、Streamable HTTP 或 Control API 交给网关，就能复用同一套六关治理、
+Effect 持久化和 Gate6 审计；下游业务工具不需要感知调用来自哪一种智能体客户端。
+
+当前实测范围包括 Claude Code 的本地 MCP Server 注册与握手、独立 stdio JSON-RPC harness 的 9 个
+真实 MCP 场景，以及 OpenCode 1.17.8 / GLM-5.2 经 Streamable HTTP 发起的真实模型选工具调用。
+对未声明 elicitation 能力的客户端，系统已验证 pending approval 与控制工具 fallback；支持
+elicitation 的客户端可使用协议内交互审批。上述结果证明的是 MCP/HTTP 网关契约可被真实客户端
+触发，不等同于 OpenClaw 官方 SDK 或专有接口已经完成适配，也不外推为所有国产 IDE 的原生 HITL
+弹窗均已跑通。若发榜方另行给出 OpenClaw 专有接口规范，可在现有契约外增加薄适配层，而不改变
+核心治理链。
+
+### 6.3 对安全与审计工作的价值
 
 安全团队能够从同一条记录中看到人员、智能体、工具、数据域、策略版本、审批人、业务引用和结果。
 Effect 把审计与恢复连接起来：审计人员不仅能定位异常写操作，还能看到可逆性、恢复窗口、
@@ -572,7 +587,7 @@ Effect 把审计与恢复连接起来：审计人员不仅能定位异常写操�
 OAR 提供从攻击任务到业务后果的可重复验证方法。策略调整后可以重跑相同 finding 和 replay，
 比较保护效果及审计变化，从而形成评测、修复和复验闭环。
 
-### 6.3 与合规和治理要求的衔接
+### 6.4 与合规和治理要求的衔接
 
 GB/T 45654-2025 对生成式人工智能服务的安全要求、GB/T 22239-2019 的身份鉴别与安全审计、
 GB/T 39786-2021 的密码应用要求，为政企智能体治理提供了基础规范[10-12]。
@@ -582,6 +597,25 @@ NIST AI 600-1 则从治理、测量和风险管理角度给出生成式人工智
 
 XA-Guard 中的身份验证、最小权限、运行时控制、审批、密码完整性、评测和恢复机制可以为组织落实
 相关要求提供技术支撑。实际部署时，仍需结合组织制度、目标系统定级、密码应用方案和正式测评流程。
+
+### 6.5 与既有方案的横向对比
+
+下表按赛题关注的行动链能力比较公开资料中可核验的范围。外部方案标注“未核验”表示本次事实源
+未提供该能力的直接证据，不据此断言产品或研究工作一定不具备该能力；不同方案的公开指标、硬件、
+数据集和任务定义也不做数值横比[3,17-20]。
+
+| 方案 | 输入检测 | 工具授权 | 信息流 | 供应链 | 副作用恢复 | 证据链 |
+|---|---|---|---|---|---|---|
+| Lakera Guard | 官方披露检测率 >98%、FPR <0.5%[17] | 未核验人员—智能体动态授权或 HITL | 未核验跨工具信息流 | 未核验 AIBOM 准入 | 未核验恢复合同 | 未核验运行审计哈希链 |
+| Meta LlamaFirewall | PromptGuard 2 86M：97.5% Recall @ 1% FPR；另含 AlignmentCheck[18] | 未核验企业身份授权或审批 | 未核验跨工具污点传播 | CodeShield 做代码扫描，不等同于插件准入 | 未核验业务副作用恢复 | 未核验运行审计双链 |
+| CaMeL | 以系统设计防提示注入，不以输入分类器为核心 | 未核验政企身份与 HITL | 控制流/数据流分离；AgentDojo 77% provable-secure completion[3] | 未核验组件准入 | 未核验业务副作用恢复 | 未核验运行审计链 |
+| AgentSpec | trigger/predicate 规则，不是输入检测产品 | DSL 约束 trigger、predicate 与 enforcement[19] | 未核验跨工具信息流 | 未核验组件准入 | 未核验业务副作用恢复 | 未核验运行审计链 |
+| ShieldAgent | 概率规则电路，不是输入检测产品 | 以可验证规则电路约束策略推理[20] | 未核验跨工具信息流 | 未核验组件准入 | 未核验业务副作用恢复 | 形式化验证不等同于运行期审计证据 |
+| **XA-Guard** | Gate1 规则/模型接口、Spotlighting 与分层指标 | 动态 assignment、Gate2/3、HITL、deny 优先 | Gate4 来源标签、敏感字段与出向控制 | AIBOM、CycloneDX、A–F 评级与签名 | **intent-first Effect、恢复合同、职责分离 Undo、Worker 补偿** | **Effect/Gate6 双链、交叉引用、SM2-with-SM3 manifest 与篡改对照** |
+
+在这组选定对象及已核验公开范围内，XA-Guard 的差异点不是单独提高输入分类分数，而是把执行前授权、
+信息流、供应链准入、真实副作用恢复和可独立验签证据放入同一运行时闭环。其中“副作用恢复”和
+“Effect/Gate6 双链可验签证据”是本项目直接实现并以业务状态 oracle 验证的能力。
 
 ---
 
@@ -653,6 +687,18 @@ Security[S]. IETF, 2025. <https://www.rfc-editor.org/rfc/rfc9700>
 Generative Artificial Intelligence Profile, NIST AI 600-1[R]. National Institute of Standards
 and Technology, 2024. <https://doi.org/10.6028/NIST.AI.600-1>
 
+[17] Check Point Software Technologies. Check Point Acquires Lakera to Deliver End-to-End AI
+Security for Enterprises[EB/OL]. 2025. <https://www.checkpoint.com/press-releases/check-point-acquires-lakera-to-deliver-end-to-end-ai-security-for-enterprises/>
+
+[18] Meta. LlamaFirewall: An open source guardrail system for building secure AI agents[EB/OL].
+2025. <https://meta-llama.github.io/PurpleLlama/LlamaFirewall/>
+
+[19] Wang Y, et al. AgentSpec: Customizable Runtime Enforcement for Safe and Reliable LLM
+Agents[EB/OL]. arXiv:2503.18666, 2025. <https://arxiv.org/abs/2503.18666>
+
+[20] Zhang Y, et al. ShieldAgent: Shielding Agents via Verifiable Safety Policy Reasoning[EB/OL].
+arXiv:2503.22738, 2025. <https://arxiv.org/abs/2503.22738>
+
 ---
 
 ## 附录 A：验证材料索引
@@ -661,6 +707,7 @@ and Technology, 2024. <https://doi.org/10.6028/NIST.AI.600-1>
 
 | 验证内容 | 材料位置 |
 |---|---|
+| Gate1 分层召回、误报、Wilson 区间与规则层时延 | `docs/evidence/gate1-l3-evaluation-2026-06-18.json` |
 | OAR full-day、live A/B 与 replay | `docs/acceptance/EVIDENCE-CONSOLIDATION.md` §2 |
 | Reference 11/11 fault | `docs/evidence/agent-identity-undo-final-2026-07-21/acceptance/reference-faults-all-final-rerun-20260721.json` |
 | 本地三节点 kind | `docs/evidence/agent-identity-undo-final-2026-07-21/acceptance/kind-ha-final-pass-20260721.json` |
@@ -668,4 +715,6 @@ and Technology, 2024. <https://doi.org/10.6028/NIST.AI.600-1>
 | 最终签名 evidence | `docs/evidence/agent-identity-undo-final-2026-07-21.md` |
 | 代表性攻击链的脱敏清单、脚本、结果摘要、源码 provenance 与 hash | `docs/evidence/attack-proof-set-2026-07-26.md` |
 | 三账号 Console 闭环 | `docs/evidence/mcp-live-acceptance-2026-07-19/` |
+| Claude Code MCP 握手与 9 个 stdio JSON-RPC 场景 | `docs/evidence/mcp-live-acceptance-2026-07-19/` |
+| OpenCode Streamable HTTP 与 pending approval fallback | `docs/evidence/l3-opencode-http-2026-06-18.md`、`docs/evidence/l3-hitl-pending-approval-2026-06-18.md` |
 | 最终仓库状态与统一验证 | `status.md` |
