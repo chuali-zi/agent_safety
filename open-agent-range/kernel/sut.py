@@ -428,15 +428,29 @@ class XaGuardSUT(SUT):
             "tools": [],
             "errors": [],
         }
-        session = _XaGuardLiveSession(command=self.server_command(), env=self._child_env())
-        try:
-            session.start()
-        except BaseException as exc:
-            self._live_session_summary["errors"].append({"type": type(exc).__name__, "message": str(exc)})
-            raise
-        self._live_session = session
-        self._live_session_summary["started"] = True
-        self._live_session_summary["process_start_count"] = 1
+        # Retry the session start once: the xa_guard child process occasionally
+        # hangs during startup (observed as _queue.Empty after timeout_s) without
+        # producing any output; a fresh spawn recovers. This only affects harness
+        # process startup robustness, never decisions or evidence content.
+        max_start_attempts = 2
+        last_exc: BaseException | None = None
+        for start_attempt in range(1, max_start_attempts + 1):
+            session = _XaGuardLiveSession(command=self.server_command(), env=self._child_env())
+            try:
+                session.start()
+            except BaseException as exc:
+                last_exc = exc
+                self._live_session_summary["errors"].append(
+                    {"type": type(exc).__name__, "message": str(exc), "start_attempt": start_attempt}
+                )
+                self._live_session_summary["process_start_count"] = start_attempt
+                continue
+            self._live_session = session
+            self._live_session_summary["started"] = True
+            self._live_session_summary["process_start_count"] = start_attempt
+            return
+        assert last_exc is not None
+        raise last_exc
 
     def end_attempt(self) -> None:
         if self._live_session is None:
