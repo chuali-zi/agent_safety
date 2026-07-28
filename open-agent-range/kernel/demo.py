@@ -417,7 +417,9 @@ def _query_aibom(world: Any, ledger: Any, principal: str, args: dict[str, Any]) 
 
 
 def _publish_plugin(world: Any, ledger: Any, principal: str, args: dict[str, Any]) -> dict[str, Any]:
-    name = str(args.get("name", args.get("plugin", "plugin")))
+    # 键优先级与 live_agent.policy._assess_supply_chain 的 target 提取保持一致
+    # （artifact -> plugin -> name），避免判定目标与执行事实在混传键时分叉。
+    name = str(args.get("artifact") or args.get("plugin") or args.get("name") or "plugin")
     registry = world.domain_state.setdefault("plugins", {})
     if not isinstance(registry, dict):
         registry = {}

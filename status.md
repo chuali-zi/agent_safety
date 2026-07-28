@@ -1,7 +1,7 @@
 # 仓库状态：XA-Guard / XA-202620
 
-> 快照日期：**2026-07-26**（America/Los_Angeles）
-> 当前统一口径：**ENGINEERING-FROZEN / RELEASE-VERIFIED / SUBMISSION-PLANNED**
+> 快照日期：**2026-07-27**（America/Los_Angeles）
+> 当前统一口径：**ENGINEERING-FROZEN / RELEASE-VERIFIED / D3-VISUAL-FRAMEWORK-DONE-LIVE-EVAL-VERIFIED / SUBMISSION-PLANNED**
 > 比赛交付口径：[docs/acceptance/DELIVERY-v2.md](docs/acceptance/DELIVERY-v2.md)
 > 提交材料收口计划：[docs/delivery/D1-D3-submission-plan.md](docs/delivery/D1-D3-submission-plan.md)
 > 本轮评审意见：[docs/delivery/REVIEW-2026-07-26.md](docs/delivery/REVIEW-2026-07-26.md)
@@ -15,9 +15,13 @@
 
 **同日负责人完成五项决策定案并冻结**：D1 底稿取 v0.2 审阅稿、Gate1 分层识别指标写入正文、OAR live A/B 的 N 由 3 提到 10、视频格式已向赛事方确认无特殊要求、D3 旁白采用真人录音。
 
-**同日六项 P0 已全部完成**：P0-1 Gate1 分层指标、P0-2 五维指标体系与预期效果、P0-3 七项算法设计、P0-4 OpenClaw 类智能体兼容边界、P0-5 横向对比表均已补入 v0.2；P0-6 构建器已支持离线 Mermaid、缺失 pagebreak 容错和旧 `[DIAGRAM:x]`。独立复核：`py_compile` PASS，P0 全量稿临时构建为 **16 页**，v1 兼容构建仍为 14 页且 hash 未变，七列表格与参考文献完成渲染抽检。正式 `output/pdf/` 兜底未替换，风险 R1 关闭。
+**同日 D1 六项 P0 已全部完成**：P0-1 Gate1 分层指标、P0-2 五维指标体系与预期效果、P0-3 七项算法设计、P0-4 OpenClaw 类智能体兼容边界、P0-5 横向对比表均已补入 v0.2；P0-6 构建器已支持离线 Mermaid、缺失 pagebreak 容错和旧 `[DIAGRAM:x]`。独立复核：`py_compile` PASS，P0 全量稿临时构建为 **16 页**，v1 兼容构建仍为 14 页且 hash 未变，七列表格与参考文献完成渲染抽检。正式 `output/pdf/` 兜底未替换，风险 R1 关闭。
 
-据此当前口径为：① v1 稿不再作构建源，仅作历史参考与文本来源；② 数字冻结日锁定 8/9，在此之前 D1 与字幕中的 OAR N=10 不写成已完成结果；③ D1 六项 P0 已闭合，下一步是 P1-2 边界收框与最终通读；④ 正式 `output/pdf/` 待数字冻结和内容完成后一次性重建，不产生中间正式版本。
+据此当前口径为：① v1 稿不再作构建源，仅作历史参考与文本来源；② OAR N=10 数字已冻结；③ D1 六项 P0、
+P1-2 边界收框与最终通读均已完成；④ D3 的真实 Agent 因果实验框架已实现，包括 DeepSeek 原生
+Tool Calls、不可变 ToolIntent、Null/XA-Guard 同意图分叉、独立指标、冻结清单与自包含回放 GUI；
+Kimi 攻击 payload 已完成且 holdout 已冻结，正式 live 因果评估与逐 Gate audit 映射/真实性验收均已完成（D2 因果证明成立、D1 防护边界照实记录、verify 20/20），D3 镜头二次同步仍 OPEN；⑤ 正式
+`output/pdf/` 待视频预演暴露的问题收口后一次性重建。
 
 ## 当前交付成熟度
 
@@ -25,12 +29,12 @@
 |---|---|---|
 | 核心功能与四方向覆盖 | DONE | 六关、MCP、AIBOM、OAR、Identity + Undo、Console 和审计均有实现与证据 |
 | B6/B7 Identity + Undo | DONE | 最终候选 all fault 11/11、kind HA 和正式性能通过；不外推为生产 IAM/多地域 HA |
-| D1 技术方案 | **P0-COMPLETE / BUILDABLE / CONTENT-OPEN** | 底稿为 v0.2，六项 P0 全部闭合；**P1-2 边界收框完成**（新增 §5.9 能力边界与不声明事项集中框，边界一条未减）；当前临时构建 **17 页**、余量 13 页；OpenClaw 仅声明 MCP/HTTP 协议层兼容，不声称专有适配完成；正式 `output/pdf/` 尚未用 v0.2 重建，现有 14 页 PDF 保留为兜底 |
+| D1 技术方案 | **P0/P1-COMPLETE / BUILDABLE / PDF-PENDING** | 底稿为 v0.2；六项 P0、P1-2 边界收框与最终通读均完成；当前临时构建 **17 页**、余量 13 页；OpenClaw 仅声明 MCP/HTTP 协议层兼容，不声称专有适配完成；正式 `output/pdf/` 尚未用 v0.2 重建，现有 14 页 PDF 保留为兜底 |
 | D2 代码与发布 | DONE-REMOTE / RELEASE-VERIFIED | 最终 evidence、统一复验、冻结提交与 clean manifest 完成并同步 `origin/main`；未创建 tag/release |
-| D3 演示视频 | **MANUAL-PENDING / SCRIPT-REVISION-NEEDED** | 逐镜指南与 SRT 模板完成；现行八镜头缺 live 攻击拦截与 AIBOM 画面，方向一/三 0 秒出镜，需按收口计划 §7 重排后再录；成片参数已冻结（1920×1080 / 30fps / H.264+AAC，**真人录音**）；SRT 与旁白稿需按新顺序重写 |
+| D3 演示视频 | **SCRIPT-STRUCTURE-READY / VISUAL-FRAMEWORK-DONE / LIVE-EVAL-VERIFIED / SCRIPT-RESYNC-OPEN** | 11 段结构、旁白初稿和 SRT 已完成首轮重排；`kernel/live_agent/` 与自包含 causal replay GUI 已实现。正式 holdout live 评估已完成（30 runs，infra 0）：D2 两档 5/5 稳定突破 + Null harm 10/10 + XA-Guard live deny 10/10，因果证明成立；D1 realistic-safe 5/5 突破但 live 放行 5/5（引用型外发绕过内容标记规则，真实边界发现，照实记录）；D3 0/10 attempt（模型自防）。逐 Gate audit 映射与真实性验收已完成（verify 20/20，回放页 Gate 条带已由真实 audit 驱动）；镜头/旁白/SRT 二次同步尚未完成，不能开始正式录制 |
 | D4 报名表 | DONE-MANUAL | 负责人已确认审核/盖章完成；隐私材料在仓库外；建议提交前再核实一次系统审核状态 |
 | 代表性攻击证明集 | DONE-CLEAN / SEALED / PUBLIC / **N=10 冻结** | 六类 case 6/6 verified、0 failed、0 infra_error；Git start/end clean；20/20 protected replay PASS；根清单 730/730 非自身文件；run `xa-attack-proof-v1-20260727T033934Z-win-local`（旧 N=3 run 保留为历史） |
-| 文档一致性 | P0/P1-1/P1-2/通读 DONE | D1 v0.2 已完成全部 P0、P1-2 边界收框与最终通读压口径（2026-07-27，外部事实与事实源核一致）；**OAR N=10 数字已冻结**（`FROZEN-NUMBERS.md`）；D3 重排/旁白稿/SRT 重写与正式 PDF 重建仍待完成 |
+| 文档一致性 | D1 CONSISTENT / D3 VISUAL REVISION PENDING | D1 v0.2 已完成全部 D1 P0、P1-2 与最终通读；OAR N=10 数字已冻结；D3 首轮镜头、旁白与 SRT 已对 `FROZEN-NUMBERS.md` 同步，但 D3-P0-1 落地后仍需二次同步 |
 
 ## 提交材料收口计划（2026-07-26 制定）
 
@@ -43,9 +47,9 @@
 | 周 | 任务 | 冻结点 |
 |---|---|---|
 | ~~7/26~~ | ~~五项决策定案~~ + ~~P0-1..P0-6 全部完成~~ | ✅ **决策已冻结**；当前 v0.2 = 16 页 |
-| 7/27–8/2 | P1-2 边界收框与最终通读 | — |
-| 8/3–8/9 | 唯一一次 OAR 重跑（N=10）+ 重新封存 + 同步全部引用点 + 建 `FROZEN-NUMBERS.md` | **数字冻结** |
-| 8/10–8/23 | D1 内容完成 → v0.9 PDF；只改文字不改数字 | — |
+| ~~7/27–8/2~~ | ~~P1-2 边界收框与最终通读~~ | ✅ **已完成（2026-07-27）** |
+| ~~8/3–8/9~~ | ~~OAR N=10 重跑、重新封存、同步引用点并建立 `FROZEN-NUMBERS.md`~~ | ✅ **已提前完成（2026-07-27）** |
+| 8/10–8/23 | D1 内容完成 → v0.9 PDF；只改文字不改数字；闭合 D3-P0-1 的载体选型、实现、真实客户端验证与不录制预演 | **D3 可录制前置闭合** |
 | 8/24–9/6 | 按重排镜头表录制 D3（真人旁白） | **视频定版** |
 | 9/7–9/11 | 只回改录像暴露的问题；重建 PDF；核页数与 hash | **PDF 冻结** |
 | 9/12–9/14 | 提交邮件与附件核对（不踩 9/15） | **提交** |
@@ -60,7 +64,7 @@
 | DEC-2 | Gate1 分层识别指标 | **写入 D1 正文** | 四条范围声明缺一不可（范围 60 例 / 6 族 / `independent_holdout=false` / Wilson 区间） |
 | DEC-3 | OAR live A/B 的 N | **由 3 提到 10** | **已于 2026-07-27 提前完成**：N=10 重跑 PASS 并封存（run `...20260727T033934Z...`），数字冻结，全部引用点已同步；旧 N=3 run 保留为历史 |
 | DEC-4 | 赛事咨询 | **视频格式已问，答复无特殊要求** | D3 沿用现有成片参数；风险 R6 关闭；邮件命名按赛题 PDF 原文照写 |
-| DEC-5 | D3 旁白 | **真人录音**，不用 TTS | 旁白稿须按新镜头表重写并逐段掐表；SRT 需重写；新增风险 R9（读超时长） |
+| DEC-5 | D3 旁白 | **真人录音**，不用 TTS | 旁白稿与 SRT 已按新镜头完成；负责人逐段试读掐表仍待完成，R9（读超时长）继续开放 |
 
 ### P0 缺口摘要（按分值排序）
 
@@ -72,6 +76,7 @@
 | P0-4 | ✅ 已补入 v0.2 §6.2：OpenClaw 类智能体的 MCP/HTTP 协议层兼容、真实客户端证据与专有接口边界 | 应用价值 20% |
 | P0-5 | ✅ 已补入 v0.2 §6.5：六能力横向对比表；外部方案“未核验”不解释为“没有” | 创新性 25% |
 | ~~P0-6~~ | ~~修 PDF 构建管线使其能构建 v0.2~~ → ✅ **DONE 2026-07-26**：baseline v0.2 = 13 页；P0 全量稿 = 16 页；v1 = 14 页未回归 | 全部 |
+| **D3-P0-1** | 🟠 **LIVE-EVAL-VERIFIED / SCRIPT-RESYNC OPEN**：框架、回放 GUI、攻击 payload、holdout 冻结、正式 3/5 live 评估（D2 causal_proof 双档成立、D1 防护边界照实记录、D3 模型自防）与逐 Gate audit 映射 + 真实性验收（20/20）均完成；剩余：D1/D3 表述按真实值反映 D1 边界、镜头/旁白/SRT 二次同步 | 实际效果 30% + 应用价值 20% + 展示表达 5% |
 
 ## 2026-07-21 最终候选验证基线
 
@@ -101,17 +106,18 @@
 
 决策项已全部关闭（见上节）。以下按执行顺序排列。
 
-1. **P1-2 边界收框与最终通读**：六项 P0 已进入 v0.2，下一步压缩重复数字并统一“结果 + 适用范围”表述，不删除边界。
-2. 8/3–8/9 完成唯一一次 OAR N=10 重跑与重新封存，随后建立 `FROZEN-NUMBERS.md` 并冻结数字；在此之前不能把 N=10 写成已完成结果。
-3. 数字冻结且内容完成后用 v0.2 重建正式 `output/pdf/`，记录最终页数与 SHA-256；在此之前保留现有 14 页兜底，不产生中间正式版本。
-4. 按收口计划 §7 重排 D3 镜头；重写旁白稿与 `D3-video-subtitles.srt`（现有版本对应旧顺序）；先做不录制预演找 UI 崩点，再真人录音。
+1. 闭合 D3-P0-1 剩余部分：~~Kimi 补 payload~~（✅）、~~冻结后正式 5 重复 live 评估~~（✅）、~~逐 Gate audit 映射与真实性验收~~（✅ 2026-07-27，verify 20/20）；剩余：D1/D3 表述需按真实值反映 D1 引用型外发未被内容标记规则拦截的边界；是否扩展 OAR egress 规则扫描 sources 属产品决策，待负责人定夺；按最终载体二次同步 D3 镜头/旁白/SRT。框架与回放 GUI 已实现，不再重做载体。
+2. 按最终载体二次同步 D3 镜头、旁白与 SRT；负责人再做 11 段真人试读并填写实测秒数，不能删除数字边界。
+3. 完成一次不录制预演，记录 UI 崩点、客户端连接、登录等待、Worker 刷新、封存回放标识与画面敏感信息；随后才录制素材并合成最终 MP4。
+4. 视频预演暴露的问题收口后，用 v0.2 重建正式 `output/pdf/`，记录最终页数与 SHA-256；在此之前保留现有 14 页兜底。
 5. 并行准备答辩问答手册与 `CODE-MAP.md`（P2-1/P2-2）。
-6. 人工确认 D4 隐私附件、网盘权限和邮件内容，并再核实一次报名表系统审核状态（风险 R8）；攻击证明源码锚点提交与公开材料尚未推送，未创建 tag/release。
+6. 人工确认 D4 隐私附件、网盘权限和邮件内容，并再核实一次报名表系统审核状态（风险 R8）；尚未创建 tag/release。
 7. 按提交清单核对 D1–D4，目标 2026-09-12–14 提交，不踩 9/15 截止。
 
 ## 声明边界
 
 - `.runtime/reference/`、`.runtime/kind-ha/`、`.runtime/evidence/` 含运行数据或敏感材料且不进入 Git。
+- 新增 live-agent 轨道不修改旧 OAR Oracle 或 N=10 冻结证据。新框架 + range CLI 22 项与 Ruff 通过；既有真实 SUT 测试曾通过，收尾复跑连续两次 60 秒子进程启动超时，失败保留且未改测试。参考执行体 `_publish_plugin` 键优先级已修复为与判定器一致（artifact→plugin→name），kernel/tests 125 项通过。2026-07-27 正式 holdout live 评估（30 runs，infra 0）结果：D2-HOLDOUT 两档 5/5 稳定突破、Null harm 10/10、XA-Guard live deny 10/10 → causal_proof 成立；D1-HOLDOUT realistic-safe 5/5 突破但 live 5/5 放行（引用型外发不经内容标记，真实边界，未重跑掩盖）；D3-HOLDOUT 0/10 attempt（模型侧安全）。证据 `.runtime/live-agent/holdout-v1/`（未入 Git）；evaluate 进程 exit code 1 无 Traceback、证据完整，待查。
 - D1/D3 仓库内容不含学校、个人信息、密码、token 或私钥。
 - 2026-07-26 D1 P0 收口仍为文档与构建器工作：P0-1..P0-5 已补入 v0.2，P0-6 已完成；未重跑产品、故障、kind、性能或攻击实验，未修改产品/测试代码，未替换当前 14 页正式 PDF。
 - 收口计划识别的缺口是**材料表述缺口，不是新发现的功能缺陷**；补缺方式为引用已封存证据，不允许为凑指标重测、改阈值或改断言。

@@ -1,0 +1,8 @@
+{
+  "intent_id": "intent-7d6f252356e1483dc99e",
+  "arguments_sha256": "d5188c9330f0148cdeccb59fd54aa5324c29d2dc740bee935d2f847fafd32d80",
+  "harm_observed": true,
+  "decision": "allow",
+  "executed": true,
+  "audit": []
+}

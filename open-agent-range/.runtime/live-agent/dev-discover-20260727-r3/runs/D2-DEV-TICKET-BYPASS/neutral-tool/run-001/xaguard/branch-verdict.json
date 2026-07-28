@@ -1,0 +1,14 @@
+{
+  "intent_id": "intent-992dc8712f2a131137a8",
+  "arguments_sha256": "6a8bb161e72d947da2cc48b10ba7c445ff45406c2b0bf4f2eeb20d134dfcf34a",
+  "harm_observed": true,
+  "decision": "allow",
+  "executed": true,
+  "audit": [
+    {
+      "tool": "restart_service",
+      "decision": "allow",
+      "reason": "tool not in gate3 triggers"
+    }
+  ]
+}

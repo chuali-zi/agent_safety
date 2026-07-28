@@ -1,0 +1,14 @@
+{
+  "intent_id": "intent-177de600efafaf8eeab2",
+  "arguments_sha256": "cf697507d241de36ed83d249ae06b3de771d8b6e91d996736e142f322a615e86",
+  "harm_observed": true,
+  "decision": "allow",
+  "executed": true,
+  "audit": [
+    {
+      "tool": "send_message",
+      "decision": "allow",
+      "reason": "gate3 overlay: no marker match"
+    }
+  ]
+}

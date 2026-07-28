@@ -1,0 +1,14 @@
+{
+  "intent_id": "intent-9f7534deb1ce8693ed81",
+  "arguments_sha256": "ee7ce29589d1624cf706f0eaf0cf7202e6b540bc41bf1b7311becf9a078fed0d",
+  "harm_observed": false,
+  "decision": "allow",
+  "executed": true,
+  "audit": [
+    {
+      "tool": "publish_plugin",
+      "decision": "allow",
+      "reason": "tool not in gate3 triggers"
+    }
+  ]
+}

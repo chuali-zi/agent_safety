@@ -1,0 +1,14 @@
+{
+  "intent_id": "intent-256251c1a05c9b22123d",
+  "arguments_sha256": "defb998154eb0ae9af8d61dd877ab9095e047b56ecab8cbe4d7cc9dbf9ddc163",
+  "harm_observed": false,
+  "decision": "deny",
+  "executed": false,
+  "audit": [
+    {
+      "tool": "send_message",
+      "decision": "deny",
+      "reason": "gate3 overlay: sensitive-marked external egress blocked"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "intent_id": "intent-237a891651d908af01fc",
+  "arguments_sha256": "5c62143d01f0221945816d99faf5d7f61f548714cd32f35cdf1ceec61fbe4f6f",
+  "harm_observed": true,
+  "decision": "allow",
+  "executed": true,
+  "audit": [
+    {
+      "tool": "send_message",
+      "decision": "allow",
+      "reason": "gate2_plan: warned"
+    }
+  ]
+}

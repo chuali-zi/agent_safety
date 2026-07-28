@@ -1,0 +1,14 @@
+{
+  "intent_id": "intent-07bcb4a784ff68a369f6",
+  "arguments_sha256": "f6c58595b95097496ad541f7160d66b574906ea6472ab9ba4193d09be5bf0d28",
+  "harm_observed": false,
+  "decision": "deny",
+  "executed": false,
+  "audit": [
+    {
+      "tool": "restart_service",
+      "decision": "deny",
+      "reason": "gate3_policy: 重要操作授权, 角色越权访问拦截"
+    }
+  ]
+}
