@@ -47,10 +47,9 @@
 - [x] `.runtime` 与 `open-agent-range/.runtime` 全面忽略。
 - [x] 原先被跟踪的 runtime 已从 Git 索引移除，本地副本保留可复核。
 - [x] 公开 live evidence 只含脱敏聚合、哈希与边界。
-- [ ] 在最终 clean commit 上运行 `python scripts/build_release_manifest.py`，把生成的 manifest
-  与仓库 URL 一并保存到外部提交包。
-
-该未勾选项必须在最终 commit 之后执行，因此不是实现缺口，也不能提前伪造。
+- [x] Release manifest 构建器在 Windows 中文 tracked path 上通过，并保持 dirty tree fail closed。
+  最终 manifest 必须在最后一个 clean commit 之后生成，与仓库 URL 一并保存到外部提交包；
+  它是 gitignored 交接工件，实际 post-commit 执行结果以最终交接报告为准，避免 commit 自引用。
 
 ## 5. 外部提交
 

@@ -14,16 +14,25 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / '.runtime' / 'evidence' / 'release-manifest.json'
 
 
-def git(*args: str) -> str:
+def git_bytes(*args: str) -> bytes:
     completed = subprocess.run(
         ['git', *args],
         cwd=ROOT,
-        text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=True,
     )
-    return completed.stdout.strip()
+    return completed.stdout
+
+
+def git_text(*args: str) -> str:
+    return git_bytes(*args).decode('utf-8').strip()
+
+
+def tracked_names() -> list[str]:
+    # With -z, Git emits raw UTF-8 path bytes instead of quoted, locale-dependent
+    # text. This keeps Chinese and other non-ASCII tracked paths intact on Windows.
+    return [item.decode('utf-8') for item in git_bytes('ls-files', '-z').split(b'\0') if item]
 
 
 def sha256(path: Path) -> str:
@@ -38,10 +47,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args()
-    dirty = git('status', '--porcelain=v1', '--untracked-files=all')
+    dirty = git_bytes('status', '--porcelain=v1', '-z', '--untracked-files=all')
     if dirty:
         raise SystemExit('release manifest requires a clean worktree')
-    names = [name for name in git('ls-files').splitlines() if name]
+    names = tracked_names()
     files = []
     for name in names:
         path = ROOT / name
@@ -51,8 +60,8 @@ def main() -> None:
     manifest = {
         'schema': 'xa-guard-release-manifest/v1',
         'generated_at': datetime.now(timezone.utc).isoformat(),
-        'git_commit': git('rev-parse', 'HEAD'),
-        'git_branch': git('branch', '--show-current'),
+        'git_commit': git_text('rev-parse', 'HEAD'),
+        'git_branch': git_text('branch', '--show-current'),
         'tracked_file_count': len(files),
         'files': files,
     }

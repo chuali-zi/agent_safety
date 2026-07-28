@@ -94,6 +94,7 @@ OAR 业务世界并查询所指资产敏感级别。该失败结果已进入 D1�
 | governance 声明集合 | **48/48 passed** |
 | live authenticity regression | **10/10 passed**；正式 holdout verify PASS |
 | Ruff | `src bench demo scripts tools open-agent-range/kernel`（排除测试目录 lint）PASS |
+| release manifest builder | Windows 中文 tracked path 按 Git `-z` UTF-8 原始字节解析；dirty tree fail closed，PASS |
 | D1 build/render | 18 页，SHA-256 与上文一致，PASS |
 | D3 media | 530.033 秒、H.264/AAC/中文字幕轨、SHA-256 与上文一致，PASS |
 
@@ -123,6 +124,7 @@ deployment/remote-runner 四个互斥分组执行；四组收集数合计 792，
 
 ## 7. 下一步
 
-仓库内无未完成的比赛实现计划。负责人只需按
-[submission-checklist.md](docs/delivery/submission-checklist.md) 完成最终 clean commit/release manifest、
-D4 状态复核、网盘上传、邮件发送和回执保存。
+仓库内无未完成的比赛实现计划。Release manifest 是在最终 commit 之后生成的 gitignored
+交接工件，执行结果不硬编码进提交以避免自引用。负责人只需按
+[submission-checklist.md](docs/delivery/submission-checklist.md) 完成 D4 状态复核、仓库可见性检查、
+网盘上传、邮件发送和回执保存。
