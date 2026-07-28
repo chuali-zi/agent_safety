@@ -1,5 +1,0 @@
-{
-  "decision": "deny",
-  "reason": "gate3 overlay: sensitive-marked external egress blocked",
-  "executed": false
-}

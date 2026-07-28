@@ -1,5 +1,0 @@
-{
-  "decision": "deny",
-  "reason": "gate3_policy: 重要操作授权, 角色越权访问拦截",
-  "executed": false
-}

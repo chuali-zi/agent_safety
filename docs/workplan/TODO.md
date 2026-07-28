@@ -1,169 +1,40 @@
-# XA-Guard 下一步 TODO 与交付收束计划
+# XA-Guard 最终 TODO
 
-> 快照时间：**2026-07-21**（Delivery v2 口径）
-> 权威交付规格：[../acceptance/DELIVERY-v2.md](../acceptance/DELIVERY-v2.md)
-> 仓库状态：[../../status.md](../../status.md)
-> 赛题依据：[../source-of-truth/事实源.md](../source-of-truth/事实源.md)
+> 状态：**仓库内比赛计划全部完成；只剩外部提交动作**
+> 更新：2026-07-27
+> 权威口径：[Delivery v2](../acceptance/DELIVERY-v2.md)
 
-## 0. 先读结论
+## 1. 已完成
 
-**活跃口径是 Delivery v2**，不是 L3 最终 BLOCKED 叙事。
-
-- **Tier A（必交）**：D1 PDF 与 D4 已完成；D3 录制指南和字幕已完成，最终视频由负责人手工录制；D2 release 正在封存。
-- **Tier B（主证据）**：B1–B7 均在竞赛原型声明边界内完成；最终候选全故障 11/11、kind HA 和正式并发性能通过。
-- **Tier C（加分）**：R4/R7/R8 已有证据；R2/R3、Trae 截图等为 **RETIRED** 硬承诺，仅背景实验。
-
-**下一步自动任务第一优先级**：重新封存最终 evidence，执行 unified verifier，生成 clean release manifest 并完成本地冻结提交；不再新增产品功能。D3 视频录制、报名系统附件检查和最终提交仍为人工事项。
-
----
-
-## 1. Tier A — 官方交付必做
-
-| ID | 任务 | 状态 | 下一步 |
-|---|---|---|---|
-| A1 | D1 PDF ≤30 页 | `DONE` | 14 页 PDF 已生成并完成渲染抽检 |
-| A2 | D2 代码 + README/部署 | `DONE-REMOTE` | 最终 evidence、unified verifier、冻结提交和 manifest 完成并同步 `origin/main` |
-| A3 | D3 视频 ≤10 分钟 | `MANUAL-PENDING` | 指南与字幕完成；负责人按黄金路径录制 |
-| A4 | D4 报名表审核通过 | `DONE` | 2026-07-18 负责人确认；隐私证据在仓库外 |
-
-### A4 报名（人工）
-
-- [x] 负责人确认系统审核状态为「审核通过」
-- [x] 负责人确认盖章扫描件与系统信息一致
-- [x] 证据不入 Git（个人隐私）
-
-### A2 D2 release checklist
-
-- [x] `python scripts/verify_release.py`（2026-07-21：782 collected / 781 passed / 1 Windows symlink capability skip / 0 failure/error；产品 Ruff、static、Compose、Console、最终 evidence verifier 一并通过）
-- [x] `python scripts/verify_l3_static.py --section all`（11/11）
-- [x] Reference health + PKCE/Undo e2e + full fault 11/11
-- [x] kind 三节点 HA 全阶段 + SM2-with-SM3 evidence verifier
-- [x] 正式 10 并发性能（完整重建组三轮 p95/upper 均 ≤50ms；Undo latency 10/10 通过）
-- [x] final release manifest（仅在 clean final commit 上运行 `scripts/build_release_manifest.py`，产物为 gitignored 运行证据）
-- [x] README 已增加统一 verifier 与 release manifest 命令；提交前仍需与最终 D1 数字复核
-
----
-
-## 2. Tier B — 产品可信度（OAR 中心）
-
-| ID | 任务 | 状态 | 下一步 |
-|---|---|---|---|
-| B1 | 六关拦截 demo + MCP e2e + verify_audit | `DONE` | D1/D3 引用现有 trace |
-| B2 | OAR 企业 full-day 场景 | `DONE` | D1 §8 描述六域竖切 |
-| B3 | Null vs XA-Guard live A/B | `DONE` | D3 展示 `protection_delta` |
-| B4 | Ledger replay + audit 对齐 | `DONE` | D1 附 replay JSON 摘要 |
-| B5 | 一键 canonical 证据链 | `DONE` | `oar-delivery-v2-20260711T123124Z-win-local` 已封存并锚定 |
-| B6 | 可信 Agent Identity | `DONE` | 自动故障、HA、三账号 UI 和正式性能通过 |
-| B7 | 可验证 Undo | `DONE` | Worker 接管、retry、KEK、Undo 时延与写路径性能通过 |
-
-### B6/B7 最新验收
-
-- [x] Reference 全故障 suite：11/11。
-- [x] Worker kill takeover：2 个 Worker actor，1 次有效取消。
-- [x] 5/30/120 retry：3 次调度，1 次有效取消。
-- [x] 错误 KEK fail closed、admin retry、v1→v2 rewrap 7 条旧记录。
-- [x] kind 三节点升级、API/Worker 接管、migration、NetworkPolicy、rollback。
-- [x] SM2-with-SM3 封存与独立 verifier。
-- [x] Alice/Dora/Admin 三独立会话手测；建票、职责分离、独立批准、补偿和审计内容 PASS。
-- [x] 同链批处理、紧凑 JSON 和 final/prepared 混合单事务完成，保留 intent-first 与双链原子语义。
-- [x] 正式 10 并发 incremental p95/upper ≤50ms；完整重建组三轮为 45.109/46.984、42.141/43.120、43.934/45.528ms。
-
-### B5 封存结果
-
-- [x] Full-day reactive/null 与 live Null/XA-Guard N=3 实跑
-- [x] 7/7 attempt replay/hash/ledger/audit 校验
-- [x] 标准 run 与 deterministic tarball 封存
-- [x] provenance、D1、submission checklist 和[证据总表](../acceptance/EVIDENCE-CONSOLIDATION.md)关联
-
----
-
-## 3. Tier C — 加分 / 附录（不欠赛题）
-
-| 项 | 状态 | 说明 |
+| 项 | 状态 | 结果 |
 |---|---|---|
-| R4 性能 | `DONE` | D1 附录；`docs/evidence/l3-r4-20260705-current/` |
-| R7 OPA | `DONE` | D1 附录；注明镜像 CVE |
-| R8 cdxgen + install_plugin | `DONE` | 方向 3 附录 |
-| R2/R3 budget60 | `RETIRED` | 工具在 `scripts/run_r2_r3_acceptance.py`；背景跑数可选 |
-| Trae 截图 | `RETIRED` | 演示用 Cursor pending fallback |
-| research_full_matrix | `RETIRED` | 2986 jobs 非 Must |
+| D1 正式 PDF | **DONE** | 18 页；正式封面、题号、题名、实验/边界/证据齐全 |
+| D2 代码与复现 | **DONE / RELEASE-READY** | 代码、测试、CI、release verifier、CODE-MAP、脱敏证据齐全 |
+| D3 正式视频 | **DONE** | 8:50；真实客户端、真实模型因果、Console、工程与边界齐全 |
+| D4 | **DONE-MANUAL** | 负责人既有审核通过确认保持 |
+| 答辩材料 | **DONE** | DEFENSE-QA、CODE-MAP、FROZEN-NUMBERS |
+| governance 静态计划 | **DONE** | 48 项声明测试通过 |
+| Identity + Undo 竖切计划 | **DONE** | 两轮竖切和最终产品化证据均已闭环 |
+| 攻击证明集交接计划 | **DONE** | 6/6 verified、N=10 封存、公开脱敏摘要 |
+| D3-P0-1 | **DONE** | OpenCode + DeepSeek Flash + XA-Guard MCP 真实安全调用通过 |
+| live authenticity | **DONE** | 30/30 verdict、stable/causal 重算、15/15 audit 严格覆盖 |
 
----
+## 2. 下一步只做外部提交
 
-## 4. RETIRED — 不再列为 TODO/BLOCKED
+这些动作需要负责人账号、报名系统和网盘权限，不是仓库实现缺口：
 
-以下 **不得** 出现在执行优先级或 status 缺口中：
+1. 核对 D4 在报名系统仍显示审核通过；
+2. 上传 D3 视频和可选证据包，确认链接有效期；
+3. 核对最终仓库 URL 可访问；
+4. 邮件正文首行写“XA-202620 面向政企场景的大模型智能体安全关键技术研究”；
+5. 附 D1、D2 URL、D3 URL 和 D4；
+6. 保存发送回执、网盘权限与报名状态截图。
 
-- R1 独立 holdout / formal dual-500
-- `subscription_budget60_v1` 作为 mandatory 比赛指标
-- R9 第三方 TSA/HSM 生产实证
-- R8 marketplace/IDE native hooks
-- R6 gVisor runsc 全验收（Docker PASS 足够）
-- R5 Trae native elicitation
-- GB/T 45654 完整 500+ 语料
-- enterprise-agent-range 主叙事（OAR 已承接）
-- L3 最终验收 BLOCKED 作为项目主状态
+## 3. 不再执行
 
----
-
-## 5. 赛题四方向 → 证据映射（写 D1 用）
-
-| 方向 | 主证据（Tier B） | 附录（Tier C） |
-|---|---|---|
-| 1 输入攻击识别 | Gate1 demo、CSAB-Gov-mini；OAR 注入面 | holdout 协议（RETIRED 正式指标） |
-| 2 工具执行安全 | Gate2/3/4/5、OAR seat/SUT、pending | Docker deploy、Trae 静态 |
-| 3 供应链 | AIBOM demo、OAR supply consequence | R8 cdxgen |
-| 4 评测审计 | **OAR A/B + ledger replay**、Gate6 | R4、R7、bench 工具 |
-
----
-
-## 6. 建议执行顺序
-
-### 第 0 步（自动，当前）
-
-1. 重封存并独立验签最终 Identity + Undo evidence
-2. clean release candidate 上重跑统一 verifier
-3. 完成本地冻结提交并生成 final release manifest
-
-### 第 1 步（暂缓的人工交付）
-
-1. D1 PDF 已导出并复核为 14 页
-2. D3 按逐镜指南录制、剪辑并人工复核 ≤10 分钟（`MANUAL-PENDING`）
-
-### 第 2 步（提交）
-
-1. 人工验收结果回填 submission-checklist
-2. 核对仓库链接、PDF、视频、报名表和证据包可访问
-3. 2026-09-15 前邮件提交
-
----
-
-## 7. 不要做
-
-- 不要把 L3 BLOCKED 或 R2/R3 未跑写成比赛主缺口
-- 不要把退役项重新标为 P0 blocker
-- 不要修改测试代码掩盖失败
-- 不要把 OAR `protection_delta` 写成 AgentDojo 官方 ASR
-- 不要把本地 TSA 写成第三方 HSM
-
----
-
-## 8. 最小完成定义（Delivery v2）
-
-- D4 审核通过
-- D1 PDF：四方向 + OAR 主实验 + 诚实限制
-- D3 视频：拦截 + 审批/阻断 + 审计 + OAR A/B
-- D2：README 可复现 + 测试/verifier 最新结果
-- B5：`DONE`，封存 OAR evidence + hash 已具备
-- 退役项仅在「限制/未来工作」出现，不作为 blocker
-
----
-
-## 9. docs 导航
-
-| 文档 | 位置 | 状态 |
-|---|---|---|
-| DELIVERY-v2 | `docs/acceptance/DELIVERY-v2.md` | `ACTIVE` |
-| L3 工程清单 | `docs/acceptance/L3-test-and-acceptance.md` | `DEPRECATED` |
-| D1 草稿 | `docs/delivery/D1-technical-report-draft.md` | `TODO` |
-| NEXT-WORK-DESIGN | `docs/workplan/NEXT-WORK-DESIGN.md` | `REFERENCE`（2026-07-18 已同步 v2 状态） |
+- 不为凑页数扩写 D1；
+- 不新增攻击 payload 或攻击脚本；
+- 不修改测试、oracle、策略阈值来追求更好数字；
+- 不把 R2/R3 sampled、research full matrix、第三方 TSA/HSM 或生产 HA 重新列为比赛 blocker；
+- 不把真实 D1 5/5 allow/harm 隐藏或改写为防护成功；
+- 不把 D3 0/10 attempt 归因 XA-Guard。

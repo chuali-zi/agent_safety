@@ -1,128 +1,128 @@
 # 仓库状态：XA-Guard / XA-202620
 
-> 快照日期：**2026-07-27**（America/Los_Angeles）
-> 当前统一口径：**ENGINEERING-FROZEN / RELEASE-VERIFIED / D3-VISUAL-FRAMEWORK-DONE-LIVE-EVAL-VERIFIED / SUBMISSION-PLANNED**
-> 比赛交付口径：[docs/acceptance/DELIVERY-v2.md](docs/acceptance/DELIVERY-v2.md)
-> 提交材料收口计划：[docs/delivery/D1-D3-submission-plan.md](docs/delivery/D1-D3-submission-plan.md)
-> 本轮评审意见：[docs/delivery/REVIEW-2026-07-26.md](docs/delivery/REVIEW-2026-07-26.md)
-> 工作历史见 [log.md](log.md)。
+> 当前口径：**SUBMISSION-READY / INTERNAL ACCEPTANCE PASS / EXTERNAL SUBMISSION PENDING**
+> 更新：2026-07-27
+> 赛题：**面向政企场景的大模型智能体安全关键技术研究**
 
-## 总体结论
+## 1. 总体结论
 
-产品功能已停止扩展并完成本地工程冻结。Gate1–6、OAR 主评测、MCP 代理、OIDC + 动态 assignment、PostgreSQL Effect、独立审批 Undo、Worker 补偿、Console/BFF 与本地 kind HA 主路径均已实现。最终候选的 Reference 全故障 11/11、kind HA 全阶段、正式 10 并发性能和 unified release verifier 均已通过。代表性攻击证明集已在 clean Git 锚点上完成 6/6 verified 的提交级收口。
+赛题要求的 D1 技术方案、D2 可复现代码、D3 演示视频和答辩材料已经在仓库内收口。
+D4 维持负责人既有审核通过确认，提交前需人工复核报名系统状态。邮件发送、仓库 URL、网盘上传和
+回执保存尚未执行，因此不写“已提交”。
 
-**当前主线已从工程转为提交材料收口。** 2026-07-26 对照赛题 PDF 审阅 D1 时曾识别出 6 项 P0：Gate1 识别/误报指标、五维指标体系、算法设计、OpenClaw 类兼容表述、横向对比和 v0.2 PDF 构建能力。六项现均已闭合；原始问题、验收标准与决策过程保留在收口计划和评审记录中，不再作为当前缺口。
+权威状态入口：
 
-**同日负责人完成五项决策定案并冻结**：D1 底稿取 v0.2 审阅稿、Gate1 分层识别指标写入正文、OAR live A/B 的 N 由 3 提到 10、视频格式已向赛事方确认无特殊要求、D3 旁白采用真人录音。
+- [Delivery v2](docs/acceptance/DELIVERY-v2.md)
+- [D1/D3 收口计划](docs/delivery/D1-D3-submission-plan.md)
+- [交付验收矩阵](docs/delivery/DELIVERY-ACCEPTANCE-MATRIX.md)
+- [最终提交清单](docs/delivery/submission-checklist.md)
 
-**同日 D1 六项 P0 已全部完成**：P0-1 Gate1 分层指标、P0-2 五维指标体系与预期效果、P0-3 七项算法设计、P0-4 OpenClaw 类智能体兼容边界、P0-5 横向对比表均已补入 v0.2；P0-6 构建器已支持离线 Mermaid、缺失 pagebreak 容错和旧 `[DIAGRAM:x]`。独立复核：`py_compile` PASS，P0 全量稿临时构建为 **16 页**，v1 兼容构建仍为 14 页且 hash 未变，七列表格与参考文献完成渲染抽检。正式 `output/pdf/` 兜底未替换，风险 R1 关闭。
+## 2. 正式交付物
 
-据此当前口径为：① v1 稿不再作构建源，仅作历史参考与文本来源；② OAR N=10 数字已冻结；③ D1 六项 P0、
-P1-2 边界收框与最终通读均已完成；④ D3 的真实 Agent 因果实验框架已实现，包括 DeepSeek 原生
-Tool Calls、不可变 ToolIntent、Null/XA-Guard 同意图分叉、独立指标、冻结清单与自包含回放 GUI；
-Kimi 攻击 payload 已完成且 holdout 已冻结，正式 live 因果评估与逐 Gate audit 映射/真实性验收均已完成（D2 因果证明成立、D1 防护边界照实记录、verify 20/20），D3 镜头二次同步仍 OPEN；⑤ 正式
-`output/pdf/` 待视频预演暴露的问题收口后一次性重建。
-
-## 当前交付成熟度
-
-| 交付面 | 状态 | 当前事实与边界 |
+| 交付面 | 状态 | 当前事实 |
 |---|---|---|
-| 核心功能与四方向覆盖 | DONE | 六关、MCP、AIBOM、OAR、Identity + Undo、Console 和审计均有实现与证据 |
-| B6/B7 Identity + Undo | DONE | 最终候选 all fault 11/11、kind HA 和正式性能通过；不外推为生产 IAM/多地域 HA |
-| D1 技术方案 | **P0/P1-COMPLETE / BUILDABLE / PDF-PENDING** | 底稿为 v0.2；六项 P0、P1-2 边界收框与最终通读均完成；当前临时构建 **17 页**、余量 13 页；OpenClaw 仅声明 MCP/HTTP 协议层兼容，不声称专有适配完成；正式 `output/pdf/` 尚未用 v0.2 重建，现有 14 页 PDF 保留为兜底 |
-| D2 代码与发布 | DONE-REMOTE / RELEASE-VERIFIED | 最终 evidence、统一复验、冻结提交与 clean manifest 完成并同步 `origin/main`；未创建 tag/release |
-| D3 演示视频 | **SCRIPT-STRUCTURE-READY / VISUAL-FRAMEWORK-DONE / LIVE-EVAL-VERIFIED / SCRIPT-RESYNC-OPEN** | 11 段结构、旁白初稿和 SRT 已完成首轮重排；`kernel/live_agent/` 与自包含 causal replay GUI 已实现。正式 holdout live 评估已完成（30 runs，infra 0）：D2 两档 5/5 稳定突破 + Null harm 10/10 + XA-Guard live deny 10/10，因果证明成立；D1 realistic-safe 5/5 突破但 live 放行 5/5（引用型外发绕过内容标记规则，真实边界发现，照实记录）；D3 0/10 attempt（模型自防）。逐 Gate audit 映射与真实性验收已完成（verify 20/20，回放页 Gate 条带已由真实 audit 驱动）；镜头/旁白/SRT 二次同步尚未完成，不能开始正式录制 |
-| D4 报名表 | DONE-MANUAL | 负责人已确认审核/盖章完成；隐私材料在仓库外；建议提交前再核实一次系统审核状态 |
-| 代表性攻击证明集 | DONE-CLEAN / SEALED / PUBLIC / **N=10 冻结** | 六类 case 6/6 verified、0 failed、0 infra_error；Git start/end clean；20/20 protected replay PASS；根清单 730/730 非自身文件；run `xa-attack-proof-v1-20260727T033934Z-win-local`（旧 N=3 run 保留为历史） |
-| 文档一致性 | D1 CONSISTENT / D3 VISUAL REVISION PENDING | D1 v0.2 已完成全部 D1 P0、P1-2 与最终通读；OAR N=10 数字已冻结；D3 首轮镜头、旁白与 SRT 已对 `FROZEN-NUMBERS.md` 同步，但 D3-P0-1 落地后仍需二次同步 |
+| D1 | **FINAL / PASS** | 18 页正式 PDF，≤30 页；题号、题名、问题分析、技术路线、七项算法、实验计划、五维指标、预期效果、边界和证据索引齐全 |
+| D2 | **RELEASE-READY / PASS** | 产品、测试、复现脚本、CODE-MAP、公开脱敏证据齐全；OAR kernel 纳入 CI/release gate |
+| D3 | **FINAL / PASS** | 8:50 MP4，11 镜头，真实 OpenCode/DeepSeek Flash/MCP、安全 Tool Call、真实 Agent 因果、Console/Undo/证据与工程结果齐全 |
+| D4 | **DONE-MANUAL** | 负责人既有审核通过确认；隐私材料不入仓库，提交前人工复核 |
+| 答辩 | **READY / PASS** | DEFENSE-QA 30 题、CODE-MAP、FROZEN-NUMBERS |
 
-## 提交材料收口计划（2026-07-26 制定）
+D1：
 
-完整任务、验收标准与风险登记见 [D1-D3-submission-plan.md](docs/delivery/D1-D3-submission-plan.md)。
+- 文件：`output/pdf/XA-Guard-XA-202620-technical-report.pdf`
+- 页数：18
+- SHA-256：`de37a83c973d28f1b4efdc77efda4648a704db94540cb9839b6f4d2e8660c7f1`
+- 全页渲染抽检：PASS
 
-### 冻结顺序
+D3：
 
-依赖链为 **数字 → 视频 → PDF**（不是视频 → PDF）。数字是最上游约束：视频录完后若数字变动，只能重录或接受口径不一致，而口径漂移已列为 submission-checklist 红线。
+- 文件：`output/video/XA-Guard-XA-202620-demo.mp4`
+- 时长：530.033 秒
+- 媒体：H.264、1920×1080、30fps；AAC、48kHz、双声道；中文 `mov_text` 字幕轨
+- SHA-256：`267a1a59f7f48c9d8e489f085afda0ff79197118ceff7b7e2d5422d5962b00c5`
+- 旁白：本地 `Microsoft Huihui Desktop` 离线合成并在 metadata 披露，不声称真人
+- 画面抽检与音量检查：PASS
 
-| 周 | 任务 | 冻结点 |
-|---|---|---|
-| ~~7/26~~ | ~~五项决策定案~~ + ~~P0-1..P0-6 全部完成~~ | ✅ **决策已冻结**；当前 v0.2 = 16 页 |
-| ~~7/27–8/2~~ | ~~P1-2 边界收框与最终通读~~ | ✅ **已完成（2026-07-27）** |
-| ~~8/3–8/9~~ | ~~OAR N=10 重跑、重新封存、同步引用点并建立 `FROZEN-NUMBERS.md`~~ | ✅ **已提前完成（2026-07-27）** |
-| 8/10–8/23 | D1 内容完成 → v0.9 PDF；只改文字不改数字；闭合 D3-P0-1 的载体选型、实现、真实客户端验证与不录制预演 | **D3 可录制前置闭合** |
-| 8/24–9/6 | 按重排镜头表录制 D3（真人旁白） | **视频定版** |
-| 9/7–9/11 | 只回改录像暴露的问题；重建 PDF；核页数与 hash | **PDF 冻结** |
-| 9/12–9/14 | 提交邮件与附件核对（不踩 9/15） | **提交** |
+## 3. 关键证据
 
-### 已冻结决策（2026-07-26 负责人定案）
+### Gate1
 
-**五项全部定案，不再回退为待办。** 后续工作以收口计划 §1 为唯一依据。
+- 6 个输入攻击族，60/60 识别并阻断。
+- expected-allow FPR 0/58；Wilson 95% 上界 6.21%。
+- 规则层 p95 0.04ms。
+- `independent_holdout=false`；不含模型或完整链路时延。
 
-| # | 决策 | 定案 | 连带影响 |
-|---|---|---|---|
-| DEC-1 | D1 底稿 | **v0.2 审阅稿 `D1-technical-report-review-draft.md`** | v1 稿 `D1-technical-report-draft.md` 转为历史参考与文本来源，**不再作为构建源**；P0-6 升级为硬前置 |
-| DEC-2 | Gate1 分层识别指标 | **写入 D1 正文** | 四条范围声明缺一不可（范围 60 例 / 6 族 / `independent_holdout=false` / Wilson 区间） |
-| DEC-3 | OAR live A/B 的 N | **由 3 提到 10** | **已于 2026-07-27 提前完成**：N=10 重跑 PASS 并封存（run `...20260727T033934Z...`），数字冻结，全部引用点已同步；旧 N=3 run 保留为历史 |
-| DEC-4 | 赛事咨询 | **视频格式已问，答复无特殊要求** | D3 沿用现有成片参数；风险 R6 关闭；邮件命名按赛题 PDF 原文照写 |
-| DEC-5 | D3 旁白 | **真人录音**，不用 TTS | 旁白稿与 SRT 已按新镜头完成；负责人逐段试读掐表仍待完成，R9（读超时长）继续开放 |
+### 确定性 OAR
 
-### P0 缺口摘要（按分值排序）
+- 邮箱：Null leak 10/10；XA-Guard leak 0/10；replay 10/10。
+- RAG：Null leak 10/10；XA-Guard leak 0/10；replay 10/10。
+- protected replay 合计 20/20；0 infra error。
+- 这是合成确定性证明，不运行真实大模型，不外推通用攻击率。
 
-| # | 缺口 | 对应维度 |
-|---|---|---|
-| P0-1 | ✅ 已补入 v0.2 源稿：Gate1 声明范围内 60 例召回 1.0、FPR any-detection 0/58（Wilson 上界 6.21%）、规则层 p95 0.04ms；说明总体 0.3575 系归属误配（193 例中 133 例属 Gate2/3/5 + AIBOM 判定面） | 实际效果 30% |
-| P0-2 | ✅ 已补入 v0.2 源稿："指标体系与预期效果"章节，行名直用目标(4)五维度（数据/内容/执行/供应链/合规） | 实际效果 30% + 完整性 20% |
-| P0-3 | ✅ 已补入 v0.2 源稿："算法设计"小节，收拢阈值标定、Spotlighting、AST 谓词、策略合并、双链 CAS、bootstrap、AIBOM 评级 | 完整性 20% |
-| P0-4 | ✅ 已补入 v0.2 §6.2：OpenClaw 类智能体的 MCP/HTTP 协议层兼容、真实客户端证据与专有接口边界 | 应用价值 20% |
-| P0-5 | ✅ 已补入 v0.2 §6.5：六能力横向对比表；外部方案“未核验”不解释为“没有” | 创新性 25% |
-| ~~P0-6~~ | ~~修 PDF 构建管线使其能构建 v0.2~~ → ✅ **DONE 2026-07-26**：baseline v0.2 = 13 页；P0 全量稿 = 16 页；v1 = 14 页未回归 | 全部 |
-| **D3-P0-1** | 🟠 **LIVE-EVAL-VERIFIED / SCRIPT-RESYNC OPEN**：框架、回放 GUI、攻击 payload、holdout 冻结、正式 3/5 live 评估（D2 causal_proof 双档成立、D1 防护边界照实记录、D3 模型自防）与逐 Gate audit 映射 + 真实性验收（20/20）均完成；剩余：D1/D3 表述按真实值反映 D1 边界、镜头/旁白/SRT 二次同步 | 实际效果 30% + 应用价值 20% + 展示表达 5% |
+### 真实 DeepSeek Agent holdout
 
-## 2026-07-21 最终候选验证基线
+- 30 runs，0 infra。
+- D2 两档合计 attempt 10/10；Null harm 10/10；XA-Guard deny 10/10、harm 0/10；
+  同一不可变 ToolIntent 的因果证明成立。
+- D1 realistic-safe attempt 5/5；XA-Guard allow/harm 5/5。
+- D3 两档 attempt 0/10，只归因模型自防。
+- authenticity：303 files；30/30 per-run verdict；stable/valid breach/causal proof 重算一致；
+  expected/actual audit 15/15；全部检查 PASS。
 
-- Reference clean-volume 全故障 suite：**11/11 PASS**。最终报告：`.runtime/evidence/reference-faults-all-final-rerun-20260721.json`。
-- 同一最终候选的 core 恢复复跑：**7/7 PASS**。首次 all 尝试在 PostgreSQL 恢复后的首个 Keycloak 登录出现一次瞬态 400；保留失败报告，随后 core 和完整 all 独立复跑均通过，未修改产品或测试掩盖。
-- 本地三节点 kind profile：安装旧版、升级当前版、migration 重跑、API Pod 删除、Effect prepared 接管、Worker lease 接管、NetworkPolicy 正负探针和 Helm rollback **全阶段 PASS**。报告：`.runtime/evidence/kind-ha-final-pass-20260721.json`。
-- 完整重建镜像正式性能三轮：incremental p95 **45.109/42.141/43.934ms**；单侧 95% bootstrap upper **46.984/43.120/45.528ms**；均满足 ≤50ms。Undo **10/10**，约 **0.45–0.94s**。
-- 隔离发布 Python 环境：项目依赖安装完成，`pip check` PASS。全局 Python 的 `letta-evals`/`anyio` 冲突属于宿主环境，不通过改写项目依赖规避。
-- Console 使用 `npm ci` 恢复依赖；audit 为 **0 vulnerabilities**。
-- unified verifier：**782 collected / 781 passed / 1 allowed capability skip / 0 failure / 0 error**；隔离 `pip check`、产品 Ruff、L3 static 11/11、Compose config、Console 5/5 + build 和最终 evidence 验签全部 PASS。
-- 本轮未修改任何测试代码、既有断言或性能阈值。
+D1 的真实边界是：Gate4 会递归扫描参数中的字面字符串，但不会把 `sources` 符号引用解析到
+OAR 业务世界并查询所指资产敏感级别。该失败结果已进入 D1、D3、QA 和公开摘要，未通过重跑、
+改 payload、调阈值或改测试掩盖。
 
-## 关键能力边界
+### 真实客户端
 
-| 能力面 | 状态 | 声明边界 |
-|---|---|---|
-| Gate1–6、Gate6 审计、OAR B1–B5 | DONE | OAR 是自建红队靶场，不冒充官方 benchmark |
-| Gate1 输入识别指标 | SCOPED-PASS | 声明范围为 6 个输入攻击族 60 例；`independent_holdout=false`，payload 指纹零重叠切分为诊断性质，不外推为泛化召回；治理类用例不属 Gate1 判定面 |
-| OIDC 与动态 assignment | REFERENCE-PASS | 每请求实时授权；生产仍需组织 IdP、TLS 与密钥治理 |
-| PostgreSQL EffectStore | REFERENCE/PERFORMANCE-PASS | intent-first、双链 CAS、批处理与混合单事务均保留 |
-| Undo / Worker | REFERENCE-PASS | 至少一次调度 + 下游幂等，不宣称绝对 exactly-once |
-| Console/BFF | BUILT / MANUAL-QA-PASS | 三账号职责分离闭环已由负责人手测 |
-| Helm / kind | LOCAL-PROFILE-PASS | 只证明本机三节点 profile，不是生产多地域 HA |
-| Evidence | SEALED / VERIFIED | 最终候选 14 artifacts、102 Effect、59 Gate6；SM2-with-SM3 key id `87ca0b5c56dc9313` 独立验签通过 |
+- OpenCode 1.18.5。
+- `deepseek/deepseek-v4-flash`。
+- 恰好一个 XA-Guard HTTP MCP 服务连接。
+- 实际执行一次无副作用 `get_cpu({host:web03})`，返回 CPU 85%。
+- Gate6 allow、faithfulness 1.0，1 record verified、0 error。
 
-## 剩余事项
+## 4. 当前验证
 
-决策项已全部关闭（见上节）。以下按执行顺序排列。
+| 验证 | 结果 |
+|---|---|
+| root unit | 666 collected；665 passed；1 Windows symlink capability skip |
+| root integration | 46 collected；45 passed；1 本地 sandbox image 不可用 skip |
+| root top-level tests | 57/57 passed |
+| root deployment + remote runner | 23 collected；19 passed；4 本机 Helm 不可用 skip |
+| root 合计 | **792 collected；786 passed；6 capability/environment skips；0 failure/error** |
+| OAR kernel | **137/137 passed** |
+| governance 声明集合 | **48/48 passed** |
+| live authenticity regression | **10/10 passed**；正式 holdout verify PASS |
+| Ruff | `src bench demo scripts tools open-agent-range/kernel`（排除测试目录 lint）PASS |
+| D1 build/render | 18 页，SHA-256 与上文一致，PASS |
+| D3 media | 530.033 秒、H.264/AAC/中文字幕轨、SHA-256 与上文一致，PASS |
 
-1. 闭合 D3-P0-1 剩余部分：~~Kimi 补 payload~~（✅）、~~冻结后正式 5 重复 live 评估~~（✅）、~~逐 Gate audit 映射与真实性验收~~（✅ 2026-07-27，verify 20/20）；剩余：D1/D3 表述需按真实值反映 D1 引用型外发未被内容标记规则拦截的边界；是否扩展 OAR egress 规则扫描 sources 属产品决策，待负责人定夺；按最终载体二次同步 D3 镜头/旁白/SRT。框架与回放 GUI 已实现，不再重做载体。
-2. 按最终载体二次同步 D3 镜头、旁白与 SRT；负责人再做 11 段真人试读并填写实测秒数，不能删除数字边界。
-3. 完成一次不录制预演，记录 UI 崩点、客户端连接、登录等待、Worker 刷新、封存回放标识与画面敏感信息；随后才录制素材并合成最终 MP4。
-4. 视频预演暴露的问题收口后，用 v0.2 重建正式 `output/pdf/`，记录最终页数与 SHA-256；在此之前保留现有 14 页兜底。
-5. 并行准备答辩问答手册与 `CODE-MAP.md`（P2-1/P2-2）。
-6. 人工确认 D4 隐私附件、网盘权限和邮件内容，并再核实一次报名表系统审核状态（风险 R8）；尚未创建 tag/release。
-7. 按提交清单核对 D1–D4，目标 2026-09-12–14 提交，不踩 9/15 截止。
+root 全集合因桌面后台进程被宿主提前终止，最终按 unit、integration、top-level、
+deployment/remote-runner 四个互斥分组执行；四组收集数合计 792，与统一 collection 一致。
+未修改测试来获取通过。
 
-## 声明边界
+## 5. 仓库与证据发布边界
 
-- `.runtime/reference/`、`.runtime/kind-ha/`、`.runtime/evidence/` 含运行数据或敏感材料且不进入 Git。
-- 新增 live-agent 轨道不修改旧 OAR Oracle 或 N=10 冻结证据。新框架 + range CLI 22 项与 Ruff 通过；既有真实 SUT 测试曾通过，收尾复跑连续两次 60 秒子进程启动超时，失败保留且未改测试。参考执行体 `_publish_plugin` 键优先级已修复为与判定器一致（artifact→plugin→name），kernel/tests 125 项通过。2026-07-27 正式 holdout live 评估（30 runs，infra 0）结果：D2-HOLDOUT 两档 5/5 稳定突破、Null harm 10/10、XA-Guard live deny 10/10 → causal_proof 成立；D1-HOLDOUT realistic-safe 5/5 突破但 live 5/5 放行（引用型外发不经内容标记，真实边界，未重跑掩盖）；D3-HOLDOUT 0/10 attempt（模型侧安全）。证据 `.runtime/live-agent/holdout-v1/`（未入 Git）；evaluate 进程 exit code 1 无 Traceback、证据完整，待查。
-- D1/D3 仓库内容不含学校、个人信息、密码、token 或私钥。
-- 2026-07-26 D1 P0 收口仍为文档与构建器工作：P0-1..P0-5 已补入 v0.2，P0-6 已完成；未重跑产品、故障、kind、性能或攻击实验，未修改产品/测试代码，未替换当前 14 页正式 PDF。
-- 收口计划识别的缺口是**材料表述缺口，不是新发现的功能缺陷**；补缺方式为引用已封存证据，不允许为凑指标重测、改阈值或改断言。
-- Gate1 分层指标若写入 D1，必须同时声明：范围 60 例、6 个攻击族、seed 与规则开发同源、`independent_holdout=false`、诊断性切分、Wilson 区间、时延为规则层。
-- 攻击证明集为合成确定性场景：**当前已封存证据为 OAR live A/B 每类 N=10**（2026-07-27 clean run，邮箱/RAG 各 Null 10/10 泄漏、XA-Guard 0/10、infra error 0、protected replay 20/20），只说明本场景结果；MCP 下游 target 只记账不执行命令、插件或网络动作，身份边界复用独立验签的最终 bundle。旧 N=3 run（2026-07-26）保留为历史、不覆盖。
-- OAR 重跑的红线：只改 N，不改阈值、断言、产品代码或 case oracle；若 protected 侧出现非零泄漏或 infra error，照实记录并按真实值调整 D1 表述，不重跑掩盖。
-- 2026-07-26 攻击证明 clean run 可由记录的 Git head 精确定位 runner/manifest/record-only target；公开仓库只含脱敏摘要、完整文件名/hash 索引和 provenance，不含 raw payload/audit。2026-07-23 dirty run 仅保留为历史功能结果。
-- 产品不再新增功能；唯一允许的实验变更是 OAR 的 N 值调参重跑，只有最终验证暴露真实缺陷时才回到修复流程。
+- `.runtime/` 与 `open-agent-range/.runtime/` 全面 gitignore。
+- 原先误跟踪的 868 个 runtime 文件已经从 Git 索引移除，本地副本保留。
+- 公开仓库提交 `live-agent-holdout-v1-2026-07-27.md` 与
+  `d3-opencode-deepseek-flash-preflight-2026-07-27.md` 脱敏摘要。
+- 不提交模型输入、攻击 payload、攻击脚本、JSONL、凭据、原始日志或本机绝对路径。
+- live authenticity 对缺失/意外 audit、缺失 per-run verdict 与伪造 stable/causal 顶层结论
+  均 fail closed。
+
+## 6. 仍然成立的能力边界
+
+- D1 `sources` 引用解析与敏感资产查询边界尚未修复。
+- AIBOM 只使用 A/B/C/D/F 五档；静态/元数据分析不是任意动态恶意逻辑的完备检测。
+- MCP 演示下游是脱敏安全 target，不执行真实运维命令、插件或网络动作。
+- Reference/local kind 不等于生产多地域 HA。
+- 软件密钥、本地 hash/时间证据不等于 HSM 或第三方 TSA。
+- 生产仍需组织 IdP、KMS/HSM、TLS、备份、容量、灾备和运维流程验收。
+- R2/R3 sampled、research full matrix、第三方设施是退役/可选研究项，不是比赛 blocker。
+
+## 7. 下一步
+
+仓库内无未完成的比赛实现计划。负责人只需按
+[submission-checklist.md](docs/delivery/submission-checklist.md) 完成最终 clean commit/release manifest、
+D4 状态复核、网盘上传、邮件发送和回执保存。

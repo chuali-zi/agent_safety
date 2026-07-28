@@ -1,5 +1,10 @@
 # Agent Governance 企业静态实现工作计划
 
+> 状态：**COMPLETE / ACCEPTANCE PASS**
+> 复验：2026-07-27，本文列出的 governance、MCP envelope、配置、Gate6 与 enterprise
+> 定向集合共 **48 passed**。
+> 边界保持不变：这是静态企业 IAM/RBAC/ABAC 参考实现，不声称已接入生产 SSO/LDAP/SCIM/HSM。
+
 ## 目标
 
 把 Agent Governance v1 从 demo registry 升级为静态企业 IAM/RBAC/ABAC 参考实现。当前阶段只要求理论上符合企业化，并能通过本地单元测试、MCP envelope 集成测试和审计字段验证。

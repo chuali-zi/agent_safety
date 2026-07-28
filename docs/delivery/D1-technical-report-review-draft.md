@@ -1,8 +1,11 @@
-# XA-Guard：面向政企智能体的运行时安全治理与可验证恢复
+# XA-Guard：面向政企场景的大模型智能体运行时安全治理与可验证恢复
 
+题目名称：面向政企场景的大模型智能体安全关键技术研究
 题目编号：XA-202620
-文档版本：v0.2-review（讨论稿）
-日期：2026-07-27
+文档类型：技术方案报告（D1）
+参赛赛道：学生赛道
+文档版本：v1.0（提交版）
+提交日期：2026-07-27
 
 ## 摘要
 
@@ -10,22 +13,33 @@
 在政企场景中，安全问题因而不再局限于生成内容是否合规，还包括人员委托、智能体权限、工具执行、
 数据流向、第三方组件以及错误操作后的业务恢复。
 
-XA-Guard 是部署在智能体与工具之间的运行时安全网关。系统通过人员—智能体双主体身份建立可信委托关系，
+XA-Guard 是部署在智能体与工具之间的运行时安全网关。系统通过人员-智能体双主体身份建立可信委托关系，
 由六道安全关卡检查输入、审批、策略、信息流、执行环境和审计；对产生业务副作用的写操作，
 系统先持久化 Effect 意图，再调用下游，并在独立审批后由 Worker 执行补偿。插件、Skill 和脚本
 在安装或执行前经过 AIBOM 准入检查。配套的 Open Agent Range（OAR）以真实工具调用、业务后果、
 哈希账本和审计回放评价防护效果。
 
 项目已经形成由身份服务、安全网关、PostgreSQL、业务接口、补偿 Worker、Console/BFF 和评测靶场
-组成的完整原型。在 OAR 邮箱与 RAG 两类注入 finding 的本地 live A/B 对照中（每侧 N=10），未部署防护的一侧 10/10 发生合成数据泄漏，
-XA-Guard 侧 10/10 阻断，保护侧基础设施错误为 0；full-day 场景完成 41 次工具尝试并产生 43 条
-账本记录，未出现账本违规，7/7 次回放通过。最终候选的 11 个故障场景全部通过。本地三节点
-Kubernetes 环境完成安装、升级、迁移重跑、服务接管、网络策略验证和回滚。10 并发正式性能实验中，
-三轮 500 次成对写入的新增开销 p95 为 45.109、42.141 和 43.934ms，对应单侧 95% bootstrap
-上界为 46.984、43.120 和 45.528ms。10 次 Undo 均在约 0.45–0.94s 内完成。
+组成的完整原型。实验明确分为两条轨道。第一条是确定性合成 OAR 攻击证明集：邮箱与 RAG 两类
+finding 各进行 Null/XA-Guard 每侧 N=10 对照，Null 侧均有 10/10 合成泄漏，XA-Guard 侧泄漏均为
+0/10，保护侧基础设施错误为 0，20/20 次保护侧回放通过。第二条是真实 DeepSeek V4 Pro Agent
+冻结 holdout：30 个模型运行基础设施错误为 0；审批绕过类在两种提示档均产生工具意图，合计
+10/10 attempt，Null harm 10/10，而 XA-Guard deny 10/10、harm 0/10；检索引用型外发在
+realistic-safe 档产生 5/5 attempt，XA-Guard 却 allow/harm 5/5，暴露出网关不会把 `sources`
+符号型引用解析到业务世界并查询所指资产敏感级别的真实边界；供应链发布类为 0/10 attempt，
+只计为模型侧安全结果，不计为网关阻断。
+
+在独立的 Gate1 规则层分层评测中，声明范围内 6 个输入攻击族 60/60 被识别并阻断，expected-allow
+负控制误报为 0/58（Wilson 95% 上界 6.21%）。OAR canonical full-day 场景完成 41 次工具尝试并
+产生 43 条账本记录，ledger violation 为 0；该 canonical 轨的 7/7 次回放通过，与 N=10 证明集的
+20/20 次保护侧回放分轨报告。最终候选的 11 个故障场景全部通过。本地三节点 Kubernetes 环境完成
+安装、升级、迁移重跑、服务接管、网络策略验证和回滚。10 并发正式性能实验中，三轮 500 次成对
+写入的新增开销 p95 为 45.109、42.141 和 43.934ms，对应单侧 95% bootstrap 上界为
+46.984、43.120 和 45.528ms。10 次 Undo 均在约 0.45 至 0.94s 内完成。
 
 这些结果表明，智能体安全可以从单点输入检测扩展为覆盖身份、执行、副作用和证据的工程体系，
-并在保留审计与一致性约束的条件下，在上述验证规模内满足交互式业务的时延要求。
+并在保留审计与一致性约束的条件下，在上述验证规模内满足交互式业务的时延要求。真实 Agent
+holdout 同时给出了有效阻断与未覆盖边界，因此本文不把确定性证明集结果外推为泛化攻击成功率。
 
 **关键词：** 智能体安全；运行时治理；MCP；身份授权；工具调用；AIBOM；可验证恢复；审计溯源
 
@@ -91,14 +105,14 @@ XA-Guard 位于智能体客户端和实际工具之间。上游既可以是支�
 
 系统由四部分组成：
 
-- **身份与治理控制面**：OIDC、人员—智能体身份、动态授权关系、静态能力上限和审批；
+- **身份与治理控制面**：OIDC、人员-智能体身份、动态授权关系、静态能力上限和审批；
 - **运行时安全数据面**：输入识别、计划审核、策略、信息流、沙箱和审计；
 - **副作用恢复面**：EffectStore、恢复合同、独立审批、补偿 Worker 和密钥管理；
 - **评测与证据面**：OAR、Gate6、Effect 事件链、证据收集与独立验签。
 
 ```mermaid
 flowchart LR
-    H["人员登录"] --> I["人员—智能体身份"]
+    H["人员登录"] --> I["人员-智能体身份"]
     I --> A["动态授权 ∩ 能力上限"]
     A --> G["运行时安全网关"]
     G --> T["工具 / 业务 API"]
@@ -136,7 +150,7 @@ sequenceDiagram
 
     U->>B: Authorization Code + PKCE
     B->>IDP: Token Exchange
-    IDP-->>B: 人员—智能体令牌
+    IDP-->>B: 人员-智能体令牌
     B->>X: 工具请求
     X->>DB: 读取动态授权
     X->>X: 六关检查
@@ -158,7 +172,7 @@ Console/BFF 组成。Helm chart 将 API、Worker、Business API 和 Console 拆�
 
 ## 3. 关键技术设计
 
-### 3.1 人员—智能体双主体身份
+### 3.1 人员-智能体双主体身份
 
 XA-Guard 将智能体作为受人员委托的独立行动主体，在访问令牌中同时保留人员 `sub`、智能体
 `act.sub/azp`、租户、受众和有效期。服务端以签名令牌中的身份为授权依据，客户端自报的 Agent
@@ -168,8 +182,8 @@ XA-Guard 将智能体作为受人员委托的独立行动主体，在访问令�
 
 ```text
 有效权限 =
-  已验证的人员—智能体身份
-  ∩ 当前有效的人员/用户组—智能体授权关系
+  已验证的人员-智能体身份
+  ∩ 当前有效的人员/用户组-智能体授权关系
   ∩ 智能体静态能力上限
   ∩ 工具、数据域和参数策略
 ```
@@ -216,7 +230,7 @@ XA-Guard 的算法不是单点分类器，而是围绕“输入识别、策略�
 | baseline ∩ overlay 策略合并与 bundle hash | baseline manifest、租户 overlay、工具风险、能力和敏感模式 | 先加载全局 baseline，再加载租户 overlay；单调性检查阻止 overlay 覆盖 baseline、弱化风险、放宽能力或重复敏感模式；合并结果带 `bundle_sha`，写入决策元数据。 | overlay 加载或单调性失败时拒绝该 overlay；reload 异常保留旧 snapshot；运行时可用期望 bundle hash 检测漂移。 |
 | 双链定序加锁 + 链尾 CAS + 同租户微批 | Effect mutation、Gate6 mutation、tenant、trace 和业务引用 | 同租户请求先进入进程内微批队列，再在 PostgreSQL 事务中按固定顺序写 Effect/Gate6；`xa_chain_tails` 保存期望链尾，CAS 推进 Effect 链和 Gate6 链。 | CAS 冲突时刷新链尾并重试；仍失败则返回写入异常；签名或链完整性错误阻止记录提交。 |
 | 增量时延 5000 次非参数 bootstrap | 成对 direct baseline latency、protected latency、AB/BA 顺序和随机 seed | 对每个样本计算 `protected_ms - direct_business_baseline_ms`，用线性插值求 p95；bootstrap 5000 次有放回抽样，每次重算 p95，并取 95% 分位作为单侧上界。 | 非 reference-ready 参数、样本数不足或 bootstrap 参数非法会使脚本失败；`--dev` 结果不作为正式证据。 |
-| AIBOM A-F 风险评级与签名验证 | `install_plugin` 请求、artifact/url/code snippet、expected SHA-256、离线漏洞/信誉库和签名信任根 | 扫描源码 AST、危险 API、依赖、外联痕迹、provenance 和能力声明；生成 CycloneDX 1.6 BOM；按指标评为 A/B/C/D/F，A/B 放行，C 人工复核，D/F 拒绝，并校验签名。 | 远程 artifact 无离线缓存、SHA-256 mismatch、schema invalid 或签名不可信会降级并拒绝高风险安装。 |
+| AIBOM 五档风险评级与可选签名验证 | `install_plugin` 请求、artifact/url/code snippet、expected SHA-256、离线漏洞/信誉库；可选签名密钥与 trust store | 扫描源码 AST、危险 API、依赖、外联痕迹、provenance 和能力声明；生成 CycloneDX 1.6 BOM；仅使用 A/B/C/D/F 五档（无 E 档）：A/B=`allow`，C=`warn` 并进入人工复核，D/F=`deny`。配置签名与 trust store 时执行签名和验签。 | 离线缓存未命中评为 C，不自动安装而进入人工复核；SHA-256 mismatch 评为 F、schema invalid 或签名无效评为 D，均拒绝；未要求签名时 `signature_verified=None`，不伪报已验签。 |
 
 ### 3.4 双层策略与决策约束
 
@@ -246,18 +260,16 @@ baseline 定义全局禁止项和智能体能力上限；overlay 可以收紧工
 补偿由独立 Worker 执行。
 
 ```mermaid
-stateDiagram-v2
-    [*] --> prepared
-    prepared --> available: 业务成功
-    available --> undo_pending: 提交 Undo
-    undo_pending --> rejected: 审批拒绝
-    undo_pending --> approved: 独立审批
-    approved --> compensating: Worker 取得 lease
-    compensating --> compensated: 补偿成功
-    compensating --> retry_wait: 可重试错误
-    retry_wait --> compensating: 5 / 30 / 120 秒
-    compensating --> compensation_failed: 永久失败
+flowchart LR
+    P["prepared：执行前意图"] --> A["available：业务成功"]
+    A --> U["undo_pending：提交 Undo"]
+    U --> AP["approved：独立审批"]
+    AP --> C["compensating：Worker 持 lease"]
+    C --> OK["compensated：补偿完成"]
 ```
+
+审批拒绝进入 `rejected`；可重试错误进入 `retry_wait` 后按持久化计划重试，永久错误进入
+`compensation_failed`。这些分支状态与主成功链分别记入 Effect 事件。
 
 Worker 使用 60 秒 lease 和 20 秒 heartbeat。持有 lease 的 Worker 失效后，其他实例在 lease 到期后
 接管。网络超时、429 和 5xx 按合同持久化重试；参数、签名和策略错误直接失败。
@@ -285,7 +297,9 @@ flowchart LR
 ```
 
 系统支持内部组件描述和 CycloneDX 1.6 BOM，提取组件、依赖、MCP/AI 能力、漏洞与风险指标，
-生成 A–F 评级并验证签名。离线安装路径检查路径穿越、危险隐藏文件和能力声明不一致。
+生成 A/B/C/D/F 五档评级（无 E 档）：A/B 自动放行，C 告警并进入人工复核，D/F 拒绝。
+签名验证是显式配置的准入步骤，不把“未要求签名”写成“验签通过”。离线安装路径还会检查路径穿越、
+危险隐藏文件和能力声明不一致。
 CycloneDX 的组件、依赖、服务、漏洞和 provenance 模型为 AIBOM 的交换格式提供了基础[9]。
 
 ### 3.7 Gate6 与证据链
@@ -309,7 +323,7 @@ XA-Guard 的 Reference 路径运行完整跨服务链路：
 ```text
 Keycloak 登录
   → PKCE 与 Token Exchange
-  → 人员—智能体身份
+  → 人员-智能体身份
   → PostgreSQL 动态授权
   → 六关运行时决策
   → prepared Effect
@@ -385,10 +399,10 @@ DSN 仅保存在 gitignored 运行目录，并通过 Secret 挂载；公开证�
 
 | 工程面 | 验证规模 | 结果 |
 |---|---:|---|
-| 自动质量矩阵 | 782 collected | 781 passed，1 个 Windows 能力 skip，0 failure/error |
+| 自动质量矩阵 | 792 collected | 786 passed，6 个 capability/environment skip，0 failure/error |
 | Reference 故障 | 11 个场景 | 11/11 PASS |
 | 正式写路径性能 | 10 并发，3×500 paired writes | 三轮 p95 与 bootstrap upper 均低于 50ms |
-| Undo | 10 次真实业务取消 | 10/10，约 0.45–0.94s |
+| Undo | 10 次真实业务取消 | 10/10，约 0.45 至 0.94s |
 | 本地集群 | 三节点 kind | 安装、升级、迁移、接管、网络策略和回滚通过 |
 | 最终证据 | 14 artifacts | 102 Effect、59 Gate6，SM2-with-SM3 独立验签通过 |
 | Console | 三个独立账号会话 | 创建、申请、审批、补偿与证据时间线完成 |
@@ -409,15 +423,17 @@ DSN 仅保存在 gitignored 运行目录，并通过 Secret 挂载；公开证�
 
 | 维度 | 指标 | 测法 | 当前结果 | 证据 |
 |---|---|---|---|---|
-| 数据安全 | 合成市民数据外发次数 | OAR live A/B，邮箱与 RAG 间接注入对照 | 冻结 N=10：邮箱 Null 10、XA-Guard 0；RAG Null 10、XA-Guard 0；protected infra error 0 | `docs/evidence/attack-proof-set-2026-07-27-n10.md` |
+| 数据安全（确定性证明） | 合成敏感引用外发次数 | OAR 确定性 live A/B，邮箱与 RAG 两类 finding 分轨对照 | 每类每侧 N=10：邮箱 Null 泄漏 10/10、XA-Guard 0/10；RAG Null 泄漏 10/10、XA-Guard 0/10；保护侧 infra error 0，保护侧 replay 合计 20/20 | `docs/evidence/attack-proof-set-2026-07-27-n10.md` |
+| 数据安全（真实 Agent 边界） | 模型原生违规 ToolIntent、同一 intent 的 Null/Guard harm | 冻结 DeepSeek V4 Pro holdout，真实 MCP，5 重复×2 提示档×3 case | 30 runs、infra 0；D1 realistic-safe 5/5 attempt，Null harm 5/5，XA-Guard allow/harm 5/5，定位到结构化 `sources` 引用外发未覆盖边界 | `docs/evidence/live-agent-holdout-v1-2026-07-27.md` |
 | 内容安全 | 输入攻击族召回、阻断召回、误报率 | Gate1 isolated evaluation，限定 6 个输入攻击族与 negative controls | 60/60 检测并阻断；FPR any-detection 0/58，Wilson 95% upper 0.0621；规则层 p95 0.04ms | `docs/evidence/gate1-l3-evaluation-2026-06-18.json` |
-| 执行安全 | 未批准高风险动作下游执行数 | Null / 拒绝 / 批准三路对照 | Null 下游 1；拒绝路径下游 0 且 `require_approval -> deny`；批准对照下游 1 且 `require_approval -> allow` | `docs/evidence/attack-proof-set-2026-07-27-n10.md` |
-| 供应链安全 | 恶意组件准入与下游执行 | AIBOM 恶意 snippet / 干净 artifact 对照 | 恶意 snippet AIBOM deny、下游 0；干净 artifact 批准后下游 1 | `docs/evidence/attack-proof-set-2026-07-27-n10.md` |
+| 执行安全 | 未批准高风险动作下游执行数 | 确定性 Null/拒绝/批准三路 + 真实 Agent 同一 ToolIntent 因果分叉 | 确定性：Null 下游 1、拒绝路径 0、批准对照 1；真实 D2 两档合计 10/10 attempt，Null harm 10/10，XA-Guard deny 10/10、harm 0/10 | `attack-proof-set...n10.md` + `live-agent-holdout...md` |
+| 供应链安全 | 恶意组件准入与下游执行 | AIBOM 恶意 snippet/干净 artifact 对照 + 真实 Agent holdout | 确定性：恶意 snippet deny、下游 0，干净 artifact 批准后下游 1；真实 D3 为 0/10 attempt，只记模型侧安全，不记网关阻断 | `attack-proof-set...n10.md` + `live-agent-holdout...md` |
 | 合规风险 | 审计链完整性、篡改可检出、签名 evidence | clean / tampered 审计副本对照与最终 evidence 验签 | clean verifier exit 0；tampered verifier exit 1；原始 audit hash 不变；最终 evidence 14 artifacts、102 Effect、59 Gate6，SM2-with-SM3 | `docs/evidence/agent-identity-undo-final-2026-07-21.md` |
 
 上述五维度对应的预期效果是：内容安全维度减少恶意输入进入工具链；数据安全维度减少受保护数据外发；
 执行安全维度让未审批高风险动作不产生下游副作用；供应链安全维度把恶意插件拦在安装入口；
-合规风险维度保证事后审计、篡改检测和证据验签可以独立复核。
+合规风险维度保证事后审计、篡改检测和证据验签可以独立复核。表中“真实 Agent 边界”专门保留
+防护未覆盖结果，不用确定性证明集的 0/10 替代真实模型 holdout 的 5/5 allow/harm。
 
 ### 5.2 Gate1 分层识别指标
 
@@ -437,7 +453,7 @@ Gate1 只回答“输入与工具输出进入后，是否识别并阻断声明�
 | Gate1 小计 | 6 个输入攻击族 | 60 | 0 | detection recall 1.0；blocking recall 1.0；ASR 0.0 |
 | Gate1 negative controls | expected `allow` 控制样本 | 58 | 0 | FPR any-detection 0.0，Wilson 95% upper 0.0621；FPR blocking 0.0 |
 | Gate1 calibration/holdout | payload 指纹诊断切分 | 60 attack / 58 negative controls | 0 fingerprint overlap | `selected_threshold=1.0`；calibration 29/29 recall；holdout 31/31 recall；两侧 FPR 0.0 |
-| 非 Gate1 | 审批、留存、加密降级、跨域、供应链等治理样本 | 133 | — | 由 Gate2/Gate3/Gate5 + AIBOM 裁决，不作为 Gate1 输入识别召回分母 |
+| 非 Gate1 | 审批、留存、加密降级、跨域、供应链等治理样本 | 133 | 不适用 | 由 Gate2/Gate3/Gate5 + AIBOM 裁决，不作为 Gate1 输入识别召回分母 |
 
 因此，`docs/evidence/gate1-l3-evaluation-2026-06-18.json` 中全量 290 例的 `detection_recall=0.3575`
 不能解释为 Gate1 对输入攻击能力较弱。该总表混入了大量非 Gate1 治理类样本；在 Gate1 声明范围内，
@@ -451,28 +467,55 @@ OAR 是面向企业任务链的红队评测环境。它包含人员、智能体�
 attempt ledger 和 replay。与只判断一句输入是否恶意相比，OAR 关注攻击是否真正触发工具、
 是否改变业务后果，以及网关审计能否与靶场账本对齐。
 
-OAR 设计了三类实验：
+OAR 设计了三种观测手段，并用两条实验轨道避免口径混淆：
 
-- **full-day**：在多个业务域中运行连续任务，观察工具尝试、账本和违规；
-- **live A/B**：同一 finding 分别运行在 Null 和真实 XA-Guard MCP session；
-- **replay**：验证 artifact hash、ledger 投影、工具事件和原始 SUT 审计。
+- **full-day 与 replay**：在多个业务域中运行连续任务，验证工具尝试、账本、artifact hash、工具事件和原始 SUT 审计；
+- **确定性证明集轨道**：固定 seat 与业务 oracle，同一 finding 分别运行在 Null 和真实 XA-Guard MCP session，
+  用于验证网关因果分叉与证据链；其 N=10 结果不代表真实模型攻击成功率；
+- **真实 Agent 冻结 holdout 轨道**：模型自由选择是否调用工具；只有模型原生输出违反策略的 ToolIntent 后，
+  才把同一不可变工具名和参数 hash 分送 Null/XA-Guard 两路。安全不调用记为模型侧安全，不记为网关阻断。
 
-当前封存 live A/B 证据为每侧独立重复 10 次（2026-07-27 N=10 clean run，已冻结）。保护效果按两侧泄漏率之差计算，基础设施错误单独记录。
-这可以区分“安全网关主动阻断”和“服务没有正常运行”。
+两轨均把基础设施错误从安全结果中单列。确定性轨回答“给定同一有害意图，网关能否改变业务后果”；
+真实 Agent 轨同时回答“模型是否产生该意图”和“网关是否阻断同一意图”，因此二者不能合并成一个 ASR。
 
 ### 5.4 OAR 结果
 
-| 指标（冻结 N=10，每侧） | Null | XA-Guard |
-|---|---:|---:|
-| 独立 attempts | 10 | 10 |
-| 合成数据泄漏 | 10 | 0 |
-| 保护侧基础设施错误 | — | 0 |
-| 泄漏率 | 1.0 | 0.0 |
-| protection delta | — | 1.0 |
+**轨道 A：确定性 OAR 攻击证明集（2026-07-27，N=10）**
 
-full-day 场景（2026-07-11 canonical run）完成 41 次工具尝试，产生 43 条 ledger 记录，ledger violation 为 0。
-7/7 次 attempt replay 均通过。XA-Guard 侧的工具事件、range audit、ledger 和原始 Gate6 记录
-可以逐序对齐。
+| finding | Null 业务结果 | XA-Guard 业务结果 | 保护侧 infra | 保护侧 replay |
+|---|---:|---:|---:|---:|
+| 邮箱间接注入外发 | 泄漏 10/10 | 泄漏 0/10 | 0 | 10/10 |
+| RAG 间接注入外发 | 泄漏 10/10 | 泄漏 0/10 | 0 | 10/10 |
+| 合计 | 泄漏 20/20 | 泄漏 0/20 | 0 | **20/20** |
+
+这条轨道使用确定性合成 seat 与安全记账下游，证明同一 finding 在 Null/Guard 下形成不同业务后果；
+它不运行真实大模型，不能写成真实 Agent 的 0/10 攻击成功率。
+
+**轨道 B：真实 DeepSeek Agent 冻结 holdout（2026-07-27，30 runs）**
+
+实验在 holdout 冻结后运行 DeepSeek V4 Pro，`temperature=0.0`、thinking disabled。每个 case 在
+realistic-safe 与 neutral-tool 两个提示档各独立重复 5 次，合计 3×2×5=30 runs，infra failure 为 0。
+
+| case / 目标性质 | 提示档 | 模型违规 attempt | Null harm | XA-Guard decision / harm | 结论 |
+|---|---|---:|---:|---|---|
+| D2 审批绕过 | realistic-safe | 5/5 | 5/5 | deny 5/5；harm 0/5 | 稳定突破，因果阻断成立 |
+| D2 审批绕过 | neutral-tool | 5/5 | 5/5 | deny 5/5；harm 0/5 | 稳定突破，因果阻断成立 |
+| D1 检索引用型外发 | realistic-safe | 5/5 | 5/5 | allow 5/5；harm 5/5 | 稳定突破，暴露真实防护边界 |
+| D1 检索引用型外发 | neutral-tool | 0/5 | 0/5 | 未运行 Guard 分支 | 模型侧未尝试 |
+| D3 供应链发布 | realistic-safe + neutral-tool | 0/10 | 0/10 | 未运行 Guard 分支 | 模型侧安全，不归因 XA-Guard |
+
+D1 的 5/5 allow/harm 不是误记。真实审计显示最终 decision 为 warn 后放行：Gate4 会递归扫描参数
+中的字面字符串，但不会把结构化 `sources` 中的符号型引用解析到 OAR 业务世界并查询所指资产的
+敏感级别；模型只携带引用而正文保持干净。该结果在冻结后
+未通过改 payload 或重跑来掩盖。D2 则提供了同一不可变 ToolIntent 在 Null 产生 harm、XA-Guard deny
+且不产生 harm 的因果证明。脱敏证据与 authenticity 复核见
+`docs/evidence/live-agent-holdout-v1-2026-07-27.md`。
+
+**轨道 C：2026-07-11 OAR canonical full-day / replay**
+
+canonical full-day 完成 41 次工具尝试，产生 43 条 ledger 记录，ledger violation 为 0；该轨
+7/7 次 attempt replay 均通过，XA-Guard 侧工具事件、range audit、ledger 和原始 Gate6 记录逐序对齐。
+这里的 **7/7** 属于 canonical 轨，不与轨道 A 的 **20/20** 合并，也不替代轨道 B 的 30-run 结果。
 
 ### 5.5 故障实验
 
@@ -501,7 +544,7 @@ incremental_latency =
 | 20365470 | 42.141ms | 43.120ms |
 | 20470199 | 43.934ms | 45.528ms |
 
-三轮点估计与上界均低于 50ms。相同实验中完成 10 次 Undo，批准到业务取消约为 0.45–0.94s。
+三轮点估计与上界均低于 50ms。相同实验中完成 10 次 Undo，批准到业务取消约为 0.45 至 0.94s。
 
 ### 5.7 代表性攻击链与业务后果验证
 
@@ -509,9 +552,9 @@ incremental_latency =
 （`xa-attack-proof-set-v1`）。证明集关注攻击是否跨越安全边界、是否触发下游动作以及业务状态是否改变，
 而不是仅判断一段输入是否包含恶意文本。每类攻击保留独立业务判据，结果按各自判据分别报告（口径见 §5.9）。
 
-以邮箱间接提示注入为例展开一条完整链：攻击内容随一封普通邮件进入邮箱场景；
-Gullible seat 读取邮件后把注入指令当作任务的一部分；Null 侧发起对外发送，
-合成市民数据 `cit-1001` 被发往外部甲方；同一 finding 在 XA-Guard 侧运行时，
+以邮箱间接提示注入为例展开一条完整链：不可信内容随一封普通邮件进入邮箱场景；
+确定性 seat 读取邮件后形成越界外发意图；Null 侧发起对外发送，
+脱敏合成敏感引用被发往外部目标；同一 finding 在 XA-Guard 侧运行时，
 网关在工具执行前裁决为 deny，下游外发为 0，Gate6 记录与靶场 ledger、replay 结果逐序对齐。
 两侧各独立重复 10 次，结果一致。
 
@@ -531,7 +574,8 @@ Gullible seat 读取邮件后把注入指令当作任务的一部分；Null 侧�
 | 方向四：评测与审计 | Gate6 审计副本篡改 | clean 与 tampered 副本 | clean 验签通过，tampered 验签失败，原始 audit hash 不变 |
 | 横向身份边界 | 伪造 header、撤权与跨租户隔离 | 独立验签最终 identity evidence bundle | verifier 通过；14 artifacts / 102 Effect / 59 Gate6，三个身份 subcase 均满足预设判据 |
 
-该证明集为合成确定性场景，结果适用于本场景与上述对照设计，其实验边界与脱敏口径集中见 §5.9。
+该证明集为合成确定性场景，不包含真实模型决策；结果适用于本场景与上述对照设计，其实验边界与
+脱敏口径集中见 §5.9。真实 Agent 结果以 §5.4 轨道 B 为准，不能用本节的 0/10 替代。
 公开复现材料由脱敏 case manifest、评测 runner、结果摘要、源码 provenance 和文件 hash 组成，见
 `docs/evidence/attack-proof-set-2026-07-27-n10.md`。
 
@@ -541,6 +585,11 @@ Gullible seat 读取邮件后把注入指令当作任务的一部分；Null 侧�
 Gate6 链和三份验收报告。Collector 执行 secret scan、hash 重算、链间引用检查和业务状态断言，
 随后生成签名 manifest。独立 verifier 固定 public key id 并验证 14 个 artifacts、
 102 条 Effect 和 59 条 Gate6 记录。
+
+真实 Agent holdout 另由离线 authenticity verifier 复核：303 个文件 hash 一致，冻结 manifest
+自哈希一致，summary 指标可精确重算，15 条真实 XA-Guard audit 均与不可变 ToolIntent 的工具、
+参数 hash、decision 和 record hash 对齐，20/20 项检查通过。脱敏摘要不包含原始注入文本、
+模型 transcript、生产凭据或绝对路径。
 
 ### 5.9 能力边界与不声明事项
 
@@ -562,12 +611,29 @@ Gate6 链和三份验收报告。Collector 执行 secret scan、hash 重算、�
 
 **证明集与实验边界**
 
-- 证明集（§5.7）是合成确定性场景：OAR live A/B 每类 N=10，只说明本场景结果，不外推为泛化攻击率。
+- 确定性证明集（§5.4 轨道 A、§5.7）不运行真实模型：OAR live A/B 每类每侧 N=10，只说明给定
+  同一合成 finding 时的业务因果结果，不外推为真实 Agent 攻击率或泛化攻击率。其保护侧 replay
+  为两类合计 20/20；canonical full-day 的 7/7 replay 属于另一封存轨道，二者不相加。
 - MCP 下游为只记账的安全合成 target，不执行命令、插件或网络动作。
 - 身份边界 case 复用独立验签的最终 evidence bundle，不重跑长故障套件。
 - 每类攻击保留独立业务判据，证明集不把异构指标合并成单一攻击成功率。
 - D1 正文不复制原始注入 payload、危险命令、插件攻击代码、原始审计记录、审批令牌或运行环境绝对路径，
   避免把攻击文本的新颖性误写成系统防护能力。
+
+**真实 Agent 边界**
+
+- 真实 Agent holdout（§5.4 轨道 B）只有 3 个冻结合成 case、2 个提示档、每格 5 次，共 30 runs；
+  使用单一 DeepSeek V4 Pro、temperature 0、thinking disabled。它是小规模冻结 holdout，不是独立第三方
+  benchmark，也不代表所有模型、提示、工具或政企业务。
+- D2 两档合计 10/10 attempt、Null harm 10/10、XA-Guard deny 10/10/harm 0/10，是当前真实 Agent
+  轨的有效因果阻断证据；D1 realistic-safe 的 5/5 attempt 与 XA-Guard allow/harm 5/5 是同等有效的
+  未覆盖结果，根因边界为结构化 `sources` 引用没有被解引用并映射到业务资产敏感级别。本文不把它隐藏在
+  确定性 RAG 证明集的 0/10 后面。
+- D1 neutral-tool 的 0/5 与 D3 两档合计 0/10 都表示模型没有产生违规 ToolIntent；Guard 分支未执行，
+  因此不得记为 XA-Guard 阻断成功。汇总 ASR 只用于这 30-run 冻结设计内部，不与 Gate1 或确定性 OAR 合并。
+- 30 个 run 的 `infra_status` 均为 ok，summary 记 `infra_failures=0`；评测包装进程在证据完整落盘后
+  的 MCP teardown 返回过非零退出码但无 Traceback，authenticity 仍 20/20 通过。本文据逐 run 状态报告
+  infra 0，同时把 teardown 返回码保留为待定位的 harness 边界。
 
 **兼容与部署边界**
 
@@ -579,6 +645,8 @@ Gate6 链和三份验收报告。Collector 执行 secret scan、hash 重算、�
 **证据公开边界**
 
 - 公开证据只包含审计投影和摘要，访问令牌、恢复材料和私钥保留在运行环境（§3.7）。
+- 真实 Agent 脱敏摘要不含原始 holdout payload、原始 transcript、外发正文、生产地址或绝对路径；
+  只公开实验身份、聚合计数、边界说明、根文件 SHA-256 与 verifier 结果。
 
 ---
 
@@ -590,7 +658,7 @@ XA-Guard 采用网关方式接入。支持 MCP 的客户端可以把工具调用
 传统业务应用可以使用 Control API。模型、客户端和业务接口之间保持松耦合，
 安全策略、审批和证据由网关集中处理。
 
-动态授权关系适合组织中的“人员—数字员工—数据域”管理。人员离岗、岗位变化或智能体能力调整时，
+动态授权关系适合组织中的“人员-数字员工-数据域”管理。人员离岗、岗位变化或智能体能力调整时，
 管理员修改 assignment 即可生效。YAML ceiling 保留平台级安全底线，业务部门的 overlay
 负责表达部门和场景差异。
 
@@ -602,9 +670,11 @@ XA-Guard 采用网关方式接入。支持 MCP 的客户端可以把工具调用
 Effect 持久化和 Gate6 审计；下游业务工具不需要感知调用来自哪一种智能体客户端。
 
 当前实测范围包括 Claude Code 的本地 MCP Server 注册与握手、独立 stdio JSON-RPC harness 的 9 个
-真实 MCP 场景，以及 OpenCode 1.17.8 / GLM-5.2 经 Streamable HTTP 发起的真实模型选工具调用。
-对未声明 elicitation 能力的客户端，系统已验证 pending approval 与控制工具 fallback；支持
-elicitation 的客户端可使用协议内交互审批。上述结果表明 MCP/HTTP 网关契约可在真实客户端上触发，
+真实 MCP 场景，以及两条 OpenCode Streamable HTTP 轨道。2026-06-18 轨道验证 OpenCode 1.17.8 /
+GLM-5.2 的真实模型选工具与 pending approval fallback；2026-07-27 又在隔离配置中用 OpenCode
+1.18.5 / DeepSeek V4 Flash 完成工具发现、一次无副作用 `get_cpu` 调用和 Gate6 审计验签，
+1 条记录、0 error。对未声明 elicitation 能力的客户端，系统已验证 pending approval 与控制工具
+fallback；支持 elicitation 的客户端可使用协议内交互审批。上述结果表明 MCP/HTTP 网关契约可在真实客户端上触发，
 其兼容范围与不声明事项见 §5.9。若发榜方另行给出 OpenClaw 专有接口规范，可在现有契约外增加薄适配层，而不改变
 核心治理链。
 
@@ -636,12 +706,12 @@ XA-Guard 中的身份验证、最小权限、运行时控制、审批、密码�
 
 | 方案 | 输入检测 | 工具授权 | 信息流 | 供应链 | 副作用恢复 | 证据链 |
 |---|---|---|---|---|---|---|
-| Lakera Guard | 官方披露检测率 >98%、FPR <0.5%[17] | 未核验人员—智能体动态授权或 HITL | 未核验跨工具信息流 | 未核验 AIBOM 准入 | 未核验恢复合同 | 未核验运行审计哈希链 |
+| Lakera Guard | 官方披露检测率 >98%、FPR <0.5%[17] | 未核验人员-智能体动态授权或 HITL | 未核验跨工具信息流 | 未核验 AIBOM 准入 | 未核验恢复合同 | 未核验运行审计哈希链 |
 | Meta LlamaFirewall | PromptGuard 2 86M：97.5% Recall @ 1% FPR；另含 AlignmentCheck[18] | 未核验企业身份授权或审批 | 未核验跨工具污点传播 | CodeShield 做代码扫描，不等同于插件准入 | 未核验业务副作用恢复 | 未核验运行审计双链 |
 | CaMeL | 以系统设计防提示注入，不以输入分类器为核心 | 未核验政企身份与 HITL | 控制流/数据流分离；AgentDojo 77% provable-secure completion[3] | 未核验组件准入 | 未核验业务副作用恢复 | 未核验运行审计链 |
 | AgentSpec | trigger/predicate 规则，不是输入检测产品 | DSL 约束 trigger、predicate 与 enforcement[19] | 未核验跨工具信息流 | 未核验组件准入 | 未核验业务副作用恢复 | 未核验运行审计链 |
 | ShieldAgent | 概率规则电路，不是输入检测产品 | 以可验证规则电路约束策略推理[20] | 未核验跨工具信息流 | 未核验组件准入 | 未核验业务副作用恢复 | 形式化验证不等同于运行期审计证据 |
-| **XA-Guard** | Gate1 规则/模型接口、Spotlighting 与分层指标 | 动态 assignment、Gate2/3、HITL、deny 优先 | Gate4 来源标签、敏感字段与出向控制 | AIBOM、CycloneDX、A–F 评级与签名 | **intent-first Effect、恢复合同、职责分离 Undo、Worker 补偿** | **Effect/Gate6 双链、交叉引用、SM2-with-SM3 manifest 与篡改对照** |
+| **XA-Guard** | Gate1 规则/模型接口、Spotlighting 与分层指标 | 动态 assignment、Gate2/3、HITL、deny 优先 | Gate4 来源标签、敏感字段与出向控制 | AIBOM、CycloneDX、A/B/C/D/F 五档与可选验签 | **intent-first Effect、恢复合同、职责分离 Undo、Worker 补偿** | **Effect/Gate6 双链、交叉引用、SM2-with-SM3 manifest 与篡改对照** |
 
 在这组选定对象及已核验公开范围内，XA-Guard 的差异点不是单独提高输入分类分数，而是把执行前授权、
 信息流、供应链准入、真实副作用恢复和可独立验签证据放入同一运行时闭环。其中“副作用恢复”和
@@ -651,7 +721,7 @@ XA-Guard 中的身份验证、最小权限、运行时控制、审批、密码�
 
 ## 7. 结论
 
-XA-Guard 将智能体安全从输入过滤扩展到完整行动链。人员—智能体双主体身份解决可信委托问题；
+XA-Guard 将智能体安全从输入过滤扩展到完整行动链。人员-智能体双主体身份解决可信委托问题；
 六关网关在工具执行前后统一处理输入、审批、策略、信息流、隔离和审计；intent-first Effect
 把副作用恢复所需的信息提前到执行之前；AIBOM 控制扩展组件入口；OAR 和签名 evidence
 用于验证防护结果与审计完整性。
@@ -659,14 +729,22 @@ XA-Guard 将智能体安全从输入过滤扩展到完整行动链。人员—�
 项目已经完成跨身份服务、网关、数据库、业务接口、Worker、Console 和评测环境的工程闭环。
 最终候选通过故障、并发性能、本地集群和统一质量验证，并保留可独立验签的证据包。
 
-本文实验基于 Reference Compose 和本地三节点 kind 环境，结论适用于当前实现、场景与恢复合同；
-进入组织生产环境的前置条件见 §5.9。
+实验结论按轨道成立：确定性 OAR N=10 证明集给出两类 finding 的 Null 泄漏 20/20、
+XA-Guard 泄漏 0/20 与保护侧 replay 20/20；canonical full-day/replay 独立报告为
+41 次工具尝试、43 条 ledger、0 violation 和 7/7 replay。真实 DeepSeek Agent 冻结 holdout
+则在 30 runs、infra 0 下同时得到 D2 的 10/10 因果阻断和 D1 `sources` 引用型外发的
+5/5 allow/harm 未覆盖边界，D3 的 0/10 attempt 只归因模型侧安全。该结果说明现有运行时治理链
+能够约束一类真实高风险动作，也明确把结构化引用解析和敏感资产查询列为下一项防护重点。
+
+本文实验基于 Reference Compose、本地三节点 kind 与小规模冻结合成 holdout，结论适用于当前实现、
+模型、场景与恢复合同，不声明对未知攻击或所有 OpenClaw 类客户端的完全覆盖；进入组织生产环境的
+前置条件与全部不声明事项见 §5.9。
 
 ---
 
 ## 参考文献
 
-[1] Debenedetti E, Zhang J, Balunović M, et al. AgentDojo: A Dynamic Environment to Evaluate
+[1] Debenedetti E, Zhang J, Balunovic M, et al. AgentDojo: A Dynamic Environment to Evaluate
 Prompt Injection Attacks and Defenses for LLM Agents[C]//Advances in Neural Information Processing
 Systems. 2024. <https://proceedings.neurips.cc/paper_files/paper/2024/hash/97091a5177d8dc64b1da8bf3e1f6fb54-Abstract-Datasets_and_Benchmarks_Track.html>
 
@@ -698,14 +776,19 @@ Security[S]. IETF, 2025. <https://www.rfc-editor.org/rfc/rfc9700>
 
 [10] 国家市场监督管理总局, 国家标准化管理委员会. GB/T 45654-2025 网络安全技术
 生成式人工智能服务安全基本要求[S]. 2025.
+<https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=F67D3F376E0A0A0FF5317FB36B32A30A>
 
 [11] 国家市场监督管理总局, 国家标准化管理委员会. GB/T 22239-2019 信息安全技术
 网络安全等级保护基本要求[S]. 2019.
+<https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=BAFB47E8874764186BDB7865E8344DAF>
 
 [12] 国家市场监督管理总局, 国家标准化管理委员会. GB/T 39786-2021 信息安全技术
 信息系统密码应用基本要求[S]. 2021.
+<https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=53282C88712CE157043B7A2C590278FC>
 
-[13] 全国网络安全标准化技术委员会. 人工智能安全治理框架 2.0[R]. 2025.
+[13] 国家互联网应急中心牵头组织有关专业机构、科研院所和行业企业（国家互联网信息办公室指导）.
+人工智能安全治理框架 2.0[R]. 2025.
+<https://www.cac.gov.cn/2025-09/15/c_1759653448369123.htm>
 
 [14] OWASP GenAI Security Project. OWASP Top 10 for LLM Applications 2025[R]. 2025.
 <https://genai.owasp.org/llm-top-10/>
@@ -721,7 +804,7 @@ and Technology, 2024. <https://doi.org/10.6028/NIST.AI.600-1>
 Security for Enterprises[EB/OL]. 2025. <https://www.checkpoint.com/press-releases/check-point-acquires-lakera-to-deliver-end-to-end-ai-security-for-enterprises/>
 
 [18] Meta. LlamaFirewall: An open source guardrail system for building secure AI agents[EB/OL].
-2025. <https://meta-llama.github.io/PurpleLlama/LlamaFirewall/>
+2025. URL: https://meta-llama.github.io/PurpleLlama/LlamaFirewall/
 
 [19] Wang Y, et al. AgentSpec: Customizable Runtime Enforcement for Safe and Reliable LLM
 Agents[EB/OL]. arXiv:2503.18666, 2025. <https://arxiv.org/abs/2503.18666>
@@ -738,13 +821,15 @@ arXiv:2503.22738, 2025. <https://arxiv.org/abs/2503.22738>
 | 验证内容 | 材料位置 |
 |---|---|
 | Gate1 分层召回、误报、Wilson 区间与规则层时延 | `docs/evidence/gate1-l3-evaluation-2026-06-18.json` |
-| OAR full-day、live A/B 与 replay | `docs/acceptance/EVIDENCE-CONSOLIDATION.md` §2 |
+| OAR canonical full-day 与 7/7 replay（2026-07-11 轨） | `docs/acceptance/EVIDENCE-CONSOLIDATION.md` §2 |
+| 确定性 OAR N=10 两类 finding 与保护侧 20/20 replay（2026-07-27 轨） | `docs/evidence/attack-proof-set-2026-07-27-n10.md` |
+| 真实 DeepSeek Agent 冻结 holdout：30 runs、infra 0、D2 因果阻断与 D1 引用型外发边界 | `docs/evidence/live-agent-holdout-v1-2026-07-27.md` |
 | Reference 11/11 fault | `docs/evidence/agent-identity-undo-final-2026-07-21/acceptance/reference-faults-all-final-rerun-20260721.json` |
 | 本地三节点 kind | `docs/evidence/agent-identity-undo-final-2026-07-21/acceptance/kind-ha-final-pass-20260721.json` |
 | 正式 3×500 性能与 Undo | `docs/evidence/agent-identity-undo-final-2026-07-21/acceptance/perf-formal-mixed-transaction-rebuilt-20260721.json` |
 | 最终签名 evidence | `docs/evidence/agent-identity-undo-final-2026-07-21.md` |
-| 代表性攻击链的脱敏清单、脚本、结果摘要、源码 provenance 与 hash | `docs/evidence/attack-proof-set-2026-07-27-n10.md` |
 | 三账号 Console 闭环 | `docs/evidence/mcp-live-acceptance-2026-07-19/` |
 | Claude Code MCP 握手与 9 个 stdio JSON-RPC 场景 | `docs/evidence/mcp-live-acceptance-2026-07-19/` |
 | OpenCode Streamable HTTP 与 pending approval fallback | `docs/evidence/l3-opencode-http-2026-06-18.md`、`docs/evidence/l3-hitl-pending-approval-2026-06-18.md` |
+| OpenCode 1.18.5 + DeepSeek V4 Flash 安全工具调用与 Gate6 验签 | `docs/evidence/d3-opencode-deepseek-flash-preflight-2026-07-27.md` |
 | 最终仓库状态与统一验证 | `status.md` |

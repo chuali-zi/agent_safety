@@ -81,8 +81,13 @@ def ensure_sandbox_image(env: dict[str, str]) -> None:
         )
 
 
-def verify_pytest(env: dict[str, str]) -> dict[str, object]:
-    junit = RUNTIME / 'pytest-junit.xml'
+def verify_pytest(
+    env: dict[str, str],
+    *,
+    test_paths: Sequence[str] = (),
+    junit_filename: str = 'pytest-junit.xml',
+) -> dict[str, object]:
+    junit = RUNTIME / junit_filename
     run(
         [
             sys.executable,
@@ -93,6 +98,7 @@ def verify_pytest(env: dict[str, str]) -> dict[str, object]:
             'no:cacheprovider',
             '--junitxml',
             str(junit),
+            *test_paths,
         ],
         env=env,
     )
@@ -170,6 +176,16 @@ def main() -> None:
         env=env,
     )
     pytest_result = verify_pytest(env)
+    range_env = env.copy()
+    range_pythonpath = str(ROOT / 'open-agent-range')
+    if range_env.get('PYTHONPATH'):
+        range_pythonpath += os.pathsep + range_env['PYTHONPATH']
+    range_env['PYTHONPATH'] = range_pythonpath
+    range_pytest_result = verify_pytest(
+        range_env,
+        test_paths=('open-agent-range/kernel/tests',),
+        junit_filename='open-agent-range-kernel-pytest-junit.xml',
+    )
     run([sys.executable, 'scripts/verify_l3_static.py', '--section', 'all'], env=env)
     run([executable('docker'), 'compose', 'config', '--quiet'], env=env)
     npm = executable('npm.cmd' if os.name == 'nt' else 'npm')
@@ -195,6 +211,7 @@ def main() -> None:
         'helm_bin': env['HELM_BIN'],
         'sandbox_image': SANDBOX_IMAGE,
         'pytest': pytest_result,
+        'open_agent_range_kernel_pytest': range_pytest_result,
         'evidence_bundle': str(args.evidence_bundle.resolve()),
     }
     output = RUNTIME / 'summary.json'

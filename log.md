@@ -1,3 +1,47 @@
+# 2026-07-27 20:58 PDT 赛题交付收口完成：D1/D3 定版、验真门禁加固、全部仓库内计划通过
+
+- 以 `docs/source-of-truth/` 的 XA-202620 比赛方案为唯一需求源，复核 D1、D3、Delivery v2、
+  TODO/NEXT、governance、Identity/Undo 和攻击证明集交接计划；把过时的 OPEN/MANUAL-PENDING
+  状态改成当前验收事实，并新增 `docs/delivery/DELIVERY-ACCEPTANCE-MATRIX.md`。
+- 完成 D1 提交稿：正式题名/题号/赛道/版本封面；加入真实 DeepSeek Agent 30-run holdout，
+  将确定性 OAR N=10、canonical full-day 与真实模型轨道分开；明确 D2 因果成功、D1
+  `sources` 引用解析失败边界和 D3 模型自防；校正 AIBOM 为 A/B/C/D/F 五档与可选验签；
+  加入 OpenCode 1.18.5 + DeepSeek V4 Flash 客户端证据。构建器过滤 Markdown 分隔符、
+  修复宽表/状态图/正式封面与 metadata。正式 PDF 为 18 页，SHA-256
+  `de37a83c973d28f1b4efdc77efda4648a704db94540cb9839b6f4d2e8660c7f1`；全页渲染抽检通过。
+- 在隔离配置中完成真实 OpenCode 1.18.5 + `deepseek/deepseek-v4-flash` + XA-Guard HTTP MCP
+  安全预演：工具发现恰好 1 server，模型实际调用一次无副作用 `get_cpu(host=web03)`，
+  返回 CPU 85%；Gate6 allow、faithfulness 1.0，1 条审计独立验证 0 error。API key 仅从
+  gitignored `.env` 读入进程，没有进入配置、日志或公开材料；新增公开脱敏证据摘要与逐文件哈希。
+- 新增 `scripts/build_d3_submission_video.py`，用现有真实 Console 截图、封存结果投影、
+  本地 System.Speech 和 FFmpeg 可重复生成 11 镜头 D3。最终视频 530.033 秒，
+  H.264 1920×1080 30fps、AAC 48kHz 双声道、中文 `mov_text` 字幕轨与独立 40-cue SRT；
+  SHA-256 `267a1a59f7f48c9d8e489f085afda0ff79197118ceff7b7e2d5422d5962b00c5`。
+  逐镜抽帧、标题溢出、字幕遮挡和音量均已检查；最终采用可开关字幕轨避免永久覆盖证据画面。
+  metadata 如实标注本地合成旁白，不声称真人。
+- 加固 `open-agent-range/kernel/live_agent/authenticity.py`：除 hash/summary 指标外，
+  严格核对冻结 run matrix 与 30/30 `verdict.json`，重新计算 stable results、
+  valid breach 和 causal proof，按实际 branch 计算 expected/actual audit 覆盖，缺失/意外 audit
+  均失败。新增 5 个回归场景；正式 holdout 复验为 303 files、30/30 verdict、15/15 audit，
+  全部检查通过。
+- 将 `open-agent-range/kernel/tests` 显式加入 GitHub Actions 和 `scripts/verify_release.py`；
+  Ruff 覆盖 OAR kernel 产品代码并排除测试目录 lint。仅从 `scripts/run_attack_proof_set.py`
+  删除一个未使用 import，未新增或修改攻击逻辑、payload、oracle、策略阈值或测试断言。
+- 修复发布边界：`.runtime/` 与 `open-agent-range/.runtime/` 全面 gitignore；从 Git 索引移除
+  868 个历史 runtime 文件，但本地 1239 个原始文件保留可复核。公开仓库只保留脱敏摘要，
+  不提交 JSONL、模型输入、攻击 payload、攻击脚本、凭据、原始日志或绝对路径。
+- 新建约 30 题 `DEFENSE-QA.md` 与 `CODE-MAP.md`，把赛题声明映射到实现、测试、证据和边界；
+  重写 `FROZEN-NUMBERS.md`、Delivery v2、D1/D3 计划、TODO/NEXT、submission checklist 与
+  `status.md`，删除过时状态但保留真实外部提交边界。
+- 验证：root 互斥分组共 792 collected、786 passed、6 capability/environment skips、
+  0 failure/error（unit 666、integration 46、top-level 57、deployment/remote 23）；
+  OAR kernel 137/137；governance 48/48；live authenticity 专项 10/10 与正式 evidence PASS；
+  Ruff PASS；D1/D3 构建和媒体校验 PASS。统一 pytest 后台进程两次被桌面宿主提前终止且无测试失败，
+  因此改用四个互斥分组完成同一 792 项收集面，未把进程中断冒充通过。
+- 已删除本轮生成的 213 个临时 PDF/视频 QA 文件。未执行：没有发送邮件、上传网盘、修改 D4
+  隐私材料或创建远端发布；这些动作仍需负责人账号和确认。下一步是在最终 clean commit 上生成
+  release manifest，然后由负责人复核 D4、上传材料、发送正式邮件并保存回执。
+
 # 2026-07-27 14:10 PDT 逐 Gate audit 映射与真实性验收完成（holdout-v1 20/20 通过）
 
 - 回放页 Gate 1–6 条带改为真实数据驱动：`kernel/live_agent/render.py` 直接读取每 run 已落盘的 `xaguard/xa-guard-audit/audit.jsonl`，按 final_reason 的 `gateN_*` 前缀高亮真实决策 Gate，并显示命中规则 ID（如 GBT-22239-8.1.4.4 / 8.1.3.1）、faithfulness 分数、评估 Gate 数、record_hash 与时间戳；无 live audit 的支路（offline guard 或无违规意图）明示 `NO LIVE AUDIT`，遵守禁止伪造 Gate 状态红线。无需重跑评估。

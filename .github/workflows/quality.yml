@@ -23,5 +23,8 @@ jobs:
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[crypto,bench,dev,policy,aibom,http]"
-      - run: python -m ruff check src bench demo scripts tools
+      - run: python -m ruff check src bench demo scripts tools open-agent-range/kernel --exclude open-agent-range/kernel/tests
       - run: python -X faulthandler -m pytest -vv
+      - run: python -X faulthandler -m pytest -vv open-agent-range/kernel/tests
+        env:
+          PYTHONPATH: open-agent-range

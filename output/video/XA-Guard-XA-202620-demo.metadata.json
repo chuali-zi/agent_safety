@@ -1,0 +1,151 @@
+{
+  "schema": "xa-guard-d3-video/v1",
+  "competition_code": "XA-202620",
+  "title": "面向政企场景的大模型智能体安全关键技术研究",
+  "narration": {
+    "method": "offline Windows System.Speech",
+    "voice": "Microsoft Huihui Desktop",
+    "rate": 0,
+    "disclosure": "machine-synthesized narration; no claim of human recording"
+  },
+  "privacy": {
+    "attack_payloads_embedded": false,
+    "credentials_embedded": false,
+    "raw_audit_records_embedded": false,
+    "absolute_paths_embedded": false
+  },
+  "scenes": [
+    {
+      "index": 1,
+      "slug": "01-open",
+      "title": "面向政企场景的大模型智能体安全关键技术研究",
+      "target_seconds": 35,
+      "source_audio_seconds": 24.920952,
+      "atempo": 1.0
+    },
+    {
+      "index": 2,
+      "slug": "02-real-client",
+      "title": "OpenCode → DeepSeek V4 Flash → XA-Guard MCP",
+      "target_seconds": 55,
+      "source_audio_seconds": 34.722902,
+      "atempo": 1.0
+    },
+    {
+      "index": 3,
+      "slug": "03-live-causal",
+      "title": "同一不可变 ToolIntent，两条执行臂给出相反业务后果",
+      "target_seconds": 65,
+      "source_audio_seconds": 39.985533,
+      "atempo": 1.0
+    },
+    {
+      "index": 4,
+      "slug": "04-metrics-boundary",
+      "title": "既给出达标数字，也保留未拦住的引用型外发边界",
+      "target_seconds": 50,
+      "source_audio_seconds": 50.590839,
+      "atempo": 1.0324661020408163
+    },
+    {
+      "index": 5,
+      "slug": "05-oar-proof",
+      "title": "邮箱与 RAG 两类合成场景：同输入、同 SUT、双臂业务后果对照",
+      "target_seconds": 45,
+      "source_audio_seconds": 36.222177,
+      "atempo": 1.0
+    },
+    {
+      "index": 6,
+      "slug": "06-aibom",
+      "title": "源码、依赖、能力声明与 provenance 一并进入审批策略",
+      "target_seconds": 45,
+      "source_audio_seconds": 37.451247,
+      "atempo": 1.0
+    },
+    {
+      "index": 7,
+      "slug": "07-identity",
+      "title": "human → Agent → tool → data domain",
+      "target_seconds": 45,
+      "source_audio_seconds": 34.168073,
+      "atempo": 1.0
+    },
+    {
+      "index": 8,
+      "slug": "08-effect-undo",
+      "title": "先登记可恢复意图，再触发真实业务副作用；申请人与批准人不能是同一 subject",
+      "target_seconds": 60,
+      "source_audio_seconds": 43.435011,
+      "atempo": 1.0
+    },
+    {
+      "index": 9,
+      "slug": "09-evidence",
+      "title": "Gate6 决策链 + Effect 生命周期链，以 effect、业务引用和 trace 交叉关联",
+      "target_seconds": 55,
+      "source_audio_seconds": 33.782902,
+      "atempo": 1.0
+    },
+    {
+      "index": 10,
+      "slug": "10-engineering",
+      "title": "结果按 Reference 与 local kind profile 分层，不把本地验证写成生产级 HA",
+      "target_seconds": 45,
+      "source_audio_seconds": 41.104717,
+      "atempo": 1.0
+    },
+    {
+      "index": 11,
+      "slug": "11-close",
+      "title": "结论只覆盖可追溯证据支持的范围",
+      "target_seconds": 30,
+      "source_audio_seconds": 27.889569,
+      "atempo": 1.0
+    }
+  ],
+  "expected_total_seconds": 530,
+  "sha256": "267a1a59f7f48c9d8e489f085afda0ff79197118ceff7b7e2d5422d5962b00c5",
+  "media": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "30/1",
+        "tags": {
+          "language": "und"
+        }
+      },
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "codec_type": "audio",
+        "sample_rate": "48000",
+        "channels": 2,
+        "r_frame_rate": "0/0",
+        "tags": {
+          "language": "und"
+        }
+      },
+      {
+        "index": 2,
+        "codec_name": "mov_text",
+        "codec_type": "subtitle",
+        "r_frame_rate": "0/0",
+        "tags": {
+          "language": "chi"
+        }
+      }
+    ],
+    "format": {
+      "duration": "530.033008",
+      "size": "14921254",
+      "bit_rate": "225212"
+    }
+  }
+}

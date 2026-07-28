@@ -1,4 +1,4 @@
-"""Build the repository-safe D1 competition report PDF."""
+"""Build the formal XA-202620 D1 technical report PDF."""
 from __future__ import annotations
 
 import argparse
@@ -12,15 +12,15 @@ import fitz
 from pypdf import PdfReader
 from reportlab import rl_config
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
-    BaseDocTemplate, Flowable, Frame, PageBreak, PageTemplate, Paragraph,
-    Spacer, Table, TableStyle,
+    BaseDocTemplate, CondPageBreak, Flowable, Frame, PageBreak, PageTemplate,
+    Paragraph, Spacer, Table, TableStyle,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -345,11 +345,14 @@ def styles(font: str):
     base = getSampleStyleSheet()
     return {
         "h2": ParagraphStyle("h2", parent=base["Heading2"], fontName=font, fontSize=14, leading=19,
-                              textColor=NAVY, spaceBefore=2 * mm, spaceAfter=4 * mm),
+                              textColor=NAVY, spaceBefore=2 * mm, spaceAfter=4 * mm,
+                              keepWithNext=True),
         "h1": ParagraphStyle("h1", parent=base["Heading1"], fontName=font, fontSize=16, leading=22,
-                              textColor=NAVY, spaceBefore=1 * mm, spaceAfter=5 * mm),
+                              textColor=NAVY, spaceBefore=1 * mm, spaceAfter=5 * mm,
+                              keepWithNext=True),
         "h3": ParagraphStyle("h3", parent=base["Heading3"], fontName=font, fontSize=11, leading=15,
-                              textColor=BLUE, spaceBefore=2 * mm, spaceAfter=2 * mm),
+                              textColor=BLUE, spaceBefore=2 * mm, spaceAfter=2 * mm,
+                              keepWithNext=True),
         "body": ParagraphStyle("body", parent=base["BodyText"], fontName=font, fontSize=9.2, leading=15,
                                 alignment=TA_JUSTIFY, textColor=INK, spaceAfter=2.8 * mm, wordWrap="CJK"),
         "bullet": ParagraphStyle("bullet", parent=base["BodyText"], fontName=font, fontSize=8.9, leading=14,
@@ -362,36 +365,127 @@ def styles(font: str):
                                 textColor=INK, wordWrap="CJK"),
         "headcell": ParagraphStyle("headcell", parent=base["BodyText"], fontName=font, fontSize=7.2,
                                     leading=10, textColor=colors.white, wordWrap="CJK"),
+        "reference": ParagraphStyle("reference", parent=base["BodyText"], fontName=font,
+                                     fontSize=7.0, leading=9.4, alignment=TA_LEFT,
+                                     textColor=INK, spaceAfter=0.5 * mm, wordWrap="CJK"),
     }
 
 
 def cover(font: str):
     title = ParagraphStyle("cover-title", fontName=font, fontSize=27, leading=38,
                            alignment=TA_CENTER, textColor=NAVY)
-    sub = ParagraphStyle("cover-sub", fontName=font, fontSize=13, leading=20,
+    competition = ParagraphStyle("cover-competition", fontName=font, fontSize=10.5, leading=16,
+                                 alignment=TA_CENTER, textColor=MUTED)
+    sub = ParagraphStyle("cover-sub", fontName=font, fontSize=15, leading=24,
                          alignment=TA_CENTER, textColor=BLUE)
-    meta = ParagraphStyle("cover-meta", fontName=font, fontSize=10, leading=18,
-                          alignment=TA_CENTER, textColor=MUTED)
+    report_type = ParagraphStyle("cover-report-type", fontName=font, fontSize=12, leading=19,
+                                 alignment=TA_CENTER, textColor=NAVY)
+    meta_label = ParagraphStyle("cover-meta-label", fontName=font, fontSize=9.2, leading=15,
+                                alignment=TA_LEFT, textColor=MUTED)
+    meta_value = ParagraphStyle("cover-meta-value", fontName=font, fontSize=9.2, leading=15,
+                                alignment=TA_LEFT, textColor=INK)
+    footer = ParagraphStyle("cover-footer", fontName=font, fontSize=8.5, leading=14,
+                            alignment=TA_CENTER, textColor=MUTED)
     rule = Table([[""]], colWidths=[42 * mm], rowHeights=[1.5 * mm],
                  style=TableStyle([("BACKGROUND", (0, 0), (-1, -1), CYAN)]))
-    return [Spacer(1, 43 * mm), Paragraph("XA-Guard", title), Spacer(1, 4 * mm),
-            Paragraph("面向政企智能体的身份约束、六关防护与可验证撤销", sub),
-            Spacer(1, 15 * mm), rule, Spacer(1, 15 * mm),
-            Paragraph("题目编号：XA-202620", meta), Paragraph("D1 技术方案报告", meta),
-            Paragraph("工程冻结版 · 仓库安全封面", meta), Spacer(1, 40 * mm),
-            Paragraph("XA-Guard Project · 2026-07", meta), PageBreak()]
+    metadata = Table(
+        [
+            [Paragraph("题目编号", meta_label), Paragraph("XA-202620", meta_value)],
+            [Paragraph("题目名称", meta_label),
+             Paragraph("面向政企场景的大模型智能体安全关键技术研究", meta_value)],
+            [Paragraph("参赛赛道", meta_label), Paragraph("学生赛道", meta_value)],
+            [Paragraph("文档版本", meta_label), Paragraph("v1.0（提交版）", meta_value)],
+            [Paragraph("提交日期", meta_label), Paragraph("2026-07-27", meta_value)],
+        ],
+        colWidths=[25 * mm, 88 * mm],
+        hAlign="CENTER",
+        style=TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("LINEBELOW", (0, 0), (-1, -2), 0.35, colors.HexColor("#D5DEE7")),
+            ("LEFTPADDING", (0, 0), (-1, -1), 3 * mm),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 3 * mm),
+            ("TOPPADDING", (0, 0), (-1, -1), 2.2 * mm),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2.2 * mm),
+        ]),
+    )
+    return [
+        Spacer(1, 24 * mm),
+        Paragraph("2026 年度中国青年科技创新“揭榜挂帅”擂台赛", competition),
+        Spacer(1, 16 * mm),
+        Paragraph("XA-Guard", title),
+        Spacer(1, 4 * mm),
+        Paragraph("面向政企场景的大模型智能体<br/>运行时安全治理与可验证恢复", sub),
+        Spacer(1, 10 * mm),
+        rule,
+        Spacer(1, 10 * mm),
+        Paragraph("D1 技术方案报告", report_type),
+        Spacer(1, 13 * mm),
+        metadata,
+        Spacer(1, 24 * mm),
+        Paragraph("发榜单位：中国雄安集团数字城市科技有限公司", footer),
+        PageBreak(),
+    ]
+
+
+def _column_ratios(count: int, header: list[str]) -> list[float]:
+    """Readable portrait-A4 profiles for the report's recurring table shapes."""
+    header_text = "|".join(header)
+    if count == 2:
+        return [0.35, 0.65]
+    if count == 3:
+        return [0.22, 0.37, 0.41]
+    if count == 4 and "处理与输出" in header_text:
+        return [0.16, 0.20, 0.40, 0.24]
+    if count == 4:
+        return [0.17, 0.23, 0.30, 0.30]
+    if count == 5 and "当前结果" in header_text:
+        return [0.13, 0.15, 0.22, 0.32, 0.18]
+    if count == 5:
+        return [0.18, 0.20, 0.20, 0.21, 0.21]
+    if count == 6:
+        return [0.20, 0.14, 0.11, 0.11, 0.22, 0.22]
+    if count == 7:
+        return [0.11, 0.145, 0.145, 0.145, 0.145, 0.155, 0.155]
+    return [1 / count] * count
 
 
 def table_from(lines: list[str], st) -> Table:
-    rows = []
+    raw_rows: list[list[str]] = []
     for line in lines:
         raw_cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
         if all(re.fullmatch(r"[-: ]+", cell) for cell in raw_cells):
             continue
-        cell_style = st["headcell"] if not rows else st["cell"]
-        rows.append([Paragraph(inline(cell), cell_style) for cell in raw_cells])
-    count = max(len(row) for row in rows)
-    table = Table(rows, colWidths=[168 * mm / count] * count, repeatRows=1, hAlign="LEFT")
+        raw_rows.append(raw_cells)
+    count = max(len(row) for row in raw_rows)
+    for row in raw_rows:
+        row.extend([""] * (count - len(row)))
+
+    font_size, leading = {
+        2: (7.3, 10.2),
+        3: (7.2, 10.0),
+        4: (6.8, 9.4),
+        5: (6.2, 8.8),
+        6: (5.8, 8.2),
+        7: (5.6, 8.0),
+    }.get(count, (5.5, 7.8))
+    body_style = ParagraphStyle(
+        f"cell-{count}", parent=st["cell"], fontSize=font_size, leading=leading,
+    )
+    head_style = ParagraphStyle(
+        f"headcell-{count}", parent=st["headcell"], fontSize=font_size, leading=leading,
+    )
+    rows = [
+        [Paragraph(inline(cell), head_style if row_index == 0 else body_style) for cell in row]
+        for row_index, row in enumerate(raw_rows)
+    ]
+    ratios = _column_ratios(count, raw_rows[0])
+    table = Table(
+        rows,
+        colWidths=[168 * mm * ratio for ratio in ratios],
+        repeatRows=1,
+        hAlign="LEFT",
+        splitByRow=1,
+    )
     table.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, -1), "CN"),
         ("BACKGROUND", (0, 0), (-1, 0), NAVY),
@@ -399,8 +493,8 @@ def table_from(lines: list[str], st) -> Table:
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#B9C8D6")),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F6F9FB")]),
-        ("LEFTPADDING", (0, 0), (-1, -1), 4), ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-        ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ("LEFTPADDING", (0, 0), (-1, -1), 3), ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+        ("TOPPADDING", (0, 0), (-1, -1), 3.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 3.5),
     ]))
     return table
 
@@ -409,10 +503,19 @@ def parse(markdown: str, st) -> list:
     lines = markdown.splitlines()
     if "<!-- pagebreak -->" in lines:
         lines = lines[lines.index("<!-- pagebreak -->") + 1:]
+    else:
+        first_nonempty = next((line.strip() for line in lines if line.strip()), "")
+        first_h2 = next((i for i, line in enumerate(lines) if line.startswith("## ")), None)
+        if first_nonempty.startswith("# ") and first_h2 is not None:
+            # The formal cover already carries the source preamble and metadata.
+            lines = lines[first_h2:]
     story, index = [], 0
     while index < len(lines):
         raw, stripped = lines[index], lines[index].strip()
         if not stripped:
+            index += 1
+            continue
+        if re.fullmatch(r"-{3,}", stripped):
             index += 1
             continue
         if stripped == "<!-- pagebreak -->":
@@ -455,29 +558,37 @@ def parse(markdown: str, st) -> list:
             story.append(Paragraph("<br/>".join(block), st["code"]))
             continue
         if stripped.startswith("# "):
+            story.append(CondPageBreak(25 * mm))
             story.append(Paragraph(inline(stripped[2:]), st["h1"]))
             index += 1
             continue
         if stripped.startswith("### "):
+            story.append(CondPageBreak(22 * mm))
             story.append(Paragraph(inline(stripped[4:]), st["h3"]))
             index += 1
             continue
         if stripped.startswith("## "):
-            story.append(Paragraph(inline(stripped[3:]), st["h2"]))
+            heading = stripped[3:]
+            if heading.startswith("附录") and story and not isinstance(story[-1], PageBreak):
+                story.append(PageBreak())
+            else:
+                story.append(CondPageBreak(28 * mm))
+            story.append(Paragraph(inline(heading), st["h2"]))
             index += 1
             continue
-        if re.match(r"^(?:[-*]|\d+\.)\s+", stripped):
-            label = re.sub(r"^(?:[-*]|\d+\.)\s+", "", re.sub(r"\s+", " ", stripped))
+        if re.match(r"^(?:[-*]|\d{1,3}\.)\s+", stripped):
+            label = re.sub(r"^(?:[-*]|\d{1,3}\.)\s+", "", re.sub(r"\s+", " ", stripped))
             story.append(Paragraph("• " + inline(label), st["bullet"]))
             index += 1
             continue
         paragraph = [stripped]
         index += 1
-        special = r"^(?:#{1,3} |\| |    |```|[-*] |\d+\. |<!--|\[DIAGRAM:)"
+        special = r"^(?:#{1,3} |\| |    |```|[-*] |\d{1,3}\. |<!--|\[DIAGRAM:)|^-{3,}$"
         while index < len(lines) and lines[index].strip() and not re.match(special, lines[index]):
             paragraph.append(lines[index].strip())
             index += 1
-        story.append(Paragraph(inline(" ".join(paragraph)), st["body"]))
+        paragraph_style = st["reference"] if re.match(r"^\[\d+\]", paragraph[0]) else st["body"]
+        story.append(Paragraph(inline(" ".join(paragraph)), paragraph_style))
     return story
 
 
@@ -502,7 +613,11 @@ def build(source: Path, output: Path, render_dir: Path | None):
     doc = BaseDocTemplate(
         str(output), pagesize=A4, leftMargin=21 * mm, rightMargin=21 * mm,
         topMargin=20 * mm, bottomMargin=20 * mm,
-        title="XA-Guard XA-202620 技术方案报告", author="XA-Guard Project",
+        title="XA-Guard：面向政企场景的大模型智能体安全关键技术研究",
+        author="XA-Guard 参赛团队",
+        subject="XA-202620 D1 技术方案报告",
+        creator="XA-Guard D1 deterministic PDF builder",
+        keywords="XA-202620, XA-Guard, 智能体安全, MCP, AIBOM, 审计溯源, 可验证恢复",
     )
     frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="body")
     doc.addPageTemplates(PageTemplate(id="report", frames=[frame], onPage=decorate))
@@ -514,7 +629,7 @@ def build(source: Path, output: Path, render_dir: Path | None):
         render_dir.mkdir(parents=True, exist_ok=True)
         pdf = fitz.open(output)
         for number, page in enumerate(pdf, 1):
-            pixmap = page.get_pixmap(matrix=fitz.Matrix(1.4, 1.4), alpha=False)
+            pixmap = page.get_pixmap(matrix=fitz.Matrix(1.7, 1.7), alpha=False)
             pixmap.save(render_dir / f"page-{number:02d}.png")
     pages = len(PdfReader(str(output)).pages)
     print(json.dumps({"output": str(output), "pages": pages, "sha256": digest,
