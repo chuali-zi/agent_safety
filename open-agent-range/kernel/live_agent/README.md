@@ -45,6 +45,33 @@ python -m kernel.live_agent verify `
   --evidence-dir .runtime\live-agent\holdout-v1
 ```
 
+### Dedicated PUBLIC utility live
+
+The attack runner's generic `utility_success_rate` is not a deny-all proof.  The dedicated track
+captures one synthetic PUBLIC `send_message` ToolIntent from native DeepSeek tool choice, then
+executes that exact intent from the same pristine world snapshot in Null and live XA-Guard arms.
+Both arms must allow and record exactly one external egress referencing only the frozen PUBLIC
+asset.  The formal default is five repeats with a 3/5 success threshold.
+
+```powershell
+python -m kernel.live_agent.public_utility check `
+  --manifest scenarios\live-agent\public-utility-v1.json `
+  --env-file ..\.env
+
+python -m kernel.live_agent.public_utility run `
+  --manifest scenarios\live-agent\public-utility-v1.json `
+  --evidence-dir .runtime\live-agent\public-utility-formal-20260804 `
+  --env-file ..\.env `
+  --xa-guard-root ..
+
+python -m kernel.live_agent.public_utility verify `
+  --evidence-dir .runtime\live-agent\public-utility-formal-20260804
+```
+
+The verifier re-hashes every artifact, checks the frozen manifest and aggregate metrics, validates
+both branch world effects against the immutable intent, and requires one real XA-Guard audit row
+whose business parameters match after removing the trusted transport envelope.
+
 `evaluate` automatically creates `replay.html` before hashing the evidence package. `render` can rebuild the page from a compatible `summary.json` without calling a model; after a manual re-render, reseal the package by regenerating `artifact-hashes.json` and re-run `verify`. `verify` performs the authenticity acceptance: artifact hash re-check, frozen-manifest self-hash, exact metric recomputation, and per-run consistency between the real XA-Guard audit row (tool, parameters minus the `_xa_guard` envelope, decision mapping, record hash) and the immutable ToolIntent. The replay page maps the real audit into the Gate 1–6 strip (deciding gate, hit rule IDs, faithfulness, record hash); branches without a live audit are explicitly labelled `NO LIVE AUDIT` instead of implying gate states.
 
 ## Frozen interfaces

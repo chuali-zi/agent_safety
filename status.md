@@ -1,8 +1,8 @@
 # 仓库状态：XA-Guard / XA-202620
 
-> 复核日期：2026-08-03
+> 复核日期：2026-08-04
 > 当前口径：**赛题 D1–D3 形式基本符合 / P0 安全后端与真实外部模型 v2 D1/D2 因果证据通过 /
-> 专用 PUBLIC 正例与 HITL live、Gate5、GUI/D3、全量发布复验及人工提交未完成**
+> 专用 PUBLIC 正例 live 通过 / 独立 HTTP HITL live、Gate5、GUI/D3、全量发布复验及人工提交未完成**
 > 本文件描述当前仓库事实，不代表主办方验收或官方评分。
 
 ## 1. 总体结论
@@ -29,9 +29,14 @@ XA-Guard live stdio 15/15 deny、0/15 harm。D1 neutral-tool 5/5 形成稳定因
 D1 allow/harm 失败仍保留；D2 两档 10/10 仍稳定。verifier 22/22 PASS、303 文件可重算，
 篡改副本 FAIL，API Key 未进入证据。
 
-但“比赛最终发布/擂主态”仍未成立：本包来自 dirty worktree/internal holdout；专用 PUBLIC
-正例尚未经过 Null/Guard 双成功 live，独立 HTTP Operator/Dora HITL live、Gate5、实际 GUI、
-连续录屏、新版 D3、独立盲测、clean checkout release 和人工外部提交仍未完成。
+2026-08-04 又完成专用 PUBLIC 正例：DeepSeek 原生安全 ToolIntent 5/5，Null 与
+XA-Guard live stdio 均 5/5 branch allow、downstream=1（Gate6 audit 为 Gate2 yellow warn），
+0 infra，3/5 稳定门通过；verifier 4/4、
+93 文件一致，篡改副本 FAIL。这证明当前链路不是 deny-all。
+
+但“比赛最终发布/擂主态”仍未成立：v2 与 PUBLIC 包均来自 dirty worktree/internal run；
+独立 HTTP Operator/Dora HITL live、Gate5、实际 GUI、连续录屏、新版 D3、独立盲测、
+clean checkout release 和人工外部提交仍未完成。
 
 ## 2. 赛题交付符合度
 
@@ -64,11 +69,11 @@ D1 allow/harm 失败仍保留；D2 两档 10/10 仍稳定。verifier 22/22 PASS�
 | Operator | `/operator/mcp` 独立 manager；共享 pending；verified identity/role/tenant/SoD/header credential；拒绝不污染 pending | 网络实传与真人 OIDC 录屏待支持环境；无配置 credential 时 fail-closed |
 | Pending | ledger 不保存 token、provenance、工具结果或 history 正文；旧 ledger 缺安全标记默认 fail-closed | 非 schema/非敏感键的参数仍是 best-effort 持久化；不是生产工作流/多实例队列 |
 | Gate3 | Python/Rego、热更新、baseline+当前 tenant overlay、effective SHA | 当前 WSL 不能运行仓库 Windows `opa.exe`；正式 Linux/Windows 支持环境待复验 |
-| Gate4 | 字面扫描、taint、capability、schema-aware 引用、执行前 external egress preflight、出向结果扫描；v2 D1 neutral-tool 5/5 执行前 deny、0 harm | 专用 PUBLIC live 正例仍缺；Gate4-out 不能撤销已发生副作用 |
+| Gate4 | 字面扫描、taint、capability、schema-aware 引用、执行前 external egress preflight、出向结果扫描；v2 D1 neutral-tool 5/5 执行前 deny、0 harm；PUBLIC live 5/5 allow/downstream=1 | Gate4-out 不能撤销已发生副作用；clean release 仍待 |
 | Gate5 | Docker/runc/runsc、资源/网络限制代码存在 | 默认和现有主演示关闭；无 live evidence |
 | Gate6 | 哈希链、faithfulness、verifier、可选 SM2/external signer；provenance 只落摘要/分类 | 默认本地 SHA-256/无签名；通用 tool parameters 仍可能含业务明文，生产脱敏策略需收口；本环境缺 `gmssl` |
 | Tenant | Gate2/3/4 使用 baseline+单一 tenant overlay；双租户测试和 SHA 区分通过 | legacy 无 tenant 读取仍用于导出/兼容，安全 Gate 已显式传 tenant |
-| OAR | 正式 v2 `p0-real-agent-causal-d1-d3-v2` 已完成：30 runs、0 infra、15/15 conditional block、22/22 verifier；可信 Adapter 绑定冻结 session/history/source digest | internal holdout、dirty worktree；D3 0/10 attempt；尚非 clean release 或独立第三方盲测 |
+| OAR | 正式 v2 `p0-real-agent-causal-d1-d3-v2` 已完成：30 runs、0 infra、15/15 conditional block、22/22 verifier；PUBLIC utility live 5/5 双成功、4/4 verifier；可信 Adapter 绑定冻结 session/history/source digest | internal run、dirty worktree；D3 0/10 attempt；尚非 clean release 或独立第三方盲测 |
 
 ## 4. 证据强度与 claim 边界
 
@@ -79,6 +84,9 @@ D1 allow/harm 失败仍保留；D2 两档 10/10 仍稳定。verifier 22/22 PASS�
   XA-Guard deny 10/10、Guard harm 0/10。
 - v2 authenticity：22/22 checks、303 files、30/30 verdict、15/15 live audit；原包 PASS，
   只改 summary 指标的复制包因 hash 与指标重算双重不符 FAIL；API Key 泄漏扫描 PASS。
+- 正式 PUBLIC utility live：5 runs、0 infra、DeepSeek 原生安全 ToolIntent 5/5；Null 与
+  XA-Guard live 均 5/5 allow/downstream=1；3/5 门槛 PASS，verifier 4/4、93 files，
+  篡改副本 FAIL，API Key 泄漏扫描 PASS。
 - 旧真实 DeepSeek holdout：30 runs、0 infra；D2 两档 10/10 形成违规 ToolIntent，
   Null 10/10 harm，XA-Guard 10/10 deny、0/10 harm；同一冻结 intent 的因果 A/B。
 - 旧 holdout authenticity 本次复验 `ok=true`：303 files、30/30 verdict、15/15 audit，
@@ -101,7 +109,8 @@ D1 allow/harm 失败仍保留；D2 两档 10/10 仍稳定。verifier 22/22 PASS�
 
 > 我们保留了 v1 的真实 D1 失败；v2 使用真实 DeepSeek 原生 Tool Call 与 XA-Guard live stdio，
 > 在 D1 neutral-tool 5/5 和 D2 两档 10/10 的同意图 A/B 中实现 Null harm、Guard deny/0 harm。
-> PUBLIC 正例和独立 Operator/HITL 目前仍只有受控集成证据，不冒充 live 完成。
+> 独立 PUBLIC utility live 又在 5/5 同意图 A/B 中实现 Null 与 Guard 双 allow/downstream=1，
+> 证明不是 deny-all；独立 HTTP Operator/HITL 仍未 live 完成。
 
 禁止使用：`100% 防御`、`任意 Agent 通用`、`OpenCode 攻击已拦截`、`六层同一 live 链路
 全运行`、`独立第三方盲测`、`生产级 HSM/TSA/HA`、`GUI/D3 已完成`、`已最终提交`。
@@ -128,6 +137,14 @@ verifier 22/22 PASS；303 files；30/30 verdict；15/15 live audit
 tampered copy: FAIL（预期）
 ```
 
+正式 PUBLIC utility live：
+
+```text
+5 runs；0 infra；5 native intents；Null allow/downstream=1 5/5；
+XA-Guard live allow/downstream=1 5/5；3/5 threshold PASS
+verifier 4/4 PASS；93 files；tampered copy FAIL（预期）
+```
+
 广泛分批回归（组间有重叠，不得相加为全量总数）：
 
 | 测试组 | 结果 |
@@ -148,7 +165,8 @@ tampered copy: FAIL（预期）
 - 沙箱禁止本地 socket，Business API 3 项 `PermissionError`；
 - reference KMS/worker health/部分 identity TestClient 用例挂起；
 - 受限 Windows 沙箱内启动 OAR live MCP subprocess 会在匿名管道创建处返回
-  `PermissionError: [WinError 5]`；经负责人明确数据外发授权后，沙箱外正式 v2 已完成。
+  `PermissionError: [WinError 5]`；经负责人明确数据外发授权后，沙箱外正式 v2 与 PUBLIC
+  utility live 已完成。
 
 因此不能写“全量 pytest 全绿”。本轮未修改旧测试、payload、oracle、阈值或 frozen evidence
 来隐藏失败。
@@ -171,9 +189,8 @@ tampered copy: FAIL（预期）
 ### 提交前硬门
 
 1. 在允许本地进程/网络的支持环境复验真实 stdio 与 HTTP Agent/Operator 双端点。
-2. 基于现有正式 v2，另补专用 PUBLIC 正例的 Null/Guard 双成功 live，以及 Agent pending →
-   独立 HTTP Operator/Dora → exact-hash 单次执行 → replay 拒绝的 HITL live；现有 15 个
-   `utility_success` 不能替代这两项。
+2. 完成 Agent pending → 独立 HTTP Operator/Dora → exact-hash 单次执行 → replay 拒绝的
+   HITL live；PUBLIC 双成功 live 已完成，不能用它替代 HITL。
 3. 负责人实现 GUI 并连续录制；重做 D3，不能用 synthetic fixture 当 live。
 4. 在支持环境启用 Gate5 live，或在画面标 `DISABLED/NOT REACHED`。
 5. 完成 clean checkout 全量 capability matrix、最终 commit 对应 release manifest。
@@ -187,5 +204,6 @@ tampered copy: FAIL（预期）
 3. 补 Gate5 真实 allow/deny 对照和支持环境性能。
 4. 将 v2 数字由 manifest/verifier 自动同步到 D1、D3、QA 和公开 evidence。
 
-保守判断：技术 P0 已从“产品闭环受控通过”提升为“D1/D2 真实模型 live 因果证据通过”；比赛
-竞争力的最大剩余短板是**专用 utility/HITL live、GUI 连续演示、Gate5、独立性和发布合规**。
+保守判断：技术 P0 已从“产品闭环受控通过”提升为“D1/D2 真实模型因果证据 + PUBLIC
+utility live 通过”；比赛竞争力的最大剩余短板是**独立 HTTP HITL live、GUI 连续演示、
+Gate5、独立性和发布合规**。

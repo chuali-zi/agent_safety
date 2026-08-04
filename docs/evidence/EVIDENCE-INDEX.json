@@ -1,6 +1,6 @@
 {
   "schema_version": "xa-guard-evidence-index/v1",
-  "snapshot_utc": "2026-08-04T05:45:00Z",
+  "snapshot_utc": "2026-08-04T07:36:30Z",
   "delivery_authority": "docs/acceptance/DELIVERY-v2.md",
   "canonical": {
     "run_id": "oar-delivery-v2-20260711T123124Z-win-local",
@@ -59,6 +59,17 @@
     "reason": "local runtime result is not a clean final-commit provenance manifest"
   },
   "supporting": [
+    {
+      "id": "live-agent-public-utility-2026-08-04",
+      "classification": "supporting-private-dirty-worktree",
+      "path": "docs/evidence/live-agent-public-utility-2026-08-04.md",
+      "runtime_path": "open-agent-range/.runtime/live-agent/public-utility-formal-20260804",
+      "source_manifest_sha256": "f7c08a13ed048efb8ff89a492875b511f4800b2d152dd2dc1274e32bdc70fdff",
+      "artifact_manifest_sha256": "ee6db9ffa82bbdb25320b51c880e0a4d564e30c964c4c59c352f549a77caf97f",
+      "verification": "4/4 PASS; 93 files; 5/5 native intent; Null 5/5 downstream=1; XA-Guard live 5/5 branch allow/downstream=1 (audit warn); tampered copy FAIL",
+      "publish": false,
+      "reason": "raw transcripts stay in gitignored runtime; run used an uncommitted PUBLIC runner and is not a clean release manifest"
+    },
     {
       "id": "live-agent-holdout-v2-2026-08-03",
       "classification": "supporting-private-dirty-worktree",
