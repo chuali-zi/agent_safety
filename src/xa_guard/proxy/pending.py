@@ -41,6 +41,8 @@ class PendingApproval:
     created_at: datetime
     expires_at: datetime
     input_schema: dict[str, Any] | None = None
+    recovered_from_ledger: bool = False
+    requires_fresh_context: bool = False
 
 
 def _parse_dt(value: str) -> datetime:
@@ -176,6 +178,12 @@ def gate_result_from_dict(raw: dict[str, Any]) -> GateResult:
 
 def context_to_dict(ctx: GateContext, input_schema: dict[str, Any] | None = None) -> dict[str, Any]:
     safe_arguments = redact_arguments(ctx.arguments, input_schema)
+    requires_fresh_context = bool(
+        ctx.provenance_verified
+        or ctx.provenance is not None
+        or ctx.identity_verified
+        or ctx.session_history
+    )
     return {
         "trace_id": ctx.trace_id,
         "span_id": ctx.span_id,
@@ -185,7 +193,11 @@ def context_to_dict(ctx: GateContext, input_schema: dict[str, Any] | None = None
         "arguments_redacted": arguments_are_redacted(safe_arguments),
         "arguments_sha256": _digest(ctx.arguments),
         "user_role": ctx.user_role,
-        "session_history": ctx.session_history,
+        # History can contain document/RAG bodies.  Persist only a digest and
+        # force a fresh request after restart whenever history was present.
+        "session_history": [],
+        "session_history_sha256": _digest(ctx.session_history),
+        "session_history_present": bool(ctx.session_history),
         "input_sources": [_enum_value(item) for item in ctx.input_sources],
         "tenant_id": ctx.tenant_id,
         "human_principal": ctx.human_principal,
@@ -207,12 +219,17 @@ def context_to_dict(ctx: GateContext, input_schema: dict[str, Any] | None = None
         "undo_status": ctx.undo_status,
         "compensates_effect_id": ctx.compensates_effect_id,
         "operation_kind": ctx.operation_kind,
+        # Do not persist a raw provenance envelope. The resume adapter must
+        # rehydrate and verify it; retaining only this safety classification
+        # ensures a pending write cannot silently degrade to read-only.
+        "effect_class": ctx.effect_class,
         "taint": _enum_value(ctx.taint),
         "risk_level": _enum_value(ctx.risk_level),
         "gate_results": [gate_result_to_dict(item) for item in ctx.gate_results],
         "rule_hits": list(ctx.rule_hits),
         "final_decision": _enum_value(ctx.final_decision),
         "final_reason": ctx.final_reason,
+        "resume_requires_fresh_context": requires_fresh_context,
     }
 
 
@@ -248,6 +265,7 @@ def context_from_dict(raw: dict[str, Any]) -> GateContext:
         undo_status=str(raw.get("undo_status") or ""),
         compensates_effect_id=str(raw.get("compensates_effect_id") or ""),
         operation_kind=str(raw.get("operation_kind") or "forward"),
+        effect_class=str(raw.get("effect_class") or ""),
     )
     ctx.taint = TaintLabel(raw.get("taint") or TaintLabel.PUBLIC.value)
     ctx.risk_level = RiskLevel(raw.get("risk_level") or RiskLevel.GREEN.value)
@@ -309,11 +327,24 @@ class PendingApprovalStore:
                 if not trace_id:
                     continue
                 if event.get("event") == "pending_added":
+                    raw_context = dict(event.get("context") or {})
+                    resume_marker = raw_context.get(
+                        "resume_requires_fresh_context"
+                    )
                     item = PendingApproval(
-                        ctx=context_from_dict(dict(event.get("context") or {})),
+                        ctx=context_from_dict(raw_context),
                         created_at=_parse_dt(str(event.get("created_at"))),
                         expires_at=_parse_dt(str(event.get("expires_at"))),
                         input_schema=None,
+                        recovered_from_ledger=True,
+                        # Pre-P0 ledgers have no marker and may contain stale
+                        # identity/history without a verifiable provenance
+                        # envelope.  Unknown schema state must fail closed.
+                        requires_fresh_context=(
+                            True
+                            if resume_marker is None
+                            else bool(resume_marker)
+                        ),
                     )
                     if item.expires_at > datetime.now(timezone.utc):
                         self._items[trace_id] = item

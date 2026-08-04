@@ -1,8 +1,8 @@
 # 项目文档总入口
 
 > 项目：XA-202620 · 面向政企场景的大模型智能体安全关键技术研究
-> 文档目录版本：v6（2026-07-12 Identity + Undo 正式接入）
-> 最高依据：赛题 PDF > 事实源 > **DELIVERY-v2** > PRD > 架构/工作设计 > 研究资料
+> 文档目录版本：v7（2026-07-30 P0 安全闭环）
+> 最高依据：赛题 PDF > 事实源 > 根 `status.md` > 当前实施计划 > 历史交付快照 > PRD/架构
 > 正式安全能力： [Agent Identity + Undo 架构与上线边界](architecture/agent-identity-and-undo.md)
 
 本目录按用途分区。顶层只保留本入口。
@@ -16,7 +16,7 @@ docs/
 ├── planning/            # PRD、产品架构、项目总览
 ├── workplan/            # TODO、下一步设计
 ├── delivery/            # D1/D3/提交清单
-├── acceptance/          # DELIVERY-v2（权威）、L3（工程参考）、R2-R3 工具说明
+├── acceptance/          # 验收报告、历史 DELIVERY-v2、L3/R2-R3 工程参考
 ├── gates/               # Gate 专题
 ├── bench-redteam/       # HACK-BENCH、XA-Bench
 ├── research/            # 答辩研究资料
@@ -29,9 +29,10 @@ docs/
 
 | 目的 | 入口 | 状态 |
 |---|---|---|
-| **比赛交什么、欠什么（权威）** | [acceptance/DELIVERY-v2.md](./acceptance/DELIVERY-v2.md) | `ACTIVE` |
+| **当前仓库与比赛缺口（权威）** | [../status.md](../status.md) | `ACTIVE` |
+| **P0 产品闭环实施计划** | [workplan/CHAMPIONSHIP-P0-LIVE-WORKBENCH-PLAN.md](./workplan/CHAMPIONSHIP-P0-LIVE-WORKBENCH-PLAN.md) | `IN PROGRESS` |
+| 2026-07-27 交付口径快照 | [acceptance/DELIVERY-v2.md](./acceptance/DELIVERY-v2.md) | `HISTORICAL` |
 | **全部证据、hash 与边界** | [acceptance/EVIDENCE-CONSOLIDATION.md](./acceptance/EVIDENCE-CONSOLIDATION.md) | `DONE` |
-| 判断仓库当前状态 | [../status.md](../status.md) | `PARTIAL` |
 | 执行优先级与 TODO | [workplan/TODO.md](./workplan/TODO.md) | `TODO` |
 | 下一步工作设计 | [workplan/NEXT-WORK-DESIGN.md](./workplan/NEXT-WORK-DESIGN.md) | `REFERENCE` |
 | 写 D1 技术方案 | [delivery/D1-technical-report-draft.md](./delivery/D1-technical-report-draft.md) | `TODO` |
@@ -48,6 +49,7 @@ docs/
 | 标签 | 含义 |
 |---|---|
 | `ACTIVE` | 当前权威口径 |
+| `HISTORICAL` | 保留当时事实和 hash，不代表当前最终状态 |
 | `DONE` | 已有代码/文档/证据，可在边界内宣称完成 |
 | `PARTIAL` | 主体完成，仍缺正式交付或冻结证据 |
 | `TODO` | 尚未完成的真实差距 |
@@ -65,7 +67,7 @@ docs/
 | `planning/` | PRD、产品架构、项目总览 |
 | `workplan/` | [TODO](./workplan/TODO.md)、NEXT-WORK-DESIGN |
 | `delivery/` | D1 草稿、D3 脚本、提交清单 |
-| `acceptance/` | **DELIVERY-v2**、L3（deprecated）、R2-R3 工具文档 |
+| `acceptance/` | 当前验收报告、历史 DELIVERY-v2、L3/R2-R3 工具文档 |
 | `gates/` | Gate1–4、Trae 静态 |
 | `bench-redteam/` | 红队协作规范 |
 | `research/` | FORCE 2026 等 |
@@ -75,7 +77,7 @@ docs/
 
 | 项 | 状态 |
 |---|---|
-| DELIVERY-v2 口径 | `ACTIVE` |
+| DELIVERY-v2 口径 | `HISTORICAL` |
 | Tier A D1/D3/D4 | `TODO` |
 | Tier A D2 | `PARTIAL` |
 | Tier B OAR 主证据 | `DONE`（B5 canonical sealed） |
@@ -85,12 +87,12 @@ docs/
 
 ## 维护规则
 
-- 交付口径变更：更新 `acceptance/DELIVERY-v2.md`、`../status.md`、`../log.md` 顶条。
+- 当前状态变更：更新 `../status.md` 和 `../log.md` 顶条；历史快照只补充纠错说明。
 - 勿将 DELIVERY-v2 退役项重新标为 BLOCKED。
 - 移动文档后修链接并在 `log.md` 记录。
 
 ## 根级关联
 
 - [../README.md](../README.md) — 代码快速开始
-- [../status.md](../status.md) — 仓库状态（Delivery v2）
+- [../status.md](../status.md) — 当前仓库与比赛状态
 - [../log.md](../log.md) — 工作日志

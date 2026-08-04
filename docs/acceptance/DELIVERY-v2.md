@@ -1,8 +1,13 @@
-# Delivery v2：比赛交付权威口径
+# Delivery v2：2026-07-27 历史交付快照
 
-> 状态：**SUBMISSION-READY / INTERNAL ACCEPTANCE PASS**
+> 状态：**HISTORICAL SNAPSHOT / SUPERSEDED BY ROOT `status.md`**
 > 更新：2026-07-27
 > 适用：XA-202620《面向政企场景的大模型智能体安全关键技术研究》
+>
+> 本文保留当时的内部验收事实和冻结交付物 hash，不再代表当前最终发布状态。
+> 2026-07-30 的 P0 修复、未完成的 v2 live evidence、GUI/D3、支持环境全量复验和人工
+> 外部提交状态，以仓库根 `status.md` 与
+> `docs/workplan/CHAMPIONSHIP-P0-LIVE-WORKBENCH-PLAN.md` 为准。
 
 ## 1. 必交件
 

@@ -6,12 +6,18 @@
 
 令牌 = HMAC-SHA256(secret, canonical_json(payload))，payload 绑定：
     trace_id + tool_name + args_hash + approver + issued_at + expires_at
+    + request_identity + tenant_id + provenance_digest + history_digest
+    + taint + policy_bundle_sha + effect_class + nonce
 
 - args_hash 绑定精确入参 → 审批后篡改参数（TOCTOU）会令牌失配。
+- identity / tenant / provenance / history / taint / policy / effect 绑定
+  → 批准后上下文漂移会被拒绝。
+- nonce + 进程内原子消费 → 同一令牌不能重复执行。
 - expires_at → 过期令牌不可执行。
 - secret 走环境变量 XA_GUARD_APPROVAL_SECRET（缺省 demo 密钥）。
 
-demo 用 HMAC；生产可替换为 SM2/RSA 非对称签名，接口保持不变。
+demo 用 HMAC；多实例生产部署仍需把 nonce 消费状态放入共享事务存储，
+并用受管密钥替换缺省 demo 密钥。
 """
 from __future__ import annotations
 
@@ -20,12 +26,14 @@ import hmac
 import json
 import os
 import threading
+import uuid
 from datetime import datetime, timedelta, timezone
 
 from xa_guard.types import Approval
 
 _DEFAULT_SECRET = "xa-guard-demo-approval-secret"
 _DEFAULT_TTL_SECONDS = 300
+MAX_APPROVAL_TTL_SECONDS = 900
 _CONSUMED_LOCK = threading.Lock()
 _CONSUMED_TOKENS: dict[str, datetime] = {}
 
@@ -42,7 +50,12 @@ def args_hash(arguments: dict | None) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def _payload(*, trace_id: str, tool_name: str, ah: str, approver: str, issued_at: str, expires_at: str) -> dict:
+def _payload(
+    *, trace_id: str, tool_name: str, ah: str, approver: str, issued_at: str,
+    expires_at: str, request_identity: str = "", tenant_id: str = "",
+    provenance_digest: str = "", history_digest: str = "", taint: str = "",
+    policy_bundle_sha: str = "", effect_class: str = "", nonce: str = "",
+) -> dict:
     return {
         "trace_id": trace_id,
         "tool_name": tool_name,
@@ -50,6 +63,14 @@ def _payload(*, trace_id: str, tool_name: str, ah: str, approver: str, issued_at
         "approver": approver,
         "issued_at": issued_at,
         "expires_at": expires_at,
+        "request_identity": request_identity,
+        "tenant_id": tenant_id,
+        "provenance_digest": provenance_digest,
+        "history_digest": history_digest,
+        "taint": taint,
+        "policy_bundle_sha": policy_bundle_sha,
+        "effect_class": effect_class,
+        "nonce": nonce,
     }
 
 
@@ -66,16 +87,33 @@ def issue_approval(
     approver: str,
     reason: str = "",
     ttl_seconds: int = _DEFAULT_TTL_SECONDS,
+    request_identity: str = "",
+    tenant_id: str = "",
+    provenance_digest: str = "",
+    history_digest: str = "",
+    taint: str = "",
+    policy_bundle_sha: str = "",
+    effect_class: str = "",
+    nonce: str | None = None,
 ) -> Approval:
     """在人工 approve 时签发令牌。"""
+    if ttl_seconds <= 0 or ttl_seconds > MAX_APPROVAL_TTL_SECONDS:
+        raise ValueError(
+            f"approval ttl_seconds must be in 1..{MAX_APPROVAL_TTL_SECONDS}"
+        )
     now = datetime.now(timezone.utc)
     exp = now + timedelta(seconds=ttl_seconds)
     ah = args_hash(arguments)
     issued_at = now.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     expires_at = exp.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    nonce = nonce or uuid.uuid4().hex
     token = _sign(_payload(
         trace_id=trace_id, tool_name=tool_name, ah=ah,
         approver=approver, issued_at=issued_at, expires_at=expires_at,
+        request_identity=request_identity, tenant_id=tenant_id,
+        provenance_digest=provenance_digest, history_digest=history_digest,
+        taint=taint, policy_bundle_sha=policy_bundle_sha,
+        effect_class=effect_class, nonce=nonce,
     ))
     return Approval(
         approver=approver,
@@ -83,6 +121,14 @@ def issue_approval(
         args_hash=ah,
         issued_at=issued_at,
         expires_at=expires_at,
+        request_identity=request_identity,
+        tenant_id=tenant_id,
+        provenance_digest=provenance_digest,
+        history_digest=history_digest,
+        taint=taint,
+        policy_bundle_sha=policy_bundle_sha,
+        effect_class=effect_class,
+        nonce=nonce,
         token=token,
     )
 
@@ -94,6 +140,13 @@ def verify_approval(
     tool_name: str,
     arguments: dict | None,
     now: datetime | None = None,
+    request_identity: str = "",
+    tenant_id: str = "",
+    provenance_digest: str = "",
+    history_digest: str = "",
+    taint: str = "",
+    policy_bundle_sha: str = "",
+    effect_class: str = "",
 ) -> tuple[bool, str]:
     """执行前验签：返回 (是否有效, 原因)。
 
@@ -104,9 +157,27 @@ def verify_approval(
     ah = args_hash(arguments)
     if not hmac.compare_digest(ah, approval.args_hash or ""):
         return False, "args_hash_mismatch"
+    bindings = {
+        "request_identity": request_identity,
+        "tenant_id": tenant_id,
+        "provenance_digest": provenance_digest,
+        "history_digest": history_digest,
+        "taint": taint,
+        "policy_bundle_sha": policy_bundle_sha,
+        "effect_class": effect_class,
+    }
+    for field, current in bindings.items():
+        bound = getattr(approval, field, "")
+        # A non-empty signed binding must always be supplied and match at resume.
+        if bound and not hmac.compare_digest(str(bound), str(current)):
+            return False, f"{field}_mismatch"
     expected = _sign(_payload(
         trace_id=trace_id, tool_name=tool_name, ah=approval.args_hash,
         approver=approval.approver, issued_at=approval.issued_at, expires_at=approval.expires_at,
+        request_identity=approval.request_identity, tenant_id=approval.tenant_id,
+        provenance_digest=approval.provenance_digest, history_digest=approval.history_digest,
+        taint=approval.taint, policy_bundle_sha=approval.policy_bundle_sha,
+        effect_class=approval.effect_class, nonce=approval.nonce,
     ))
     if not hmac.compare_digest(expected, approval.token):
         return False, "bad_signature"
@@ -126,6 +197,13 @@ def verify_and_consume_approval(
     tool_name: str,
     arguments: dict | None,
     now: datetime | None = None,
+    request_identity: str = "",
+    tenant_id: str = "",
+    provenance_digest: str = "",
+    history_digest: str = "",
+    taint: str = "",
+    policy_bundle_sha: str = "",
+    effect_class: str = "",
 ) -> tuple[bool, str]:
     """验签并把 approval token 标记为已消费，防止进程内重放执行。
 
@@ -139,6 +217,13 @@ def verify_and_consume_approval(
         tool_name=tool_name,
         arguments=arguments,
         now=checked_at,
+        request_identity=request_identity,
+        tenant_id=tenant_id,
+        provenance_digest=provenance_digest,
+        history_digest=history_digest,
+        taint=taint,
+        policy_bundle_sha=policy_bundle_sha,
+        effect_class=effect_class,
     )
     if not ok:
         return False, why

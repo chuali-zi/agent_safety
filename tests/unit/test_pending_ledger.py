@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from xa_guard.proxy.pending import PendingApprovalStore, arguments_are_redacted, redact_arguments
 from xa_guard.types import Decision, GateContext, GateResult, RiskLevel, TaintLabel
 
@@ -157,3 +159,26 @@ def test_pending_ledger_prunes_expired_items(tmp_path):
     assert store.list() == []
     assert PendingApprovalStore(ledger_path=ledger).pop(item.ctx.trace_id) is None
     assert '"outcome": "expired"' in ledger.read_text(encoding="utf-8")
+
+
+def test_pre_p0_ledger_without_resume_marker_fails_closed(tmp_path):
+    ledger = tmp_path / "pending.jsonl"
+    PendingApprovalStore(ledger_path=ledger).add(_ctx())
+    events = [
+        json.loads(line)
+        for line in ledger.read_text(encoding="utf-8").splitlines()
+    ]
+    events[0]["context"].pop("resume_requires_fresh_context", None)
+    ledger.write_text(
+        "\n".join(
+            json.dumps(event, ensure_ascii=False, sort_keys=True)
+            for event in events
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    restored = PendingApprovalStore(ledger_path=ledger).list()[0]
+
+    assert restored.recovered_from_ledger is True
+    assert restored.requires_fresh_context is True

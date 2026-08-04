@@ -23,6 +23,15 @@ import yaml
 
 from xa_guard.gates.base import Gate, GateStage
 from xa_guard.policy.layered import get_global_source
+from xa_guard.provenance import (
+    DEFAULT_REFERENCE_SCHEMAS,
+    ReferenceFieldSpec,
+    ReferenceResolutionContext,
+    ReferenceResolver,
+    ResolutionStatus,
+    ResolvedReference,
+    extract_reference_ids,
+)
 from xa_guard.types import (
     Decision,
     GateContext,
@@ -74,6 +83,9 @@ _ROUTING_VALUE_KEYS = {
 
 # InputSource → 最低推断污点
 _SOURCE_TAINT: dict[InputSource, TaintLabel] = {
+    # Unknown is intentionally not upgraded to a claimed origin.  It remains
+    # public for taint compatibility while Gate1/audit retain its uncertainty.
+    InputSource.UNKNOWN: TaintLabel.PUBLIC,
     InputSource.USER: TaintLabel.PUBLIC,
     InputSource.WEB: TaintLabel.PUBLIC,
     InputSource.DOCUMENT: TaintLabel.INTERNAL,
@@ -148,13 +160,21 @@ class Gate4Taint(Gate):
     name = "gate4_taint"
     supported_stages = (GateStage.INBOUND, GateStage.OUTBOUND)
 
-    def __init__(self, cfg=None) -> None:
+    def __init__(
+        self,
+        cfg=None,
+        *,
+        reference_resolver: ReferenceResolver | None = None,
+        reference_schemas: tuple[ReferenceFieldSpec, ...] = DEFAULT_REFERENCE_SCHEMAS,
+    ) -> None:
         super().__init__(cfg)
         cap_file = self.opt("tool_capabilities_file", "policies/baseline/gate4_capabilities.yaml")
         try:
             self.capabilities: dict[str, ToolCapability] = _load_capabilities(cap_file)
         except FileNotFoundError:
             self.capabilities = {}
+        self.reference_resolver = reference_resolver
+        self.reference_schemas = reference_schemas
 
     def _default_cap(self, tool_name: str) -> ToolCapability:
         # Fail-closed 兜底：未登记工具视为最高风险来源。
@@ -169,21 +189,21 @@ class Gate4Taint(Gate):
             output_taint=TaintLabel.CONFIDENTIAL,
         )
 
-    def _current_caps(self) -> dict[str, ToolCapability]:
+    def _current_caps(self, ctx: GateContext) -> dict[str, ToolCapability]:
         """LayeredPolicySource opt-in（cfg.gate4.prefer_layered: true）；默认 legacy。"""
         if bool(self.opt("prefer_layered", False)):
             layered = get_global_source()
             if layered is not None:
-                caps = layered.get_tool_capabilities()
+                caps = layered.get_tool_capabilities(ctx.tenant_id)
                 if caps:
                     return caps
         return self.capabilities
 
-    def _current_pattern(self) -> re.Pattern:
+    def _current_pattern(self, ctx: GateContext) -> re.Pattern:
         if bool(self.opt("prefer_layered", False)):
             layered = get_global_source()
             if layered is not None:
-                pat = layered.get_sensitive_pattern()
+                pat = layered.get_sensitive_pattern(ctx.tenant_id)
                 if pat is not None:
                     return pat
         return _SENSITIVE_PATTERNS
@@ -197,7 +217,7 @@ class Gate4Taint(Gate):
                 continue
             taint = taint.merge(mapped)
 
-        pat = self._current_pattern()
+        pat = self._current_pattern(ctx)
         # 扫描 arguments 值
         if _scan_sensitive(ctx.arguments, pat):
             taint = taint.merge(TaintLabel.CONFIDENTIAL)
@@ -211,16 +231,48 @@ class Gate4Taint(Gate):
 
         return taint
 
+    def _resolve_references(self, ctx: GateContext) -> list[ResolvedReference]:
+        reference_ids = extract_reference_ids(ctx.arguments, self.reference_schemas)
+        if not reference_ids:
+            return []
+        resolution_context = ReferenceResolutionContext(
+            tool_name=ctx.tool_name, tenant_id=ctx.tenant_id, task_id=ctx.task_id,
+            human_principal=ctx.human_principal, agent_id=ctx.agent_id,
+        )
+        # A resolver is server-side trusted state.  Envelope records are usable
+        # only after the upstream adapter has verified their MAC and set the
+        # explicit flag; Agent-supplied `trust_state=verified` is insufficient.
+        verified_envelope = ctx.provenance if ctx.provenance_verified else None
+        envelope_references = {
+            ref.reference_id: ref for ref in (verified_envelope.resolved_references if verified_envelope else ())
+        }
+        resolved: list[ResolvedReference] = []
+        for reference_id in reference_ids:
+            if self.reference_resolver is not None:
+                resolved.append(self.reference_resolver.resolve(reference_id, resolution_context))
+            elif reference_id in envelope_references:
+                resolved.append(envelope_references[reference_id])
+            else:
+                resolved.append(ResolvedReference(
+                    reference_id=reference_id, status=ResolutionStatus.UNKNOWN,
+                    reason="no trusted reference resolution available",
+                ))
+        return resolved
+
     def evaluate(self, ctx: GateContext, stage: GateStage = GateStage.INBOUND) -> GateResult:
         # strict_mode 保留读取以兼容 configs/xa-guard.yaml 的 strict_mode 配置项，
         # 但 gate4 当前逻辑中 OUTBOUND 机密外泄直接 DENY，无 WARN 路径，故 strict 不影响实际决策。
         # 如未来需要 WARN 升级语义，在此处重新引入逻辑。
         _ = self.opt("strict_mode", False)  # 保留兼容，暂未使用（见上方注释）
-        caps = self._current_caps()
+        caps = self._current_caps(ctx)
         cap = caps.get(ctx.tool_name) or self._default_cap(ctx.tool_name)
 
         if stage == GateStage.INBOUND:
             inferred = self._infer_taint(ctx)
+            references = self._resolve_references(ctx)
+            for reference in references:
+                if reference.status == ResolutionStatus.RESOLVED:
+                    inferred = inferred.merge(reference.classification).merge(reference.taint)
 
             if inferred.can_flow_to(cap.input_max_taint):
                 decision = Decision.ALLOW
@@ -231,6 +283,15 @@ class Gate4Taint(Gate):
                     f"taint {inferred.value} > tool input_max {cap.input_max_taint.value}"
                 ]
 
+            has_external = any(c in cap.capabilities for c in ("NETWORK_EXTERNAL", "NOTIFY"))
+            unresolved = [r for r in references if r.status != ResolutionStatus.RESOLVED]
+            if has_external and unresolved:
+                decision = Decision.DENY
+                risks.extend(
+                    f"reference {r.reference_id} is {r.status.value}; external egress requires trusted resolution"
+                    for r in unresolved
+                )
+
             return GateResult(
                 gate_name=self.name,
                 decision=decision,
@@ -238,6 +299,7 @@ class Gate4Taint(Gate):
                 metadata={
                     "taint": inferred.value,
                     "tool_capability": _cap_to_dict(cap),
+                    "resolved_references": [reference.audit_summary() for reference in references],
                 },
             )
 

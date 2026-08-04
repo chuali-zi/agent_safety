@@ -46,7 +46,7 @@ class Gate2Plan(Gate):
         except FileNotFoundError:
             self._legacy_risks = {}
 
-    def _load_risks(self) -> dict[str, RiskLevel]:
+    def _load_risks(self, tenant_id: str = "") -> dict[str, RiskLevel]:
         """LayeredPolicySource（baseline+overlay 合并）opt-in；默认走单文件。
 
         prefer_layered: true 时优先 layered（生产推荐），否则保持 legacy（兼容单测）。
@@ -56,7 +56,7 @@ class Gate2Plan(Gate):
         if bool(self.opt("prefer_layered", False)):
             layered = get_global_source()
             if layered is not None:
-                risks = layered.get_tool_risks()
+                risks = layered.get_tool_risks(tenant_id)
                 if risks:
                     return risks
         # legacy 路径：单文件直读（单测兼容；tool_risk_file 配置指向 gate2_tool_risks.yaml 仅作历史保留）
@@ -108,7 +108,7 @@ class Gate2Plan(Gate):
         )
 
     def evaluate(self, ctx: GateContext, stage: GateStage = GateStage.INBOUND) -> GateResult:
-        risks = self._load_risks()
+        risks = self._load_risks(ctx.tenant_id)
         # 未登记工具 fail-closed：默认 YELLOW（warn + async_notify），而非 GREEN（静默放行）。
         # 安全网关对未知工具应暴露而不应静默。可通过 opt("default_risk") 覆盖（"green"/"yellow"/"red"）。
         # risk_level 唯一事实源：policies/baseline/gate4_capabilities.yaml。

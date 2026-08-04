@@ -34,6 +34,7 @@ from xa_guard.audit.sm_crypto import (
 from xa_guard.config import GateConfig
 from xa_guard.gates.base import Gate, GateStage
 from xa_guard.policy.layered import get_global_source
+from xa_guard.provenance import canonical_sha256
 from xa_guard.types import AuditRecord, Decision, GateContext, GateResult
 
 
@@ -117,7 +118,32 @@ class Gate6Audit(Gate):
 
         # 5. 双层策略 bundle_sha（若 LayeredPolicySource 已实例化）
         layered = get_global_source()
-        bundle_sha = layered.bundle_sha if layered is not None else ""
+        bundle_sha = (
+            layered.effective_bundle_sha(ctx.tenant_id)
+            if layered is not None
+            else ""
+        )
+        provenance = ctx.provenance if ctx.provenance_verified else None
+        provenance_sources = []
+        provenance_references = []
+        provenance_digest = ""
+        if provenance is not None:
+            provenance_digest = canonical_sha256(provenance.unsigned_payload())
+            provenance_sources = [
+                {
+                    "source_id": source.source_id,
+                    "kind": source.kind,
+                    "locator_digest": source.locator_digest,
+                    "content_digest": source.content_digest,
+                    "trust_state": source.trust_state.value,
+                    "taint": source.taint.value,
+                }
+                for source in provenance.sources
+            ]
+            provenance_references = [
+                reference.audit_summary()
+                for reference in provenance.resolved_references
+            ]
         sandbox_metadata = {}
         governance_metadata = {}
         for gate_result in reversed(ctx.gate_results):
@@ -178,6 +204,35 @@ class Gate6Audit(Gate):
             gen_ai_identity_kid=ctx.identity_kid,
             gen_ai_identity_jti_sha256=ctx.identity_jti_sha256,
             gen_ai_identity_scopes=list(ctx.identity_scopes),
+            gen_ai_provenance_verified=ctx.provenance_verified,
+            gen_ai_provenance_schema_version=(
+                provenance.schema_version if provenance is not None else ""
+            ),
+            gen_ai_provenance_session_id=(
+                provenance.session_id if provenance is not None else ""
+            ),
+            gen_ai_provenance_turn_id=(
+                provenance.turn_id if provenance is not None else ""
+            ),
+            gen_ai_provenance_history_digest=(
+                provenance.history_digest if provenance is not None else ""
+            ),
+            gen_ai_provenance_digest=provenance_digest,
+            gen_ai_provenance_policy_bundle_sha=(
+                provenance.policy_bundle_sha if provenance is not None else ""
+            ),
+            gen_ai_provenance_key_id=(
+                provenance.key_id if provenance is not None else ""
+            ),
+            gen_ai_provenance_nonce_sha256=(
+                canonical_sha256(provenance.nonce) if provenance is not None else ""
+            ),
+            gen_ai_provenance_input_sources=[
+                str(getattr(source, "value", source))
+                for source in ctx.input_sources
+            ],
+            gen_ai_provenance_sources=provenance_sources,
+            gen_ai_provenance_resolved_references=provenance_references,
             gen_ai_resilience_effect_id=ctx.effect_id,
             gen_ai_resilience_side_effect_level=ctx.side_effect_level,
             gen_ai_resilience_reversibility=ctx.reversibility,

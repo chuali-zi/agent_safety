@@ -16,7 +16,9 @@ import json
 import hashlib
 import logging
 import os
+import threading
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from hmac import compare_digest
 from typing import Any
 
@@ -29,6 +31,10 @@ from mcp.server.stdio import stdio_server
 from xa_guard.aibom.gateway import AdmissionResult, admit_install_request
 from xa_guard.approval import issue_approval
 from xa_guard.pipeline import Pipeline
+from xa_guard.provenance import (
+    TrustedContextEnvelope,
+    canonical_sha256,
+)
 from xa_guard.proxy.downstream import DownstreamRouter
 from xa_guard.proxy.pending import PendingApprovalStore, arguments_are_redacted, redact_arguments
 from xa_guard.types import Decision, GateContext, GateResult, InputSource
@@ -68,6 +74,21 @@ _CAPABILITY_SECRET_MARKERS = (
     "signature",
     "token",
 )
+_PROVENANCE_KEYS_ENV = "XA_GUARD_PROVENANCE_HMAC_KEYS"
+_PROVENANCE_SECRET_ENV = "XA_GUARD_PROVENANCE_HMAC_SECRET"
+_PROVENANCE_KEY_ID_ENV = "XA_GUARD_PROVENANCE_HMAC_KEY_ID"
+_PROVENANCE_NONCE_LOCK = threading.Lock()
+_PROVENANCE_NONCES: dict[str, datetime] = {}
+_INPUT_SOURCE_BY_KIND = {
+    "unknown": InputSource.UNKNOWN,
+    "user": InputSource.USER,
+    "web": InputSource.WEB,
+    "document": InputSource.DOCUMENT,
+    "rag": InputSource.RAG,
+    "memory": InputSource.MEMORY,
+    "tool_result": InputSource.TOOL_RESULT,
+    "tool-result": InputSource.TOOL_RESULT,
+}
 
 
 def _pop_governance_envelope(arguments: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -119,27 +140,170 @@ def _capability_token_summary(envelope: dict[str, Any]) -> dict[str, Any]:
     return summary
 
 
+def _provenance_keys() -> dict[str, bytes]:
+    """Load trusted-adapter HMAC keys without ever returning them to MCP clients."""
+    raw = os.getenv(_PROVENANCE_KEYS_ENV, "").strip()
+    keys: dict[str, bytes] = {}
+    if raw:
+        try:
+            parsed = json.loads(raw)
+        except ValueError as exc:
+            raise ValueError(f"{_PROVENANCE_KEYS_ENV} must be a JSON object") from exc
+        if not isinstance(parsed, dict):
+            raise ValueError(f"{_PROVENANCE_KEYS_ENV} must be a JSON object")
+        for key_id, secret in parsed.items():
+            if str(key_id) and isinstance(secret, str) and secret:
+                keys[str(key_id)] = secret.encode("utf-8")
+    single = os.getenv(_PROVENANCE_SECRET_ENV, "")
+    if single:
+        keys.setdefault(
+            os.getenv(_PROVENANCE_KEY_ID_ENV, "default") or "default",
+            single.encode("utf-8"),
+        )
+    return keys
+
+
+def _consume_provenance_nonce(envelope: TrustedContextEnvelope) -> bool:
+    """Consume a signed nonce once for this process; expired entries are pruned."""
+    now = datetime.now(timezone.utc)
+    try:
+        expiry = datetime.fromisoformat(envelope.expires_at.replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return False
+    if expiry.tzinfo is None or expiry <= now:
+        return False
+    nonce_key = f"{envelope.key_id}:{envelope.nonce}"
+    with _PROVENANCE_NONCE_LOCK:
+        for key, value in list(_PROVENANCE_NONCES.items()):
+            if value <= now:
+                _PROVENANCE_NONCES.pop(key, None)
+        if nonce_key in _PROVENANCE_NONCES:
+            return False
+        _PROVENANCE_NONCES[nonce_key] = expiry
+    return True
+
+
+def _session_history(envelope: dict[str, Any]) -> list[dict[str, Any]]:
+    """Normalize adapter-provided history while bounding untrusted input size."""
+    raw = envelope.get("session_history")
+    if not isinstance(raw, list):
+        return []
+    history: list[dict[str, Any]] = []
+    for item in raw[:100]:
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("role") or "")
+        content = item.get("content", "")
+        if not isinstance(content, (str, list, dict)):
+            content = str(content)
+        history.append({"role": role, "content": content})
+    return history
+
+
+def _verified_provenance(
+    *,
+    name: str,
+    arguments: dict[str, Any],
+    envelope: dict[str, Any],
+    verified_identity: VerifiedIdentity | None,
+    history: list[dict[str, Any]],
+) -> tuple[TrustedContextEnvelope | None, str]:
+    raw = envelope.get("provenance")
+    if raw is None:
+        return None, ""
+    if not isinstance(raw, dict):
+        return None, "provenance envelope must be an object"
+    try:
+        provenance = TrustedContextEnvelope.from_dict(raw)
+        if not provenance.tool_name or not provenance.arguments_sha256:
+            raise ValueError("provenance envelope requires exact tool and arguments binding")
+        keys = _provenance_keys()
+        if not provenance.verify_for_context(keys, tool_name=name, arguments=arguments):
+            raise ValueError("provenance signature, expiry, or request binding is invalid")
+        if provenance.history_digest != canonical_sha256(history):
+            raise ValueError("provenance history digest mismatch")
+        if verified_identity is not None:
+            identity_values = {
+                "human_principal": verified_identity.human_principal,
+                "agent_id": verified_identity.agent_id,
+                "tenant_id": verified_identity.tenant_id,
+            }
+            for field, expected in identity_values.items():
+                if str(getattr(provenance, field)) != expected:
+                    raise ValueError(f"provenance {field} conflicts with verified identity")
+        if not _consume_provenance_nonce(provenance):
+            raise ValueError("provenance nonce is expired or already consumed")
+        return provenance, ""
+    except (TypeError, ValueError) as exc:
+        return None, str(exc)
+
+
+def _provenance_sources(
+    provenance: TrustedContextEnvelope | None,
+) -> list[InputSource]:
+    if provenance is None:
+        return [InputSource.UNKNOWN]
+    result = [
+        _INPUT_SOURCE_BY_KIND[source.kind.lower()]
+        for source in provenance.sources
+        if source.kind.lower() in _INPUT_SOURCE_BY_KIND
+    ]
+    return list(dict.fromkeys(result)) or [InputSource.UNKNOWN]
+
+
 def _ctx_with_governance(
     name: str,
     arguments: dict[str, Any],
     envelope: dict[str, Any],
     verified_identity: VerifiedIdentity | None = None,
 ) -> GateContext:
-    human = verified_identity.human_principal if verified_identity else str(
-        envelope.get("human_principal") or envelope.get("principal_id")
-        or envelope.get("principal") or envelope.get("employee_id") or ""
+    history = _session_history(envelope)
+    provenance, provenance_error = _verified_provenance(
+        name=name,
+        arguments=arguments,
+        envelope=envelope,
+        verified_identity=verified_identity,
+        history=history,
     )
-    return GateContext(
+    trusted_adapter = provenance is not None
+    human = (
+        verified_identity.human_principal
+        if verified_identity
+        else provenance.human_principal
+        if provenance
+        else str(
+            envelope.get("human_principal")
+            or envelope.get("principal_id")
+            or envelope.get("principal")
+            or envelope.get("employee_id")
+            or ""
+        )
+    )
+    ctx = GateContext(
         tool_name=name,
         arguments=arguments,
-        session_history=[],
-        input_sources=[InputSource.USER],
-        tenant_id=verified_identity.tenant_id if verified_identity else str(envelope.get("tenant_id") or envelope.get("tenant") or ""),
+        session_history=history,
+        input_sources=_provenance_sources(provenance),
+        provenance=provenance,
+        provenance_verified=trusted_adapter,
+        tenant_id=(
+            verified_identity.tenant_id
+            if verified_identity
+            else provenance.tenant_id
+            if provenance
+            else str(envelope.get("tenant_id") or envelope.get("tenant") or "")
+        ),
         human_principal=human,
-        agent_id=verified_identity.agent_id if verified_identity else str(envelope.get("agent_id") or ""),
+        agent_id=(
+            verified_identity.agent_id
+            if verified_identity
+            else provenance.agent_id
+            if provenance
+            else str(envelope.get("agent_id") or "")
+        ),
         data_domain=str(envelope.get("data_domain") or ""),
         resource_owner=str(envelope.get("resource_owner") or ""),
-        task_id=str(envelope.get("task_id") or ""),
+        task_id=provenance.task_id if provenance else str(envelope.get("task_id") or ""),
         cost_estimate_usd=_float_field(envelope, "cost_estimate_usd"),
         output_estimate=str(envelope.get("output_estimate") or ""),
         capability_token_summary=_capability_token_summary(envelope),
@@ -149,6 +313,17 @@ def _ctx_with_governance(
         identity_jti_sha256=verified_identity.jti_sha256 if verified_identity else "",
         identity_scopes=list(verified_identity.scopes) if verified_identity else [],
     )
+    if provenance_error:
+        log.warning("trusted provenance rejected for tool %s: %s", name, provenance_error)
+        ctx.append(
+            GateResult(
+                gate_name="trusted_context",
+                decision=Decision.DENY,
+                risks=["invalid trusted provenance envelope"],
+                metadata={"provenance_verified": False, "error": provenance_error},
+            )
+        )
+    return ctx
 
 
 def _aibom_install_preflight(
@@ -232,6 +407,26 @@ def _aibom_offline_store() -> Any:
     return OfflinePackageStore(cache_path)
 
 
+def _issue_runtime_approval(
+    pipeline: Pipeline,
+    ctx: GateContext,
+    *,
+    approver: str,
+    reason: str,
+) -> Any:
+    """Use fully bound runtime approvals; retain fake-pipeline test compatibility."""
+    issuer = getattr(pipeline, "issue_bound_approval", None)
+    if callable(issuer):
+        return issuer(ctx, approver=approver, reason=reason)
+    return issue_approval(
+        trace_id=ctx.trace_id,
+        tool_name=ctx.tool_name,
+        arguments=ctx.arguments,
+        approver=approver,
+        reason=reason,
+    )
+
+
 def _build_app(
     pipeline: Pipeline,
     downstream_router: DownstreamRouter,
@@ -239,9 +434,14 @@ def _build_app(
     require_operator_token: bool = False,
     stdio_identity: VerifiedIdentity | None = None,
     resilience_manager: Any = None,
+    expose_operator_tools: bool = True,
+    allow_client_elicitation: bool = True,
+    pending_store: PendingApprovalStore | None = None,
 ) -> Server:
     app: Server = Server("xa-guard")
-    pending = PendingApprovalStore(ledger_path=_pending_ledger_path(pipeline))
+    pending = pending_store or PendingApprovalStore(
+        ledger_path=_pending_ledger_path(pipeline)
+    )
     aibom_offline_store = _aibom_offline_store()
     tool_schemas = {
         str(meta.get("name") or ""): dict(meta.get("inputSchema") or {})
@@ -259,7 +459,8 @@ def _build_app(
                     inputSchema=meta.get("inputSchema") or {"type": "object", "properties": {}},
                 )
             )
-        tools.extend(_control_tools())
+        if expose_operator_tools:
+            tools.extend(_control_tools())
         return tools
 
     @app.call_tool()
@@ -285,6 +486,20 @@ def _build_app(
                 return await resilience_manager.execute(c, downstream_router.call_tool)
             return await downstream_router.call_tool(c)
 
+        control_names = {
+            _PENDING_LIST_TOOL,
+            _PENDING_APPROVE_TOOL,
+            _EFFECT_LIST_TOOL,
+            _UNDO_REQUEST_TOOL,
+            _UNDO_APPROVE_TOOL,
+        }
+        if name in control_names and not expose_operator_tools:
+            return [
+                mtypes.TextContent(
+                    type="text",
+                    text="⚠ XA-Guard operator control tools are unavailable on the Agent tool plane",
+                )
+            ]
         if name == _PENDING_LIST_TOOL:
             return _list_pending_approvals(
                 pending,
@@ -333,18 +548,21 @@ def _build_app(
         result = await pipeline.run(ctx, _executor)
 
         if result.final_decision == Decision.REQUIRE_APPROVAL:
-            outcome = await _request_hitl_approval(
-                app,
-                ctx,
-                input_schema=tool_schemas.get(ctx.tool_name),
+            outcome = (
+                await _request_hitl_approval(
+                    app,
+                    ctx,
+                    input_schema=tool_schemas.get(ctx.tool_name),
+                )
+                if allow_client_elicitation
+                else _ApprovalOutcome(approved=None)
             )
             approved = outcome.approved
             if approved is True:
                 # 人工已批准：签发可验证审批令牌，挂到 ctx 供 pipeline 验签 + gate6 审计。
-                ctx.approval = issue_approval(
-                    trace_id=ctx.trace_id,
-                    tool_name=ctx.tool_name,
-                    arguments=ctx.arguments,
+                ctx.approval = _issue_runtime_approval(
+                    pipeline,
+                    ctx,
                     approver=outcome.approver or "mcp-elicitation-user",
                     reason=outcome.reason,
                 )
@@ -394,9 +612,7 @@ def _build_app(
                             f"⚠ XA-Guard 等待人工审批: {ctx.tool_name}\n"
                             f"trace_id={ctx.trace_id}\n"
                             f"expires_at={item.expires_at.isoformat()}\n"
-                            f"调用 {_PENDING_APPROVE_TOOL} 并传入 "
-                            '{"trace_id": "...", "approve": true|false, "reason": "..."} '
-                            "完成审批。"
+                            "请由独立 Operator 控制面完成审批；Agent 工具面不能自批。"
                         ),
                     )
                 ]
@@ -566,6 +782,22 @@ async def _approve_pending_approval(
             )
         ]
 
+    if item.recovered_from_ledger and item.requires_fresh_context:
+        await pipeline.reject_after_approval(
+            ctx,
+            approver=approver,
+            reason="pending_context_requires_rehydration_after_restart",
+        )
+        return [
+            mtypes.TextContent(
+                type="text",
+                text=(
+                    "⚠ XA-Guard 重启后未保留可重新验证的身份、provenance 或历史；"
+                    "该待审批请求已 fail-closed，请重新发起。"
+                ),
+            )
+        ]
+
     if arguments_are_redacted(ctx.arguments):
         await pipeline.reject_after_approval(
             ctx,
@@ -582,10 +814,9 @@ async def _approve_pending_approval(
             )
         ]
 
-    ctx.approval = issue_approval(
-        trace_id=ctx.trace_id,
-        tool_name=ctx.tool_name,
-        arguments=ctx.arguments,
+    ctx.approval = _issue_runtime_approval(
+        pipeline,
+        ctx,
         approver=approver,
         reason=reason,
     )
@@ -720,7 +951,14 @@ async def run_stdio(pipeline: Pipeline, downstream_router: DownstreamRouter, res
             if access_token is None:
                 raise RuntimeError("stdio identity token verification failed")
             identity = identity_from_access_token(access_token)
-    app = _build_app(pipeline, downstream_router, stdio_identity=identity, resilience_manager=resilience_manager)
+    app = _build_app(
+        pipeline,
+        downstream_router,
+        stdio_identity=identity,
+        resilience_manager=resilience_manager,
+        expose_operator_tools=False,
+        allow_client_elicitation=False,
+    )
     init_opts: InitializationOptions = app.create_initialization_options()
     async with stdio_server() as (read_stream, write_stream):
         log.info("xa-guard stdio server started")
@@ -784,11 +1022,17 @@ def _build_streamable_http_asgi_app(
     if session_idle_timeout_seconds <= 0:
         raise ValueError("session_idle_timeout_seconds must be positive")
 
+    pending_store = PendingApprovalStore(
+        ledger_path=_pending_ledger_path(pipeline)
+    )
     mcp_app = _build_app(
         pipeline,
         downstream_router,
         require_operator_token=True,
         resilience_manager=resilience_manager,
+        expose_operator_tools=False,
+        allow_client_elicitation=False,
+        pending_store=pending_store,
     )
 
     allowed_hosts = [
@@ -810,11 +1054,57 @@ def _build_streamable_http_asgi_app(
                 f"127.0.0.1:{port}",
             ]
         )
+    security_settings = TransportSecuritySettings(
+        allowed_hosts=sorted(set(allowed_hosts))
+    )
     manager = StreamableHTTPSessionManager(
         app=mcp_app,
         json_response=False,
         stateless=False,
-        security_settings=TransportSecuritySettings(allowed_hosts=sorted(set(allowed_hosts))),
+        security_settings=security_settings,
+        session_idle_timeout=session_idle_timeout_seconds,
+    )
+
+    from mcp.server.auth.middleware.auth_context import get_access_token
+    from xa_guard.proxy.operator import (
+        OperatorApprovalService,
+        OperatorCredentialMiddleware,
+        build_operator_server,
+    )
+
+    async def _operator_executor(ctx: GateContext) -> Any:
+        if resilience_manager is not None:
+            return await resilience_manager.execute(
+                ctx,
+                downstream_router.call_tool,
+            )
+        return await downstream_router.call_tool(ctx)
+
+    def _operator_identity() -> VerifiedIdentity | None:
+        try:
+            access_token = get_access_token()
+        except LookupError:
+            return None
+        return (
+            identity_from_access_token(access_token)
+            if access_token is not None
+            else None
+        )
+
+    operator_service = OperatorApprovalService(
+        pipeline=pipeline,
+        pending=pending_store,
+        executor=_operator_executor,
+    )
+    operator_app = build_operator_server(
+        service=operator_service,
+        identity_provider=_operator_identity,
+    )
+    operator_manager = StreamableHTTPSessionManager(
+        app=operator_app,
+        json_response=False,
+        stateless=False,
+        security_settings=security_settings,
         session_idle_timeout=session_idle_timeout_seconds,
     )
 
@@ -830,7 +1120,22 @@ def _build_streamable_http_asgi_app(
             if transport is not None and transport.is_terminated:
                 manager._server_instances.pop(session_id, None)
 
+    async def _handle_operator_mcp(scope, receive, send):
+        headers = {
+            key.decode("latin-1").lower(): value.decode("latin-1")
+            for key, value in scope.get("headers", [])
+        }
+        session_id = headers.get("mcp-session-id")
+        await operator_manager.handle_request(scope, receive, send)
+        if session_id:
+            transport = operator_manager._server_instances.get(session_id)
+            if transport is not None and transport.is_terminated:
+                operator_manager._server_instances.pop(session_id, None)
+
     protected_mcp: Any = _handle_mcp
+    protected_operator_mcp: Any = OperatorCredentialMiddleware(
+        _handle_operator_mcp
+    )
     identity_cfg = getattr(getattr(pipeline, "cfg", None), "identity", None)
     if identity_cfg is not None and identity_cfg.enabled:
         from mcp.server.auth.middleware.auth_context import AuthContextMiddleware
@@ -846,6 +1151,17 @@ def _build_streamable_http_asgi_app(
             protected_mcp,
             backend=BearerAuthBackend(JWTIdentityVerifier(identity_cfg)),
         )
+        protected_operator_mcp = RequireAuthMiddleware(
+            protected_operator_mcp,
+            required_scopes=[],
+        )
+        protected_operator_mcp = AuthContextMiddleware(
+            protected_operator_mcp
+        )
+        protected_operator_mcp = AuthenticationMiddleware(
+            protected_operator_mcp,
+            backend=BearerAuthBackend(JWTIdentityVerifier(identity_cfg)),
+        )
 
     async def _healthz(_request):
         return JSONResponse(
@@ -854,6 +1170,10 @@ def _build_streamable_http_asgi_app(
                 "transport": "streamable-http",
                 "session_mode": "stateful",
                 "active_sessions": len(manager._server_instances),
+                "operator_active_sessions": len(
+                    operator_manager._server_instances
+                ),
+                "operator_plane": "separate-authenticated-mcp",
                 "session_idle_timeout_seconds": session_idle_timeout_seconds,
             }
         )
@@ -861,15 +1181,19 @@ def _build_streamable_http_asgi_app(
     @asynccontextmanager
     async def _lifespan(_app):
         async with manager.run():
-            yield
+            async with operator_manager.run():
+                yield
 
     asgi_app = Starlette(
         lifespan=_lifespan,
         routes=[
             Route("/healthz", endpoint=_healthz, methods=["GET"]),
+            Mount("/operator/mcp", app=protected_operator_mcp),
             Mount("/mcp", app=protected_mcp),
             Mount("/", app=protected_mcp),
         ]
     )
     asgi_app.state.session_manager = manager
+    asgi_app.state.operator_session_manager = operator_manager
+    asgi_app.state.pending_approval_store = pending_store
     return asgi_app

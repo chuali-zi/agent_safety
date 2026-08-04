@@ -314,18 +314,36 @@ python -m xa_guard.server --config configs/xa-guard.business-api.yaml
 
 本机密钥只放仓库根目录 `.env`，模板见 `.env.example`；`.env` / `.env.*` 已被 `.gitignore` 忽略。该配置不写 Windows 系统环境变量，不写 Trae/Cursor/OpenCode 用户目录配置，不在仓库外创建 key 或日志。完整变量、调用 envelope、失败处理、脱敏和验收命令见 [docs/acceptance/business-api-integration.md](./docs/acceptance/business-api-integration.md)。
 
-### HITL pending approval fallback（L3 原型）
+### 独立 HITL Operator 控制面（P0 非 GUI 后端）
 
-若 MCP 客户端未声明/未实现 elicitation，红色工具不会直接透传下游。XA-Guard 会把原始 `GateContext` 记录为 pending approval，返回 `trace_id`，并暴露两个内置控制工具：
+正式 stdio 与 Streamable HTTP Agent 入口不再向 Agent 暴露审批工具，也不使用同一 MCP
+客户端的 elicitation 自批。高风险调用停在 pending，返回 `trace_id`；审批由独立 Operator
+身份完成：
 
-- `xa_guard_list_pending_approvals`：列出等待人工处理的工具调用、参数、过期时间。
-- `xa_guard_approve_pending`：按 `trace_id` 批准或拒绝；批准时签发现有 HMAC approval token，再走 `pipeline.run_after_approval()` 验签并执行下游；审批记录只消费一次。
+- Agent plane：HTTP `/mcp`，只暴露业务工具；
+- Operator plane：HTTP `/operator/mcp`，只暴露
+  `xa_guard_operator_list_pending` 与 `xa_guard_operator_decide`；
+- 两个端点共享同一 `PendingApprovalStore`，但使用独立 MCP session manager；
+- Operator 必须同时通过 transport 身份验证、`xa_guard.operator` 角色、tenant 匹配和
+  `X-XA-Guard-Operator-Token`；请求人或 Agent 自批、空理由、错误 token/role/tenant
+  均拒绝且不消费/污染 pending；
+- 准许后令牌绑定 tool、canonical args、身份、tenant、provenance、history、taint、
+  effective policy、effect class、expiry 与 nonce；治理和 Gate1–4 重评后才进入 Gate5
+  与 executor，进程内 replay 拒绝。
 
-设置 `XA_GUARD_APPROVAL_OPERATOR_TOKEN` 后，list / approve / reject 都必须传入匹配的 `operator_token` 才会处理 pending 项，错误 token 不会消费审批请求。approve token 在当前进程内会被一次性消费，重放会拒绝；reject 也会追加 `deny` 审计行记录审批人和理由。这是无 elicitation 客户端的协议内 fallback，已由 MCP E2E 覆盖 `require_approval -> allow/deny` 审计闭环；真实 Trae / 国产 IDE 弹窗截图仍属于 L3 证据待补。
+必须通过环境注入 `XA_GUARD_APPROVAL_OPERATOR_TOKEN`、`XA_GUARD_APPROVAL_SECRET` 和
+身份验证配置；凭据走 HTTP header，不进入 MCP 参数、工具 schema、pending ledger 或审计。
+当前 one-shot token 与 provenance nonce 的消费表是单进程内存状态，尚不等同多实例事务型
+防重放。
 
-配置 `pending_approvals_path` 或环境变量 `XA_GUARD_PENDING_APPROVAL_STORE` 后，pending approval 会写入本地 JSONL ledger，并可在同一 ledger 路径下重启后恢复未过期项。ledger 只保存恢复审批所需的 `GateContext` 快照和 pending 生命周期事件，不保存 approval token、operator token 或工具执行结果；approve 时才现场签发 one-shot token 并交给 pipeline 验签消费。
+配置 `pending_approvals_path` 或 `XA_GUARD_PENDING_APPROVAL_STORE` 后，ledger 不保存
+approval/operator token、工具结果、原始 provenance 或会话历史正文。若重启后无法重新验证
+identity、provenance 或历史，批准会 fail-closed 并要求重新发起；含脱敏参数的恢复项同样不能
+执行。无可信富上下文的低风险兼容项仍仅是单机本地恢复原型。
 
-pending ledger 与 `xa_guard_list_pending_approvals` 会优先按工具 `inputSchema` 中的敏感标注脱敏，例如 `x-xa-guard-sensitive: true`、`x-sensitive: true`、`writeOnly: true`、`format: password`；未标注或无 schema 时回退到常见敏感参数键 best-effort，例如 `password`、`token`、`secret`、`api_key`、`authorization`、`cookie`。非敏感参数可在重启后恢复并继续审批执行；含脱敏参数的 pending 项在重启后只保留脱敏展示和参数哈希，approve 会 fail-closed 并追加 `deny` 审计，要求重新发起工具调用。该能力是单机本地恢复与落盘明文收敛原型，不等同完整 JSON Schema 解释器、完整 DLP、生产级审批系统、多实例一致性、完整 RBAC 或真实 IDE 弹窗。
+`_build_app(..., expose_operator_tools=True)` 只保留给显式兼容/测试调用，不是正式
+`run_stdio` 或 `run_streamable_http` 的安全默认入口。真实 Operator 连续录屏和 GUI 仍由
+负责人后续完成。
 
 ### MCP 安装前 AIBOM preflight（L3 原型）
 

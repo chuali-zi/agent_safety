@@ -196,6 +196,10 @@ def _run_timeline_interleaved(
             attempt = state["queue"].pop(0)
             attempts.append(attempt)
             context = state["context"]
+            # Optional provenance adapters receive precisely the post-injection,
+            # post-tool-schema SeatContext used by the Seat to produce this call.
+            # Ordinary SUTs keep the no-op base implementation.
+            sut.set_invocation_context(context)
             output = sut.invoke(world, ledger, context.principal, attempt, surface)
             if output.get("executed") is not False:
                 followups = [_as_tool_call(a) for a in seat.on_tool_result(context, attempt, output)]

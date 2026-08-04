@@ -18,7 +18,6 @@ import yaml
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from xa_guard.approval import issue_approval
 from xa_guard.config import ResilienceConfig
 from xa_guard.identity import VerifiedIdentity
 from xa_guard.types import Decision, GateContext, InputSource
@@ -236,7 +235,11 @@ class ResilienceManager:
             ctx = GateContext(tool_name=contract.undo_tool, arguments=undo_args, input_sources=[InputSource.USER], tenant_id=identity.tenant_id, human_principal=identity.human_principal, agent_id=identity.agent_id, data_domain=str(row["data_domain"]), identity_verified=True, identity_issuer=identity.issuer, identity_kid=identity.kid, identity_jti_sha256=identity.jti_sha256, identity_scopes=list(identity.scopes), operation_kind="compensation", compensates_effect_id=row["effect_id"])
             result = await pipeline.run(ctx, executor)
             if result.final_decision == Decision.REQUIRE_APPROVAL:
-                ctx.approval = issue_approval(trace_id=ctx.trace_id, tool_name=ctx.tool_name, arguments=ctx.arguments, approver=identity.human_principal, reason=str(args.get("reason") or "undo approved"))
+                ctx.approval = pipeline.issue_bound_approval(
+                    ctx,
+                    approver=identity.human_principal,
+                    reason=str(args.get("reason") or "undo approved"),
+                )
                 result = await pipeline.run_after_approval(ctx, executor)
             success = bool(result.allowed)
             self.store.complete(request_id, ctx.trace_id, success)

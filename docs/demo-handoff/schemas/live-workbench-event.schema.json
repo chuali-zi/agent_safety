@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xa-guard.local/schemas/live-workbench-event/v1",
+  "title": "XA-Guard Live Workbench event",
+  "description": "Target contract only. Example data is synthetic and is not evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "sequence", "timestamp", "event_type", "run_mode", "state"],
+  "properties": {
+    "schema_version": {"const": "xa-guard-live-workbench-event/v1"},
+    "run_id": {"type": "string", "pattern": "^run_[A-Za-z0-9_-]{8,96}$"},
+    "sequence": {"type": "integer", "minimum": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "event_type": {"enum": ["PREFLIGHT_STARTED", "PREFLIGHT_READY", "PREFLIGHT_FAILED", "MODEL_REQUESTED", "MODEL_RESPONDED", "INTENT_FROZEN", "MODEL_SELF_DEFENSE", "NULL_STARTED", "NULL_COMPLETED", "GUARD_STARTED", "GUARD_GATE_RESULT", "GUARD_PENDING_APPROVAL", "OPERATOR_APPROVED", "OPERATOR_REJECTED", "GUARD_COMPLETED", "VERIFY_STARTED", "VERIFY_COMPLETED", "RUN_COMPLETED", "RUN_FAILED"]},
+    "run_mode": {"enum": ["LIVE_RUN", "SEALED_REPLAY", "EXAMPLE_SYNTHETIC"]},
+    "state": {"enum": ["IDLE", "PREFLIGHTING", "PREFLIGHT_READY", "PREFLIGHT_FAILED", "MODEL_REQUESTED", "MODEL_RESPONDED", "INTENT_FROZEN", "MODEL_SELF_DEFENSE", "NULL_RUNNING", "NULL_COMPLETE", "GUARD_RUNNING", "PENDING_APPROVAL", "APPROVED", "REJECTED", "GUARD_COMPLETE", "VERIFYING", "COMPLETE", "FAILED"]},
+    "branch": {"enum": ["NONE", "NULL", "GUARD", "OPERATOR", "VERIFIER"]},
+    "message": {"type": "string", "maxLength": 500},
+    "artifact_refs": {"type": "array", "items": {"$ref": "#/$defs/artifactRef"}},
+    "intent": {"$ref": "#/$defs/intent"},
+    "gate": {"$ref": "#/$defs/gate"},
+    "branch_result": {"$ref": "#/$defs/branchResult"},
+    "verification": {"$ref": "#/$defs/verification"}
+  },
+  "$defs": {
+    "artifactRef": {"type": "object", "additionalProperties": false, "required": ["name", "json_pointer", "sha256"], "properties": {"name": {"enum": ["experiment-manifest.json", "agent-transcript.jsonl", "tool-intent.json", "world-before-intent.json", "world-out.json", "ledger.jsonl", "output.json", "verdict.json", "audit.jsonl", "artifact-hashes.json", "summary.json"]}, "json_pointer": {"type": "string", "pattern": "^(?:/|/[^/]+(?:/[^/]+)*)$"}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
+    "intent": {"type": "object", "additionalProperties": false, "required": ["tool_name", "arguments_sha256", "world_before_sha256"], "properties": {"tool_name": {"type": "string", "minLength": 1}, "arguments_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "world_before_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "intent_id": {"type": "string"}, "property_id": {"type": "string"}, "target_summary": {"type": "string", "maxLength": 160}}},
+    "gate": {"type": "object", "additionalProperties": false, "required": ["gate_id", "status"], "properties": {"gate_id": {"enum": ["GATE1", "GATE2", "GATE3", "GATE4", "GATE5", "GATE6"]}, "status": {"enum": ["ALLOW", "DENY", "REQUIRE_APPROVAL", "WARN", "NOT_REACHED", "UNKNOWN", "DISABLED", "FAILED"]}, "rule_ids": {"type": "array", "items": {"type": "string"}}, "audit_record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "faithfulness_score": {"type": "number", "minimum": 0, "maximum": 1}}},
+    "branchResult": {"type": "object", "additionalProperties": false, "required": ["downstream_call_count", "harm_observed", "world_before_sha256", "world_after_sha256"], "properties": {"decision": {"enum": ["allow", "deny", "pending", "not_run", "failed", "unknown"]}, "downstream_call_count": {"type": "integer", "minimum": 0}, "harm_observed": {"type": "boolean"}, "world_before_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "world_after_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "ledger_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
+    "verification": {"type": "object", "additionalProperties": false, "required": ["target", "ok"], "properties": {"target": {"enum": ["ORIGINAL_EVIDENCE", "TAMPERED_COPY"]}, "ok": {"type": "boolean"}, "check_count": {"type": "integer", "minimum": 0}, "failed_checks": {"type": "array", "items": {"type": "string"}}}}
+  }
+}

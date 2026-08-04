@@ -28,7 +28,7 @@ from kernel.live_agent.policy import assess_intent, harm_observed
 from kernel.live_agent.provider import ModelAdapter, openai_tools
 from kernel.policy_overlay import overlay_from_scenario
 from kernel.scenario import Scenario, build_world, load_scenario, with_injections
-from kernel.sut import NullSUT, SUT, ToolCall, XaGuardSUT
+from kernel.sut import NullSUT, SUT, ToolCall, TrustedInvocationContext, XaGuardSUT
 
 GuardFactory = Callable[[Scenario], SUT]
 
@@ -247,7 +247,7 @@ class LiveAgentRunner:
         _write_json(run_dir / "world-before-intent.json", world.to_dict())
         if intent is not None and infra_status == "ok":
             _write_json(run_dir / "tool-intent.json", intent.to_dict())
-            result.update(self._execute_fork(case, scenario, intent, world, ledger, run_dir))
+            result.update(self._execute_fork(case, scenario, intent, world, ledger, run_dir, messages=messages))
         _write_json(run_dir / "verdict.json", result)
         return result
 
@@ -259,6 +259,8 @@ class LiveAgentRunner:
         world: Any,
         ledger: Ledger,
         run_dir: Path,
+        *,
+        messages: list[dict[str, Any]],
     ) -> dict[str, Any]:
         call = ToolCall(intent.tool_name, copy.deepcopy(intent.arguments))
         null_world = copy.deepcopy(world)
@@ -285,6 +287,7 @@ class LiveAgentRunner:
             guard.prepare(EvidenceStore(guard_dir), scenario, self.surface)
         guard.begin_attempt()
         try:
+            guard.set_invocation_context(_live_guard_invocation_context(case, intent, messages))
             guard_output = guard.invoke(
                 guard_world,
                 guard_ledger,
@@ -443,6 +446,128 @@ def _assistant_message(turn: AgentTurn) -> dict[str, Any]:
             for call in turn.tool_calls
         ]
     return message
+
+
+_LIVE_CHANNEL_SOURCE_KINDS = {
+    "mailbox": "document",
+    "rag": "rag",
+    "doc": "document",
+    "policy": "document",
+    "meeting": "document",
+    "plugin": "document",
+    "mcp": "document",
+    "supply": "document",
+    "aibom": "document",
+    "log": "tool_result",
+    "ticket": "tool_result",
+    "insider": "memory",
+}
+_LIVE_HISTORY_LIMIT = 24
+_LIVE_HISTORY_TEXT_LIMIT = 4096
+_LIVE_SOURCE_LIMIT = 32
+
+
+def _live_guard_invocation_context(
+    case: AttackCase,
+    intent: ToolIntent,
+    messages: list[dict[str, Any]],
+) -> TrustedInvocationContext:
+    """Build a digest-only source inventory and normalized model history for Guard.
+
+    The history is sent only across the authenticated adapter boundary for Gate1;
+    it is not inserted into OAR branch artifacts. Source entries never carry the
+    prompt, model output, tool output, or injected body itself.
+    """
+    history = tuple(_normalized_model_history(messages))
+    sources: list[dict[str, str]] = [
+        {
+            "source_id": f"oar-live-task:{case.case_id}",
+            "kind": "user",
+            "locator_digest": sha256_json({"case_id": case.case_id, "field": "task"}),
+            "content_digest": sha256(case.task.encode("utf-8")).hexdigest(),
+            "trust_state": "verified",
+            "taint": "PUBLIC",
+        }
+    ]
+    injections_by_channel: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for injection in case.injections:
+        target = str(injection.get("into", ""))
+        scheme, _, locator = target.partition(":")
+        injections_by_channel.setdefault((scheme, locator), []).append(injection)
+    for scheme, locator in sorted(case.channels.items()):
+        records = injections_by_channel.get((scheme, locator), [])
+        if not records:
+            sources.append(
+                {
+                    "source_id": f"oar-live-channel:{scheme}:empty",
+                    "kind": _LIVE_CHANNEL_SOURCE_KINDS.get(scheme, "unknown"),
+                    "locator_digest": sha256_json({"channel": scheme, "locator": locator}),
+                    "content_digest": sha256_json({"channel": scheme, "locator": locator, "records": []}),
+                    "trust_state": "unknown",
+                    "taint": "PUBLIC",
+                }
+            )
+        for index, record in enumerate(records):
+            meta = record.get("meta", {})
+            if not isinstance(meta, dict):
+                meta = {}
+            sources.append(
+                {
+                    "source_id": f"oar-live-channel:{scheme}:{index}",
+                    "kind": _LIVE_CHANNEL_SOURCE_KINDS.get(scheme, "unknown"),
+                    "locator_digest": sha256_json({"channel": scheme, "locator": locator, "index": index}),
+                    "content_digest": sha256(str(record.get("content", "")).encode("utf-8")).hexdigest(),
+                    # These records come from the experiment's explicit
+                    # injection set. Their transport metadata is authentic,
+                    # but their content is never a trusted instruction source.
+                    "trust_state": "unverified",
+                    "taint": _live_source_taint(meta),
+                }
+            )
+    return TrustedInvocationContext(
+        task=case.task,
+        channels=dict(case.channels),
+        visible={},
+        provenance_history=history,
+        provenance_sources=tuple(sources[:_LIVE_SOURCE_LIMIT]),
+        provenance_session_id=intent.session_id,
+        provenance_turn_id=str(intent.turn),
+        provenance_task_id=case.case_id,
+    )
+
+
+def _normalized_model_history(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Mirror upstream role/content normalization while bounding adapter payload size."""
+    history: list[dict[str, Any]] = []
+    for message in messages[:_LIVE_HISTORY_LIMIT]:
+        if not isinstance(message, dict):
+            continue
+        role = str(message.get("role") or "")[:128]
+        content = message.get("content", "")
+        if not isinstance(content, (str, list, dict)):
+            content = str(content)
+        history.append({"role": role, "content": _bounded_live_history_value(content)})
+    return history
+
+
+def _bounded_live_history_value(value: Any, *, depth: int = 0) -> Any:
+    if depth >= 5:
+        return "[truncated-depth]"
+    if isinstance(value, str):
+        return value[:_LIVE_HISTORY_TEXT_LIMIT]
+    if isinstance(value, dict):
+        return {
+            str(key)[:128]: _bounded_live_history_value(item, depth=depth + 1)
+            for key, item in list(value.items())[:20]
+        }
+    if isinstance(value, list):
+        return [_bounded_live_history_value(item, depth=depth + 1) for item in value[:20]]
+    return value
+
+
+def _live_source_taint(meta: dict[str, Any]) -> str:
+    value = str(meta.get("classification", "PUBLIC")).upper()
+    return value if value in {"PUBLIC", "INTERNAL", "CONFIDENTIAL"} else "CONFIDENTIAL"
 
 
 def _write_branch(

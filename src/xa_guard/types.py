@@ -17,7 +17,10 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
+
+if TYPE_CHECKING:
+    from xa_guard.provenance import TrustedContextEnvelope
 
 
 # ============================================================
@@ -66,6 +69,9 @@ class Decision(str, Enum):
 # 4. 输入来源（关卡 1 输入攻击识别 — 赛题方向 1 要求）
 # ============================================================
 class InputSource(str, Enum):
+    # A transport that has not supplied a verified provenance envelope must not
+    # silently claim a user-origin trust level.
+    UNKNOWN = "unknown"
     USER = "user"               # 用户直接输入
     WEB = "web"                 # 网页抓取
     DOCUMENT = "document"       # 文档附件
@@ -140,6 +146,16 @@ class Approval:
     args_hash: str = ""                  # 被审批的精确入参 sha256（防 TOCTOU 改参）
     issued_at: str = ""                  # 签发时间 ISO8601
     expires_at: str = ""                 # 过期时间 ISO8601
+    # 以下字段将批准绑定到发起请求的治理上下文。空值仅兼容历史 token；
+    # 新控制面应始终填充，恢复执行时必须逐项重新验证。
+    request_identity: str = ""
+    tenant_id: str = ""
+    provenance_digest: str = ""
+    history_digest: str = ""
+    taint: str = ""
+    policy_bundle_sha: str = ""
+    effect_class: str = ""
+    nonce: str = ""
     token: str = ""                      # HMAC-SHA256 签名
 
 
@@ -161,6 +177,10 @@ class GateContext:
     user_role: str = "user"               # user / ops / admin / ...
     session_history: list[dict] = field(default_factory=list)
     input_sources: list[InputSource] = field(default_factory=lambda: [InputSource.USER])
+    # Trusted adapter supplied metadata.  Merely populating this value does not
+    # establish trust; transport integration must verify its MAC/signature.
+    provenance: "TrustedContextEnvelope | None" = None
+    provenance_verified: bool = False  # set only after trusted adapter MAC verification
 
     # 企业治理控制面（可选）：由上游 `_xa_guard` envelope 注入，默认空值不影响旧路径。
     tenant_id: str = ""
@@ -186,6 +206,8 @@ class GateContext:
     compensates_effect_id: str = ""
     operation_kind: str = 'forward'
     defer_gate6_until_effect: bool = False
+    # 安全写路径的显式效果分类；空值由 Gate 的保守映射处理，保持旧调用兼容。
+    effect_class: str = ""
 
     # 累积属性
     taint: TaintLabel = TaintLabel.PUBLIC
@@ -281,6 +303,19 @@ class AuditRecord:
     gen_ai_identity_kid: str = ""
     gen_ai_identity_jti_sha256: str = ""
     gen_ai_identity_scopes: list[str] = field(default_factory=list)
+    # 可信上下文只记录可验证摘要与分类，不落 source/document 原文或 MAC。
+    gen_ai_provenance_verified: bool = False
+    gen_ai_provenance_schema_version: str = ""
+    gen_ai_provenance_session_id: str = ""
+    gen_ai_provenance_turn_id: str = ""
+    gen_ai_provenance_history_digest: str = ""
+    gen_ai_provenance_digest: str = ""
+    gen_ai_provenance_policy_bundle_sha: str = ""
+    gen_ai_provenance_key_id: str = ""
+    gen_ai_provenance_nonce_sha256: str = ""
+    gen_ai_provenance_input_sources: list[str] = field(default_factory=list)
+    gen_ai_provenance_sources: list[dict[str, Any]] = field(default_factory=list)
+    gen_ai_provenance_resolved_references: list[dict[str, Any]] = field(default_factory=list)
     gen_ai_resilience_effect_id: str = ""
     gen_ai_resilience_side_effect_level: str = "none"
     gen_ai_resilience_reversibility: str = "none"
@@ -342,6 +377,18 @@ class AuditRecord:
             "gen_ai.identity.kid": self.gen_ai_identity_kid,
             "gen_ai.identity.jti_sha256": self.gen_ai_identity_jti_sha256,
             "gen_ai.identity.scopes": self.gen_ai_identity_scopes,
+            "gen_ai.provenance.verified": self.gen_ai_provenance_verified,
+            "gen_ai.provenance.schema_version": self.gen_ai_provenance_schema_version,
+            "gen_ai.provenance.session_id": self.gen_ai_provenance_session_id,
+            "gen_ai.provenance.turn_id": self.gen_ai_provenance_turn_id,
+            "gen_ai.provenance.history_digest": self.gen_ai_provenance_history_digest,
+            "gen_ai.provenance.digest": self.gen_ai_provenance_digest,
+            "gen_ai.provenance.policy_bundle_sha": self.gen_ai_provenance_policy_bundle_sha,
+            "gen_ai.provenance.key_id": self.gen_ai_provenance_key_id,
+            "gen_ai.provenance.nonce_sha256": self.gen_ai_provenance_nonce_sha256,
+            "gen_ai.provenance.input_sources": self.gen_ai_provenance_input_sources,
+            "gen_ai.provenance.sources": self.gen_ai_provenance_sources,
+            "gen_ai.provenance.resolved_references": self.gen_ai_provenance_resolved_references,
             "gen_ai.resilience.effect_id": self.gen_ai_resilience_effect_id,
             "gen_ai.resilience.side_effect_level": self.gen_ai_resilience_side_effect_level,
             "gen_ai.resilience.reversibility": self.gen_ai_resilience_reversibility,

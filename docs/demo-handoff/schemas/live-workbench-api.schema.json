@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xa-guard.local/schemas/live-workbench-api/v1",
+  "title": "XA-Guard Live Workbench local API",
+  "description": "Target API contract, not an implementation or live evidence.",
+  "$defs": {
+    "runId": {"type": "string", "pattern": "^run_[A-Za-z0-9_-]{8,96}$"},
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "PreflightRequest": {"type": "object", "additionalProperties": false, "required": ["scenario_id", "guard_mode"], "properties": {"scenario_id": {"type": "string", "minLength": 1}, "guard_mode": {"enum": ["live", "offline"]}, "manifest_id": {"type": "string"}}},
+    "PreflightResponse": {"type": "object", "additionalProperties": false, "required": ["ok", "checks", "safe_summary"], "properties": {"ok": {"type": "boolean"}, "checks": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name", "ok"], "properties": {"name": {"type": "string"}, "ok": {"type": "boolean"}, "detail": {"type": "string", "maxLength": 300}}}}, "safe_summary": {"type": "object", "additionalProperties": false, "properties": {"scenario_sha256": {"$ref": "#/$defs/sha256"}, "policy_sha256": {"$ref": "#/$defs/sha256"}, "provider_ready": {"type": "boolean"}}}}},
+    "RunRequest": {"type": "object", "additionalProperties": false, "required": ["scenario_id", "guard_mode"], "properties": {"scenario_id": {"type": "string", "minLength": 1}, "guard_mode": {"const": "live"}, "case_id": {"type": "string"}, "recording_label": {"type": "string", "maxLength": 80}}},
+    "RunAccepted": {"type": "object", "additionalProperties": false, "required": ["run_id", "state", "run_mode"], "properties": {"run_id": {"$ref": "#/$defs/runId"}, "state": {"const": "MODEL_REQUESTED"}, "run_mode": {"const": "LIVE_RUN"}}},
+    "RunSummary": {"type": "object", "additionalProperties": false, "required": ["run_id", "state", "run_mode", "started_at"], "properties": {"run_id": {"$ref": "#/$defs/runId"}, "state": {"type": "string"}, "run_mode": {"enum": ["LIVE_RUN", "SEALED_REPLAY"]}, "started_at": {"type": "string", "format": "date-time"}, "intent_sha256": {"$ref": "#/$defs/sha256"}, "guard_decision": {"enum": ["allow", "deny", "pending", "not_run", "failed", "unknown"]}}},
+    "RunList": {"type": "object", "additionalProperties": false, "required": ["runs"], "properties": {"runs": {"type": "array", "items": {"$ref": "#/$defs/RunSummary"}}}},
+    "EventList": {"type": "object", "additionalProperties": false, "required": ["run_id", "events"], "properties": {"run_id": {"$ref": "#/$defs/runId"}, "events": {"type": "array", "items": {"$ref": "live-workbench-event.schema.json"}}, "next_after_seq": {"type": "integer", "minimum": 0}}},
+    "ArtifactEnvelope": {"type": "object", "additionalProperties": false, "required": ["run_id", "name", "sha256", "data"], "properties": {"run_id": {"$ref": "#/$defs/runId"}, "name": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"}, "sha256": {"$ref": "#/$defs/sha256"}, "data": {"type": ["object", "array"]}}},
+    "VerifyRequest": {"type": "object", "additionalProperties": false, "required": ["run_id"], "properties": {"run_id": {"$ref": "#/$defs/runId"}}},
+    "TamperVerifyRequest": {"type": "object", "additionalProperties": false, "required": ["run_id", "artifact_name", "json_pointer"], "properties": {"run_id": {"$ref": "#/$defs/runId"}, "artifact_name": {"enum": ["summary.json", "verdict.json", "tool-intent.json"]}, "json_pointer": {"type": "string", "pattern": "^/[^/]+(?:/[^/]+)*$"}}},
+    "VerifyResponse": {"type": "object", "additionalProperties": false, "required": ["target", "ok", "checks"], "properties": {"target": {"enum": ["ORIGINAL_EVIDENCE", "TAMPERED_COPY"]}, "ok": {"type": "boolean"}, "checks": {"type": "array", "items": {"type": "object"}}, "copy_label": {"type": "string"}}}
+  }
+}

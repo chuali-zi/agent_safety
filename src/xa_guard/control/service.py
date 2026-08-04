@@ -5,7 +5,6 @@ from __future__ import annotations
 import uuid
 from typing import Any, Awaitable, Callable
 
-from xa_guard.approval import issue_approval
 from xa_guard.control.business import BusinessClient, BusinessError
 from xa_guard.control.ceiling import GovernanceCeiling
 from xa_guard.control.contracts import ContractRegistry, contract_succeeded, resolve_pointer
@@ -355,10 +354,8 @@ class ControlService:
             result = await self.pipeline.run(ctx, executor)
         if result.final_decision == Decision.REQUIRE_APPROVAL:
             with span("xa-approval-issue"):
-                ctx.approval = issue_approval(
-                    trace_id=ctx.trace_id,
-                    tool_name=ctx.tool_name,
-                    arguments=ctx.arguments,
+                ctx.approval = self.pipeline.issue_bound_approval(
+                    ctx,
                     approver=approver,
                     reason=reason,
                 )

@@ -33,7 +33,7 @@ from xa_guard.detectors.fusion import DEFAULT_DENY_CATEGORIES, fuse
 from xa_guard.detectors.rule_detector import RuleDetector
 from xa_guard.detectors.spotlighting import apply_spotlighting
 from xa_guard.gates.base import Gate, GateStage
-from xa_guard.types import GateContext, GateResult, InputSource
+from xa_guard.types import Decision, GateContext, GateResult, InputSource
 
 # ── 旧版兼容常量（类别分组、来源权重） ──────────────────────────────────
 _DENY_CATEGORIES = frozenset({
@@ -43,12 +43,12 @@ _DENY_CATEGORIES = frozenset({
 })
 
 _WARN_SOURCES = frozenset({
-    InputSource.WEB, InputSource.DOCUMENT,
+    InputSource.UNKNOWN, InputSource.WEB, InputSource.DOCUMENT,
     InputSource.RAG, InputSource.MEMORY,
 })
 
 _DEFAULT_SOURCE_WEIGHTS: dict[str, float] = {
-    "user": 1.0, "web": 1.5, "document": 1.5,
+    "unknown": 1.5, "user": 1.0, "web": 1.5, "document": 1.5,
     "rag": 1.2, "memory": 1.1, "tool_result": 1.3,
 }
 
@@ -236,6 +236,26 @@ class Gate1Input(Gate):
 
         # 4. 融合
         decision, risks, fusion_meta = fuse(results, ctx, deny_categories=self.deny_categories)
+        crashed = [
+            result.detector_name
+            for result in results
+            if not result.available
+            and result.metadata.get("error") == "detector_crash"
+        ]
+        if crashed and decision != Decision.DENY:
+            degraded = self.error_result(
+                ctx,
+                RuntimeError(
+                    "unexpected detector crash: " + ", ".join(crashed)
+                ),
+                0.0,
+            )
+            degraded.metadata = {
+                **degraded.metadata,
+                "failed_detectors": crashed,
+                "fusion_before_degradation": fusion_meta,
+            }
+            return degraded
 
         # 5. 来源风险加权（旧版行为保留）
         source_risk = _compute_source_risk(ctx.input_sources, self.source_weights)

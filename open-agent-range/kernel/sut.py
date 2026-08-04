@@ -6,8 +6,9 @@ SUT 拿到工具调用尝试，返回 allow / deny / proxy 决策并产出审计
 本模块状态：
 - SUT 契约 + NullSUT（直通基线）：**已实现**。
 - GuardStubSUT（确定性替身，防判据虚假加固）：**已实现**。
-- XaGuardSUT（外部 XA-Guard，经 MCP/CLI 接入）：**配置生成 + 离线策略 stub 已实现**；
-  真实 MCP subprocess 串接待 SP5 live 授权后补齐。
+- XaGuardSUT（外部 XA-Guard，经 MCP/CLI 接入）：**配置生成、离线策略 stub、
+  MCP subprocess 客户端和可信 provenance 适配均已实现**。真实 subprocess 链路仍须
+  在允许本地 MCP 进程通信的支持环境复验；当前受限 WSL 环境会挂起。
 
 红线（decoupling-contract）：内核**不 import xa_guard、不改其策略**；只按场景/席位生成临时
 Gate3/Gate4 配置喂给外部进程，读其落盘审计当证据。
@@ -16,6 +17,8 @@ Gate3/Gate4 配置喂给外部进程，读其落盘审计当证据。
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import hmac
 import json
 import os
 import queue
@@ -23,8 +26,10 @@ import sys
 import threading
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from kernel.policy_overlay import PolicyOverlay, overlay_from_scenario, write_gate3_policy
 
@@ -33,6 +38,27 @@ from kernel.policy_overlay import PolicyOverlay, overlay_from_scenario, write_ga
 class ToolCall:
     tool: str
     args: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class TrustedInvocationContext:
+    """Transport-only context supplied by an OAR adapter before one ToolCall.
+
+    ``provenance_sources`` contains digests only. ``provenance_history`` is
+    bounded role/content data for Gate1 and is never copied to OAR evidence.
+    """
+
+    task: str
+    channels: dict[str, str]
+    visible: dict[str, Any]
+    provenance_history: tuple[dict[str, Any], ...] = ()
+    provenance_sources: tuple[dict[str, str], ...] = ()
+    provenance_session_id: str = ""
+    provenance_turn_id: str = ""
+    provenance_task_id: str = ""
+
+    def consumed_channels(self) -> dict[str, str]:
+        return dict(self.channels)
 
 
 @dataclass
@@ -70,6 +96,14 @@ class SUT:
 
     def end_attempt(self) -> None:
         """Optional lifecycle hook for SUTs that keep per-attempt resources."""
+
+    def set_invocation_context(self, context: Any) -> None:
+        """Receive the already-surfaced seat context for the next invocation.
+
+        This is an optional hook: ordinary SUTs intentionally ignore it, while
+        adapters that authenticate provenance can derive it from exactly the
+        same view the Seat used to make its ToolCall.
+        """
 
     def invoke(self, world: Any, ledger: Any, principal: str, call: ToolCall, surface: Any) -> dict[str, Any]:
         """裁决 -> 记审计/账本 -> 放行则经工具面执行（工具负责改世界 + 副作用落账）。"""
@@ -138,6 +172,159 @@ def path_text(path: Path) -> str:
 
 def yaml_string(value: str) -> str:
     return json.dumps(value, ensure_ascii=False)
+
+
+_TRUSTED_REFERENCE_FIELDS = ("sources", "attachments", "records")
+_OAR_TAINT_ORDER = {"PUBLIC": 0, "INTERNAL": 1, "CONFIDENTIAL": 2}
+
+
+def _canonical_sha256(value: Any) -> str:
+    """Match XA-Guard's documented canonical structured-data digest protocol."""
+    encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _oar_taint(classification: Any) -> str:
+    """Translate OAR labels into the product's three-level taint vocabulary."""
+    value = str(classification).upper()
+    if value in _OAR_TAINT_ORDER:
+        return value
+    # OAR SECRET is intentionally unavailable test data.  XA-Guard has no
+    # SECRET taint label, so preserve safety by mapping it to CONFIDENTIAL.
+    return "CONFIDENTIAL"
+
+
+def _reference_ids(arguments: dict[str, Any]) -> list[str]:
+    """Extract only the explicitly schema-declared business reference fields."""
+    result: list[str] = []
+    for field in _TRUSTED_REFERENCE_FIELDS:
+        raw = arguments.get(field)
+        values = raw if isinstance(raw, (list, tuple)) else [raw]
+        for item in values:
+            if isinstance(item, str) and item:
+                result.append(item)
+            elif isinstance(item, dict):
+                reference_id = item.get("reference_id", item.get("id"))
+                if isinstance(reference_id, str) and reference_id:
+                    result.append(reference_id)
+    return list(dict.fromkeys(result))
+
+
+def _oar_resolved_references(arguments: dict[str, Any], world: Any) -> list[dict[str, str]]:
+    """Resolve OAR World asset references without copying their raw contents."""
+    assets = getattr(world, "data_assets", {})
+    if not isinstance(assets, dict):
+        assets = {}
+    results: list[dict[str, str]] = []
+    for reference_id in _reference_ids(arguments):
+        asset = assets.get(reference_id)
+        if asset is None:
+            results.append(
+                {
+                    "reference_id": reference_id,
+                    "resolution_status": "unknown",
+                    "classification": "PUBLIC",
+                    "taint": "PUBLIC",
+                    "asset_digest": "",
+                    "resolver_id": "oar-world-v1",
+                    "reason": "",
+                }
+            )
+            continue
+        classification = _oar_taint(getattr(asset, "classification", "CONFIDENTIAL"))
+        raw_asset = asset.to_dict() if hasattr(asset, "to_dict") else {
+            "asset_id": reference_id,
+            "classification": str(getattr(asset, "classification", "")),
+            "domain": str(getattr(asset, "domain", "")),
+            "content": str(getattr(asset, "content", "")),
+            "metadata": dict(getattr(asset, "metadata", {}) or {}),
+        }
+        results.append(
+            {
+                "reference_id": reference_id,
+                "resolution_status": "resolved",
+                "classification": classification,
+                "taint": classification,
+                "asset_digest": _canonical_sha256(raw_asset),
+                "resolver_id": "oar-world-v1",
+                # Keep the safe minimal value: the wire contract includes this
+                # field in the MAC, but OAR must not expose raw asset details.
+                "reason": "",
+            }
+        )
+    return results
+
+
+_CHANNEL_SOURCE_KINDS = {
+    "mailbox": "document",
+    "rag": "rag",
+    "doc": "document",
+    "policy": "document",
+    "meeting": "document",
+    "plugin": "document",
+    "mcp": "document",
+    "supply": "document",
+    "aibom": "document",
+    "log": "tool_result",
+    "ticket": "tool_result",
+    "insider": "memory",
+}
+_TRUSTED_ORIGINS = {"trusted", "internal", "baseline", "system", "verified"}
+_UNTRUSTED_ORIGINS = {"untrusted", "external", "redteam", "unknown", "user", "unverified"}
+_MAX_PROVENANCE_HISTORY_ITEMS = 24
+_MAX_PROVENANCE_SOURCES = 32
+_MAX_PROVENANCE_TEXT = 4096
+_MAX_PROVENANCE_DEPTH = 5
+_MAX_PROVENANCE_COLLECTION = 20
+
+
+def _bounded_context_value(value: Any, *, depth: int = 0) -> Any:
+    """Retain a bounded, JSON-like view for Gate1 while never writing it to evidence."""
+    if depth >= _MAX_PROVENANCE_DEPTH:
+        return "[truncated-depth]"
+    if isinstance(value, str):
+        return value[:_MAX_PROVENANCE_TEXT]
+    if isinstance(value, dict):
+        return {
+            str(key)[:128]: _bounded_context_value(item, depth=depth + 1)
+            for key, item in list(value.items())[:_MAX_PROVENANCE_COLLECTION]
+        }
+    if isinstance(value, (list, tuple)):
+        return [_bounded_context_value(item, depth=depth + 1) for item in list(value)[:_MAX_PROVENANCE_COLLECTION]]
+    if value is None or isinstance(value, (bool, int, float)):
+        return value
+    return str(value)[:_MAX_PROVENANCE_TEXT]
+
+
+def _record_origin(record: Any) -> str:
+    if not isinstance(record, dict):
+        return ""
+    meta = record.get("meta", {})
+    if not isinstance(meta, dict):
+        meta = {}
+    return str(meta.get("origin", record.get("origin", ""))).strip().lower()
+
+
+def _trust_state_for_record(record: Any, *, default: str = "unknown") -> str:
+    origin = _record_origin(record)
+    if origin in _TRUSTED_ORIGINS or origin.startswith(
+        ("trusted-", "internal-", "baseline-", "system-", "verified-")
+    ):
+        return "verified"
+    if origin in _UNTRUSTED_ORIGINS or origin.startswith(
+        ("untrusted-", "external-", "redteam-", "user-", "unverified-")
+    ):
+        return "unverified"
+    return default
+
+
+def _record_taint(record: Any, *, default: str = "PUBLIC") -> str:
+    if isinstance(record, dict):
+        meta = record.get("meta", {})
+        if isinstance(meta, dict):
+            return _oar_taint(meta.get("classification", record.get("classification", default)))
+        return _oar_taint(record.get("classification", default))
+    return _oar_taint(default)
 
 
 def yaml_list(values: list[str]) -> str:
@@ -372,6 +559,16 @@ class XaGuardSUT(SUT):
         self._live_session: _XaGuardLiveSession | None = None
         self._session_generation = 0
         self._live_session_summary: dict[str, Any] | None = None
+        self._invocation_context: Any | None = None
+        self._scenario_id = "oar-unknown-task"
+        # This process-local key is passed only to the XA-Guard child via its
+        # environment.  OAR deliberately reimplements the tiny wire protocol
+        # below instead of importing product code, preserving the range/SUT
+        # independence boundary.
+        # The product reads the single-key environment variable as UTF-8 bytes,
+        # so use printable entropy and sign with those exact bytes.
+        self._provenance_key = os.urandom(32).hex().encode("ascii")
+        self._provenance_key_id = "oar-live-adapter-v1"
 
     def prepare(self, store: Any, scenario: Any, surface: Any) -> XaGuardArtifacts:
         return self.write_configs(store, scenario, surface)
@@ -379,6 +576,7 @@ class XaGuardSUT(SUT):
     def write_configs(self, store: Any, scenario: Any, surface: Any) -> XaGuardArtifacts:
         root = self.xa_guard_root or find_xa_guard_root()
         self._xa_guard_root_resolved = root.resolve()
+        self._scenario_id = str(getattr(scenario, "scenario_id", "oar-unknown-task"))
         self.artifacts = write_sut_evidence_configs(
             store,
             scenario=scenario,
@@ -412,6 +610,7 @@ class XaGuardSUT(SUT):
             raise RuntimeError("call prepare()/write_configs() before begin_attempt()")
         if self._live_session is not None:
             return
+        self._invocation_context = None
         self._session_generation += 1
         session_id = f"xa-guard-live-session-{self._session_generation:03d}"
         self._live_session_summary = {
@@ -453,14 +652,22 @@ class XaGuardSUT(SUT):
         raise last_exc
 
     def end_attempt(self) -> None:
-        if self._live_session is None:
-            return
         try:
-            self._live_session.close()
-            if self._live_session_summary is not None:
-                self._live_session_summary["closed"] = True
+            if self._live_session is not None:
+                self._live_session.close()
+                if self._live_session_summary is not None:
+                    self._live_session_summary["closed"] = True
         finally:
             self._live_session = None
+            self._invocation_context = None
+
+    def set_invocation_context(self, context: Any) -> None:
+        """Keep only the surfaced SeatContext for trusted adapter derivation.
+
+        It is intentionally ephemeral: provenance uses it during the next tool
+        call and no raw context is copied to the audit/session summary.
+        """
+        self._invocation_context = context
 
     def live_session_summary(self) -> dict[str, Any] | None:
         if self._live_session_summary is None:
@@ -470,7 +677,7 @@ class XaGuardSUT(SUT):
     def invoke(self, world: Any, ledger: Any, principal: str, call: ToolCall, surface: Any) -> dict[str, Any]:
         if not self.live:
             return super().invoke(world, ledger, principal, call, surface)
-        decision, reason = self._live_decide(principal, call)
+        decision, reason = self._live_decide(principal, call, world=world)
         self.audit.append(AuditRecord(tool=call.tool, decision=decision, reason=reason))
         _append_tool_attempt(world, ledger, principal, call)
         _append_sut_decision(world, ledger, principal, call, decision=decision, reason=reason)
@@ -481,11 +688,11 @@ class XaGuardSUT(SUT):
         output.setdefault("executed", True)
         return output
 
-    def _live_decide(self, principal: str, call: ToolCall) -> tuple[str, str]:
+    def _live_decide(self, principal: str, call: ToolCall, *, world: Any) -> tuple[str, str]:
         if self.artifacts is None:
             raise RuntimeError("call prepare()/write_configs() before using XaGuardSUT(live=True)")
         before = _audit_row_count(self.artifacts.audit_dir)
-        result_text = self._call_xa_guard(call, principal=principal)
+        result_text = self._call_xa_guard(call, principal=principal, world=world)
         row = _latest_audit_row(self.artifacts.audit_dir, after=before)
         if row:
             decision = str(row.get("gen_ai.decision.final") or "allow")
@@ -497,8 +704,8 @@ class XaGuardSUT(SUT):
             return "deny", result_text
         return "allow", result_text or "xa-guard live allowed tool call"
 
-    def _call_xa_guard(self, call: ToolCall, *, principal: str) -> str:
-        arguments = self._call_arguments(call, principal=principal)
+    def _call_xa_guard(self, call: ToolCall, *, principal: str, world: Any) -> str:
+        arguments = self._call_arguments(call, principal=principal, world=world)
         if self._live_session is not None:
             result = self._live_session.call_tool(call.tool, arguments)
             self._record_live_session_call(call, principal=principal)
@@ -527,13 +734,193 @@ class XaGuardSUT(SUT):
             result = await session.call_tool(call.tool, arguments)
         return _mcp_result_text(result)
 
-    def _call_arguments(self, call: ToolCall, *, principal: str) -> dict[str, Any]:
-        arguments = dict(call.args)
-        envelope = arguments.setdefault("_xa_guard", {})
-        if isinstance(envelope, dict):
-            envelope.setdefault("human_principal", principal)
-            envelope.setdefault("agent_id", "open-agent-range")
-        return arguments
+    def _call_arguments(self, call: ToolCall, *, principal: str, world: Any) -> dict[str, Any]:
+        """Build a product-compatible, signed trusted-context envelope.
+
+        ``_xa_guard`` is a reserved transport field rather than agent-authored
+        business input.  The adapter signs the business arguments exactly as
+        they will be evaluated by XA-Guard, then attaches only digests and
+        classifications of OAR-owned world assets.
+        """
+        business_arguments = {key: value for key, value in call.args.items() if key != "_xa_guard"}
+        history, sources = self._context_provenance(world)
+        references = _oar_resolved_references(business_arguments, world)
+        now = datetime.now(timezone.utc)
+        session_id = self._provenance_session_id()
+        turn_id = str(self._next_provenance_turn())
+        arguments_sha256 = _canonical_sha256(business_arguments)
+        unsigned = {
+            "schema_version": "1.0",
+            "session_id": session_id,
+            "turn_id": turn_id,
+            "task_id": self._provenance_task_id(),
+            "human_principal": principal,
+            "agent_id": "open-agent-range",
+            "tenant_id": "open-agent-range",
+            "history_digest": _canonical_sha256(history),
+            "sources": sources,
+            "resolved_references": references,
+            "policy_bundle_sha": self._policy_bundle_sha(),
+            "issued_at": now.isoformat().replace("+00:00", "Z"),
+            "expires_at": (now + timedelta(minutes=5)).isoformat().replace("+00:00", "Z"),
+            "nonce": uuid4().hex,
+            "tool_name": call.tool,
+            "arguments_sha256": arguments_sha256,
+            "key_id": self._provenance_key_id,
+        }
+        signature = hmac.new(
+            self._provenance_key,
+            _canonical_sha256(unsigned).encode("ascii"),
+            hashlib.sha256,
+        ).hexdigest()
+        return {
+            **business_arguments,
+            "_xa_guard": {
+                "human_principal": principal,
+                "agent_id": "open-agent-range",
+                "tenant_id": "open-agent-range",
+                "session_history": history,
+                "provenance": {**unsigned, "signature": signature},
+            },
+        }
+
+    def _context_provenance(self, world: Any) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+        """Derive bounded history/source digests from the Seat's exact surfaced view."""
+        context = self._invocation_context
+        if context is None:
+            # Direct integrations that do not use the OAR runner retain an
+            # explicit, limited adapter-origin record rather than pretending to
+            # have a Seat-visible session history.
+            return [], [
+                {
+                    "source_id": f"oar-adapter:{self._scenario_id}",
+                    "kind": "tool_result",
+                    "locator_digest": _canonical_sha256({"scenario_id": self._scenario_id}),
+                    "content_digest": _canonical_sha256({"context": "absent"}),
+                    "trust_state": "unknown",
+                    "taint": "PUBLIC",
+                }
+            ]
+
+        explicit_history = getattr(context, "provenance_history", None)
+        explicit_sources = getattr(context, "provenance_sources", None)
+        if explicit_history is not None or explicit_sources is not None:
+            history = [
+                {
+                    "role": str(item.get("role") or "")[:128],
+                    "content": _bounded_context_value(item.get("content", "")),
+                }
+                for item in list(explicit_history or ())[:_MAX_PROVENANCE_HISTORY_ITEMS]
+                if isinstance(item, dict)
+            ]
+            source_keys = {"source_id", "kind", "locator_digest", "content_digest", "trust_state", "taint"}
+            sources = [
+                {key: str(item[key]) for key in source_keys if key in item}
+                for item in list(explicit_sources or ())[:_MAX_PROVENANCE_SOURCES]
+                if isinstance(item, dict)
+            ]
+            return history, sources
+
+        history: list[dict[str, Any]] = []
+        sources: list[dict[str, str]] = []
+
+        def append_source(source: dict[str, str]) -> None:
+            if len(sources) < _MAX_PROVENANCE_SOURCES:
+                sources.append(source)
+
+        task = str(getattr(context, "task", ""))[:_MAX_PROVENANCE_TEXT]
+        if task:
+            history.append({"role": "user", "content": task})
+            append_source(
+                {
+                    "source_id": f"oar-task:{self._scenario_id}",
+                    "kind": "user",
+                    "locator_digest": _canonical_sha256({"scenario_id": self._scenario_id, "field": "task"}),
+                    "content_digest": _canonical_sha256(task),
+                    # The runner supplies this declared scenario task itself.
+                    "trust_state": "verified",
+                    "taint": "PUBLIC",
+                }
+            )
+
+        channels = context.consumed_channels() if hasattr(context, "consumed_channels") else {}
+        if not isinstance(channels, dict):
+            channels = {}
+        visible = getattr(context, "visible", {})
+        if not isinstance(visible, dict):
+            visible = {}
+        for scheme in sorted(str(key) for key in channels):
+            records = visible.get(scheme, [])
+            if not isinstance(records, list):
+                continue
+            locator = str(channels.get(scheme, ""))
+            for index, record in enumerate(records[:_MAX_PROVENANCE_HISTORY_ITEMS - len(history)]):
+                bounded = _bounded_context_value(record)
+                history.append({"role": "context", "content": {"channel": scheme, "record": bounded}})
+                append_source(
+                    {
+                        "source_id": f"oar-channel:{scheme}:{index}",
+                        "kind": _CHANNEL_SOURCE_KINDS.get(scheme, "unknown"),
+                        "locator_digest": _canonical_sha256({"channel": scheme, "locator": locator, "index": index}),
+                        "content_digest": _canonical_sha256(record),
+                        "trust_state": _trust_state_for_record(record),
+                        "taint": _record_taint(record),
+                    }
+                )
+
+        records_view = visible.get("records", {})
+        assets = getattr(world, "data_assets", {})
+        if isinstance(records_view, dict) and isinstance(assets, dict):
+            summaries: list[dict[str, Any]] = []
+            for asset_id, summary in list(records_view.items())[:_MAX_PROVENANCE_COLLECTION]:
+                asset = assets.get(str(asset_id))
+                if asset is None:
+                    continue
+                bounded = _bounded_context_value(summary)
+                summaries.append({"record_id": str(asset_id), "summary": bounded})
+                append_source(
+                    {
+                        "source_id": f"oar-record:{asset_id}",
+                        "kind": "document",
+                        "locator_digest": _canonical_sha256({"record_id": str(asset_id)}),
+                        "content_digest": _canonical_sha256(asset.to_dict() if hasattr(asset, "to_dict") else asset),
+                        "trust_state": "verified",
+                        "taint": _oar_taint(getattr(asset, "classification", "CONFIDENTIAL")),
+                    }
+                )
+            if summaries and len(history) < _MAX_PROVENANCE_HISTORY_ITEMS:
+                history.append({"role": "context", "content": {"visible_records": summaries}})
+
+        return history[:_MAX_PROVENANCE_HISTORY_ITEMS], sources[:_MAX_PROVENANCE_SOURCES]
+
+    def _provenance_session_id(self) -> str:
+        explicit = str(getattr(self._invocation_context, "provenance_session_id", ""))
+        if explicit:
+            return explicit
+        if self._live_session_summary is not None:
+            return str(self._live_session_summary.get("session_id", "xa-guard-live-per-call"))
+        return "xa-guard-live-per-call"
+
+    def _next_provenance_turn(self) -> int:
+        explicit = str(getattr(self._invocation_context, "provenance_turn_id", ""))
+        if explicit.isdigit() and int(explicit) > 0:
+            return int(explicit)
+        if self._live_session_summary is None:
+            return 1
+        return int(self._live_session_summary.get("tool_call_count", 0)) + 1
+
+    def _provenance_task_id(self) -> str:
+        explicit = str(getattr(self._invocation_context, "provenance_task_id", ""))
+        return explicit or self._scenario_id
+
+    def _policy_bundle_sha(self) -> str:
+        if self.artifacts is None:
+            return ""
+        documents: dict[str, str] = {}
+        for name, path in (("gate3", self.artifacts.gate3_rules), ("gate4", self.artifacts.gate4_capabilities)):
+            if path.is_file():
+                documents[name] = path.read_text(encoding="utf-8")
+        return _canonical_sha256(documents)
 
     def _record_live_session_call(
         self,
@@ -578,6 +965,9 @@ class XaGuardSUT(SUT):
             parts.append(existing)
         env["PYTHONPATH"] = os.pathsep.join(parts)
         env["PYTHONIOENCODING"] = "utf-8"
+        # Never emit this key in session summaries, evidence, or logs.
+        env["XA_GUARD_PROVENANCE_HMAC_SECRET"] = self._provenance_key.decode("ascii")
+        env["XA_GUARD_PROVENANCE_HMAC_KEY_ID"] = self._provenance_key_id
         return env
 
     def _offline_gate3_decide(self, call: ToolCall) -> tuple[str, str]:

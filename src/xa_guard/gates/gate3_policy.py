@@ -81,17 +81,18 @@ class Gate3Policy(Gate):
             return True
         return tool_name in rule.triggers
 
-    def _current_view(self) -> tuple[list[PolicyRule], dict[str, Callable[[GateContext], bool]], str]:
+    def _current_view(self, ctx: GateContext) -> tuple[list[PolicyRule], dict[str, Callable[[GateContext], bool]], str]:
         """LayeredPolicySource opt-in（cfg.gate3.prefer_layered: true）；默认 legacy。"""
         if bool(self.opt("prefer_layered", False)):
             layered = get_global_source()
             if layered is not None:
-                rules = layered.get_policy_rules()
+                rules = layered.get_policy_rules(ctx.tenant_id)
                 if rules:
                     expected = str(self.opt("expected_policy_bundle_sha", "") or "")
-                    if expected and layered.bundle_sha != expected:
+                    bundle_sha = layered.effective_bundle_sha(ctx.tenant_id)
+                    if expected and bundle_sha != expected:
                         raise RuntimeError("gate3 policy bundle drift detected")
-                    return rules, layered.get_compiled_predicates(), layered.bundle_sha
+                    return rules, layered.get_compiled_predicates(ctx.tenant_id), bundle_sha
         return self.rules, self.compiled, ""
 
     def _layered_rego_engine(self, rules: list[PolicyRule], bundle_sha: str) -> RegoPolicyEngine | None:
@@ -113,7 +114,7 @@ class Gate3Policy(Gate):
         return self._layered_rego
 
     def evaluate(self, ctx: GateContext, stage: GateStage = GateStage.INBOUND) -> GateResult:
-        rules, compiled, bundle_sha = self._current_view()
+        rules, compiled, bundle_sha = self._current_view(ctx)
         if not rules:
             return GateResult(
                 gate_name=self.name,

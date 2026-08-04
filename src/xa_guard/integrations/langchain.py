@@ -8,7 +8,6 @@ import inspect
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable
 
-from xa_guard.approval import issue_approval
 from xa_guard.sdk.decorators import XAGuardBlocked, _pipeline, _sources
 from xa_guard.types import Decision, GateContext, InputSource
 
@@ -61,10 +60,8 @@ class ApprovalRequest:
         if self._resolved:
             raise RuntimeError("XA-Guard approval request has already been resolved")
         self._resolved = True
-        self.ctx.approval = issue_approval(
-            trace_id=self.ctx.trace_id,
-            tool_name=self.ctx.tool_name,
-            arguments=self.ctx.arguments,
+        self.ctx.approval = self.pipeline.issue_bound_approval(
+            self.ctx,
             approver=approver,
             reason=reason,
             ttl_seconds=ttl_seconds,

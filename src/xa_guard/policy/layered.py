@@ -52,6 +52,7 @@ from xa_guard.types import (
 )
 
 log = logging.getLogger("xa_guard.policy.layered")
+_UNSET_TENANT = object()
 
 
 # ============================================================
@@ -375,12 +376,17 @@ class LayeredPolicySource:
             merged_pats,
         ) = self._merge_with_monotonicity(baseline, overlays, rejections)
 
-        bundle_sha = _compute_bundle_sha([baseline, *overlays.values()])
+        # A rejected overlay is not part of the effective policy bundle.
+        accepted_overlays = {
+            tenant_id: layer for tenant_id, layer in overlays.items()
+            if tenant_id not in rejections
+        }
+        bundle_sha = _compute_bundle_sha([baseline, *accepted_overlays.values()])
         merged_pattern = _compile_pattern(merged_pats, case_insensitive=True)
 
         return _Snapshot(
             baseline=baseline,
-            overlays=overlays,
+            overlays=accepted_overlays,
             merged_rules=merged_rules,
             merged_compiled=merged_compiled,
             merged_tool_risks=merged_risks,
@@ -404,29 +410,60 @@ class LayeredPolicySource:
         with self._lock:
             return dict(self._snapshot.overlay_rejections)
 
-    def get_policy_rules(self) -> list[PolicyRule]:
-        with self._lock:
-            return list(self._snapshot.merged_rules)
+    def _effective_layers(self, tenant_id: str | object = _UNSET_TENANT) -> list[_CompiledLayer]:
+        """Baseline plus one tenant overlay; omitted preserves legacy merged reads.
 
-    def get_compiled_predicates(self) -> dict[str, Callable]:
-        with self._lock:
-            return dict(self._snapshot.merged_compiled)
+        A concrete empty tenant means baseline only. Security gates must pass
+        their context tenant so one tenant never observes another's overlay.
+        """
+        snapshot = self._snapshot
+        if tenant_id is _UNSET_TENANT:
+            return [snapshot.baseline, *snapshot.overlays.values()]
+        overlay = snapshot.overlays.get(str(tenant_id or ""))
+        return [snapshot.baseline] + ([overlay] if overlay is not None else [])
 
-    def get_tool_risks(self) -> dict[str, RiskLevel]:
-        with self._lock:
-            return dict(self._snapshot.merged_tool_risks)
+    @staticmethod
+    def _view(layers: list[_CompiledLayer]) -> tuple[list[PolicyRule], dict[str, Callable], dict[str, RiskLevel], dict[str, ToolCapability], list[str]]:
+        rules: list[PolicyRule] = []
+        compiled: dict[str, Callable] = {}
+        risks: dict[str, RiskLevel] = {}
+        caps: dict[str, ToolCapability] = {}
+        patterns: list[str] = []
+        for layer in layers:
+            rules.extend(layer.rules)
+            compiled.update(layer.compiled)
+            risks.update(layer.tool_risks)
+            caps.update(layer.tool_caps)
+            patterns.extend(layer.sensitive_patterns)
+        return rules, compiled, risks, caps, patterns
 
-    def get_tool_capabilities(self) -> dict[str, ToolCapability]:
+    def effective_bundle_sha(self, tenant_id: str = "") -> str:
         with self._lock:
-            return dict(self._snapshot.merged_tool_caps)
+            return _compute_bundle_sha(self._effective_layers(tenant_id))
 
-    def get_sensitive_pattern(self) -> re.Pattern | None:
+    def get_policy_rules(self, tenant_id: str | object = _UNSET_TENANT) -> list[PolicyRule]:
         with self._lock:
-            return self._snapshot.merged_pattern
+            return self._view(self._effective_layers(tenant_id))[0]
 
-    def get_sensitive_patterns(self) -> list[str]:
+    def get_compiled_predicates(self, tenant_id: str | object = _UNSET_TENANT) -> dict[str, Callable]:
         with self._lock:
-            return list(self._snapshot.merged_sensitive_patterns)
+            return self._view(self._effective_layers(tenant_id))[1]
+
+    def get_tool_risks(self, tenant_id: str | object = _UNSET_TENANT) -> dict[str, RiskLevel]:
+        with self._lock:
+            return self._view(self._effective_layers(tenant_id))[2]
+
+    def get_tool_capabilities(self, tenant_id: str | object = _UNSET_TENANT) -> dict[str, ToolCapability]:
+        with self._lock:
+            return self._view(self._effective_layers(tenant_id))[3]
+
+    def get_sensitive_pattern(self, tenant_id: str | object = _UNSET_TENANT) -> re.Pattern | None:
+        with self._lock:
+            return _compile_pattern(self._view(self._effective_layers(tenant_id))[4], case_insensitive=True)
+
+    def get_sensitive_patterns(self, tenant_id: str | object = _UNSET_TENANT) -> list[str]:
+        with self._lock:
+            return self._view(self._effective_layers(tenant_id))[4]
 
     def stats(self) -> dict[str, Any]:
         with self._lock:
@@ -434,7 +471,7 @@ class LayeredPolicySource:
             return {
                 "bundle_sha": s.bundle_sha,
                 "baseline_rules": len(s.baseline.rules),
-                "overlay_tenants_accepted": len(s.overlays) - len(s.overlay_rejections),
+                "overlay_tenants_accepted": len(s.overlays),
                 "overlay_tenants_rejected": len(s.overlay_rejections),
                 "merged_rules": len(s.merged_rules),
                 "merged_tool_risks": len(s.merged_tool_risks),
