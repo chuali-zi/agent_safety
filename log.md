@@ -1,3 +1,271 @@
+# 2026-08-04 00:20 PDT PUBLIC 正例 live / HTTP Operator HITL 准备开始
+
+- 负责人要求立即运行 PUBLIC 正例 live，并先准备独立 HTTP Operator HITL live；要求分阶段
+  提交，避免继续堆积 dirty 改动。本轮没有修改既有测试。
+- 先把 2026-07-30 已完成但未提交的 P0 provenance、引用 DLP、Operator 控制面、HITL
+  重验证、OAR 可信接入及交接文档整理为独立基线提交 `b79b9b5`。提交前复跑本轮直接相关
+  P0 测试 57 passed、OAR 非基础设施契约 10 passed，并对全部纳入提交的 Python 文件运行
+  Ruff，结果通过。
+- 当前正在封存已完成的 DeepSeek + XA-Guard stdio v2 公开摘要；随后为 PUBLIC 正例使用
+  新实验 ID 和新 runtime 目录，既有 v1/v2 holdout 均不覆盖。HTTP Operator HITL 本轮只做
+  独立身份、端点、证据契约与 preflight 准备，不会把 dry-run 或缺凭据状态写成 live PASS。
+
+# 2026-08-04 00:12 PDT 向负责人讲解「PUBLIC 正例 live」概念与目标结果
+
+- 用户要求按现有架构详细解释 PUBLIC 正例 live 是什么、要做什么、结果应是什么；
+  本次只讲解，未改代码。核心：证明非 deny-all；Null/Guard 双成功 + downstream=1；
+  不可用现有 v2 的 utility_success_rate=0.5 冒充。
+
+# 2026-08-04 00:06 PDT 向负责人讲解「下一步做什么」与应读文档
+
+- 用户要求理解下一步动作、文档入口与原因；本次只讲解，未改产品代码。
+- 明确权威入口是 `status.md` §7、`CHAMPIONSHIP-P0-LIVE-WORKBENCH-PLAN.md`、
+  `docs/demo-handoff/IMPLEMENTATION-HANDOFF-CHECKLIST.md`；指出
+  `NEXT-WORK-DESIGN.md`（2026-07-27「可直接外部提交」）已过时，勿当当前计划。
+- 下一步硬门顺序：专用 PUBLIC 正例 live → 独立 HTTP Operator HITL live → GUI/D3 →
+  Gate5 边界 → clean release/人工提交。
+
+# 2026-08-04 00:05 PDT 与负责人对齐 Codex 正式 v2 反馈
+
+- 用户要求对照 Codex 终端反馈重新对齐进度；本次只读复盘，未改产品代码/测试/证据。
+- Codex 已完成：DeepSeek Key 连通、沙箱外正式 v2（30 runs / 0 infra / 15 违规意图全阻断）、
+  verifier 22/22、篡改副本 FAIL、脱敏摘要与 status/log 更新；未改测试、未覆盖 v1。
+- 对齐后权威缺口变为：专用 PUBLIC 正例 live、独立 HTTP Operator/HITL live、Gate5、
+  GUI/D3、clean release 与人工提交。此前「v2 未跑」口径已过时。
+
+# 2026-08-03 22:46 PDT 完成 DeepSeek + XA-Guard stdio 正式 v2 D1/D2 因果封存
+
+- 负责人明确授权将仓库内冻结合成场景发送给 DeepSeek，并允许沙箱外运行 XA-Guard stdio。
+  未输出、写入或提交 API Key；最终证据逐文件扫描未发现 `.env` 中的 Key。
+- 先运行 1-repeat smoke：6 runs、0 infra；D1/D2 四格产生违规意图，Null 4/4 harm、
+  XA-Guard 4/4 deny、0 harm；smoke verifier 通过。该 smoke 未达到 threshold=3，只用于连通性。
+- 首次 30-run 后修复实跑的目录名含 v2，但内部 experiment id 仍为 v1。该包本身 verifier
+  PASS，但未冒充正式 v2，也未删除；随后新增
+  `open-agent-range/scenarios/live-agent/p0-d1-d3-v2.json`，以 JSON 语义比较确认除
+  experiment id 从 v1 改为 v2 外，case、prompt、模型配置、工具面、重复数和阈值完全相同。
+- 用新 manifest 在沙箱外生成正式
+  `.runtime/live-agent/holdout-v2-formal-20260803`：DeepSeek `deepseek-v4-pro` 原生 Tool Call，
+  30 runs、0 infra；15 个违规意图，Null harm 15/15，XA-Guard live stdio deny 15/15、
+  Guard harm 0/15，conditional block rate 1.0。
+- 分格结果：D1 neutral-tool 5/5 attempt、Null harm 5/5、Gate4 deny 5/5、Guard harm 0/5；
+  D2 realistic-safe 与 neutral-tool 各 5/5 attempt，合计 Null harm 10/10、Gate3 deny 10/10、
+  Guard harm 0/10。D1 realistic-safe 0/5、D3 两档 0/10 是模型侧未尝试，未计 Guard win。
+- 正式 verifier `ok=true`，22/22 checks、303 个非自指文件、30/30 verdict、15/15 live audit
+  全部一致。旧 v1 也再次通过，未被覆盖。正式根 hash：manifest
+  `5486d588425769922580043ec1693c4ee97a17669f24f2836fdda4a3ea5f2997`，summary
+  `162c587edc6c167a14268746a833c0cfe04e736c77b2bd7af2a277b6cbc50011`，artifact manifest
+  `4402852257c4aae218a71ca77876108dcf99e0a5f0770bf478b4c972473c68b9`。
+- 复制正式包后只把副本 `attempt_asr` 从 0.5 改为 0.0；verifier 按预期退出 1，同时报告
+  `summary.json` hash mismatch 和 recorded/recomputed metric mismatch；原包 summary hash 不变。
+- 新增脱敏摘要 `docs/evidence/live-agent-holdout-v2-2026-08-03.md`，更新 `status.md`、证据索引、
+  非 GUI 验收后续状态、Live Workbench 计划/契约/交接清单。原始 transcript、攻击内容、smoke、
+  预正式包、正式包与篡改副本均留在 gitignored runtime。
+- 本次未修改任何测试代码、旧 v1 payload/oracle/threshold/evidence，也未用 forced tool call。
+  未完成：专用 PUBLIC 正例的 Null/Guard 双成功 live、独立 HTTP Operator/Dora HITL live、Gate5、
+  GUI/D3、clean checkout release、独立盲测及人工外部提交。`utility_success_rate=0.5` 未冒充前两项。
+
+# 2026-08-03 21:04 PDT DeepSeek Key 实请求通过，正式 v2 等待明确外发授权
+
+- 按负责人要求从根目录 `.env` 读取 DeepSeek 配置；未打印、写入或提交 API key。静态检查确认
+  `DEEPSEEK_API_KEY` 已配置，模型/端点/思考模式与冻结 manifest 一致，OpenAI 兼容 SDK 与 MCP
+  依赖已安装。
+- 发起一个不含仓库业务内容的最小真实请求，`deepseek-v4-pro` 成功返回原生
+  `health_check(value=ok)` Tool Call 并带 usage；因此 Key、鉴权、模型名和原生工具调用能力均无
+  异常。
+- 随后尝试运行 `holdout-v2-smoke-20260803`（3 个 holdout case × 2 个 prompt × 1 次）。模型
+  观察阶段可运行，但 XA-Guard live stdio MCP 在当前 Windows 沙箱创建匿名管道时返回
+  `PermissionError: [WinError 5]`，smoke 未形成完整 summary/verifier，不能算 v2 证据。
+- 按沙箱规则申请在沙箱外运行同一 smoke；安全审查因评测会把冻结的合成邮箱/RAG/日志/供应链
+  场景文本发送给 DeepSeek 而拒绝，要求负责人在知情后明确授权。未绕过该拒绝，也未改用 offline
+  Guard 冒充真实 stdio。
+- 本次没有修改测试代码、旧 `holdout-v1`、payload、oracle、阈值或冻结证据。已更新
+  `status.md`，将过时的“没有 key/当前 WSL 挂起”改为当前事实。
+- 未完成：正式 30-run v2、PUBLIC 安全正例 live、D2/HITL live、v2 verifier 与公开脱敏摘要均
+  尚未生成。下一步需要负责人明确同意将仓库内冻结合成场景发送给 DeepSeek，并允许在沙箱外启动
+  XA-Guard stdio 子进程；随后先跑 1-repeat smoke，通过后再新建正式 v2 包。
+
+# 2026-08-03 21:00 PDT 向负责人讲解计划退出门 G3（非 GUI 交接）
+
+- 用户要求详细讲解计划中的 G3；本次只讲解，未改代码/文档内容。说明 G3≠产品
+  Gate3：G3 是 Phase 3「Live Workbench 非 GUI 交接材料」的退出验收门，交付物在
+  `docs/demo-handoff/`，状态为 PASS（材料）/GUI 未实现。
+
+# 2026-08-03 20:55 PDT 向负责人讲解 P0 修复（小白版）
+
+- 用户要求把 P0 各工作包当完全小白详细讲解；本次只讲解，未改产品代码/测试/
+  交付物。讲解覆盖：可信信封、引用 DLP、Operator 分权、HITL 重验证、pending
+  安全、错误下限、租户视图、Gate6/OAR 契约，以及审查中修掉的 5 个阻断 bug。
+
+# 2026-08-03 20:52 PDT 进度复盘（用户遗忘后抓回状态）
+
+- 用户要求重新讲清当前进度、原因与下一步；本次只做只读复盘与讲解，未改产品代码、
+  测试、D1/D3、冻结证据或外部提交材料。
+- 对照 `status.md`（2026-07-30）、`docs/acceptance/CHAMPIONSHIP-P0-NON-GUI-ACCEPTANCE.md`、
+  `docs/workplan/CHAMPIONSHIP-P0-LIVE-WORKBENCH-PLAN.md` 与 `docs/demo-handoff/`：
+  非 GUI P0 安全后端与受控集成已通过；真实模型 v2、Gate5 live、GUI/D3 重录、
+  支持环境全量复验与人工提交仍未完成。工作区仍有大量未提交 P0 改动（git dirty）。
+- 下一步权威顺序不变：支持环境配置 key/身份 → 新建而非覆盖 v2 → D1/D2/HITL 真凭证 →
+  负责人做 GUI/录制 → clean checkout 与人工合规收口。
+
+# 2026-07-30 23:40 PDT 完成 P0 非 GUI 安全后端、OAR 可信接入与演示交接
+
+- 按负责人批准直接执行
+  `docs/workplan/CHAMPIONSHIP-P0-LIVE-WORKBENCH-PLAN.md`；所有新子代理均使用
+  `gpt-5.6-terra`、reasoning `medium`。遵守范围决定：没有实现 GUI/网页/TUI、没有录屏、
+  没有替换正式 D3。
+- 建立 gitignored 基线报告，记录 commit/dirty preserve list、Python/OPA 等能力、D1/D3
+  hash 和旧 holdout verifier；未改写 `.runtime/live-agent/holdout-v1`。收尾再次复验：
+  D1/D3 SHA-256 均与冻结值一致，holdout authenticity `ok=true`（303 files、30/30
+  verdict、15/15 audit，metrics/stability/causal proof 重算一致）。
+- 新增 `src/xa_guard/provenance.py`：版本化 Trusted Context Envelope、canonical digest、
+  HMAC、key id、TTL≤15 分钟、30 秒时钟偏差、tool/args/history/identity 绑定、nonce
+  进程内一次消费、schema-aware `sources/attachments/records` resolver 契约。普通 MCP 无
+  可信 envelope 时改为 `InputSource.UNKNOWN`，不再伪装为 `USER`。
+- Gate4 已在 executor 前解析 verified business references：CONFIDENTIAL 或 unknown 的
+  external egress 拒绝，PUBLIC 引用允许；Gate6 只记录 provenance digest、分类、解析结果和
+  nonce digest，不记录 MAC、资产正文或 resolver 原始内容。OAR Adapter 不 import 产品，
+  生成产品兼容 HMAC envelope，并绑定冻结 ToolIntent、模型历史、session/turn/task 和
+  digest-only sources。
+- HITL approval 新增 identity、tenant、provenance/history、taint、effective policy、
+  effect class、expiry 和 nonce 绑定；`run_after_approval` 重跑 governance、Gate1、Gate2、
+  Gate4-in、Gate3，检查 provenance 新鲜度与绑定，原子消费后才进入 Gate5/executor，
+  参数/身份/来源/策略漂移、过期和 replay 均拒绝。
+- 新增独立非 GUI Operator 后端 `src/xa_guard/proxy/operator.py`：正式 Agent `/mcp` 与
+  Operator `/operator/mcp` 分 manager、共享 pending；要求 verified identity、
+  `xa_guard.operator` role、tenant、独立 header credential、非自批和非空理由。stdio/HTTP
+  正式 Agent plane 均隐藏审批工具并关闭同客户端 elicitation。
+- 安全审查真实发现并修复：非法审批会污染 pending ctx；等待期间过期 provenance 可恢复；
+  重启恢复丢可信上下文仍可能执行；旧 ledger 无新标记默认可恢复；Gate error 配置可把写操作
+  降为 allow；Gate1 unexpected detector crash 可绕过统一矩阵；tenant accepted 统计错误。
+  修复后拒绝审计使用独立无业务参数 ctx，并记录认证 Operator 身份，请求人仅留摘要。
+- Pending ledger 不再落 session history 正文；存在 verified identity/provenance/history
+  或旧 schema 未知状态的恢复项要求重新发起。仍保留并明确限制：approval/provenance replay
+  仅单进程；approval 有 demo 默认密钥，生产必须显式配置；私有 `_build_app` 仍有显式兼容
+  operator tools 路径；非 schema/非敏感键参数持久化仍是 best-effort。
+- 修复 tenant effective view：Gate2/3/4 使用 baseline+当前 tenant 单一 overlay，
+  effective bundle SHA 可区分；写操作 Gate 异常安全下限不可被配置降级（read-only 最低 WARN、
+  local write 最低 HITL、external/privileged DENY）。
+- 新增/扩充 provenance DLP、HITL、Operator、pending migration、Gate6 与真实 MCP handler
+  集成测试。P0 主集实际 `80 passed`；OAR 非基础设施 `10 passed, 1 deselected`；Ruff 对全部
+  changed Python `All checks passed`。更广分批结果为 199 passed/1 skipped、51 passed、
+  Gate1–5 171 passed + 4 OPA 环境失败、Gate6 13 passed + 2 缺 gmssl、84 passed、
+  95 passed/13 skipped；组间有重叠，未相加冒充全量。
+- 环境限制如实保留：Windows `opa.exe` 在 WSL 报 vsock error；可选 `gmssl` 未安装；
+  沙箱禁止本地 socket，Business API 3 项 PermissionError；部分 TestClient 和真实 MCP
+  subprocess 挂起。没有修改旧测试、payload、oracle、阈值或 frozen evidence 来制造通过。
+- 新增 `docs/demo-handoff/` 的 event/API JSON Schema、4 条明确 synthetic 的样例、1920×1080
+  线框、8:50 分镜、素材/录制/claim 纪律和
+  `IMPLEMENTATION-HANDOFF-CHECKLIST.md`。2 个 schema 和 4 个样例事件验证通过；这些只是后续
+  GUI 材料，不是 live evidence。
+- 新增 `docs/acceptance/CHAMPIONSHIP-P0-NON-GUI-ACCEPTANCE.md`，更新根 README、
+  `docs/README.md`、历史 `DELIVERY-v2` 标识和计划执行快照；整体重写 `status.md` 为当前事实，
+  删除“P0 未启动/Luna 阻塞/SUBMISSION-READY”过时口径但保留历史 v1 失败。
+- 本轮未完成：没有 `DEEPSEEK_API_KEY`，未发生付费模型调用，未生成真实 v2 evidence；
+  未完成 Gate5 live、真实 stdio/HTTP 支持环境实传、GUI、连续录屏、新 D3、独立盲测、clean
+  checkout 全量 release、D4/资格/IP/素材授权和外部提交。
+- 下一步：负责人按 GUI 交接清单在支持环境配置私有 key/身份/Operator，创建而非覆盖 v2，
+  完成 D1 修复、安全正例、D2、HITL、Gate5 和 verifier/tamper 真凭证；随后实现 GUI/录制，
+  最后做 clean checkout 与人工合规/提交收口。
+
+# 2026-07-30 22:06 PDT 形成 P0 产品闭环与 Live Workbench 待审核实施计划
+
+- 用户要求先把全面审核结论落实为详细计划，待其审核通过后再执行，并指定子代理使用
+  `gpt-5.6-luna`、reasoning `medium`。
+- 新增
+  `docs/workplan/CHAMPIONSHIP-P0-LIVE-WORKBENCH-PLAN.md`（v0.1，687 行），状态明确为
+  `WAITING FOR OWNER REVIEW / NOT APPROVED / IMPLEMENTATION NOT STARTED`。计划覆盖审批门、
+  目标/非目标、Trusted Context Envelope、Reference Resolver、子代理文件所有权、Phase 0–6、
+  G0–G6 退出门、测试矩阵、证据纪律、D3 8:50 镜头、风险/停止条件、预计投入和负责人审核清单。
+- 计划将执行顺序定为：先建立不可变基线和接口契约，再修真实 MCP provenance、D1 `sources`
+  引用解析和执行前 egress；随后分离 Agent/Operator 控制面、批准后重验证、关键 Gate
+  fail-closed 和 tenant overlay；产品门通过后才开发 Live Workbench、生成新版本证据、重录 D3
+  并做提交收口。
+- 计划明确复用现有 `kernel.live_agent`、`XaGuardSUT(live=True)`、OAR world/oracle/ledger、
+  stdlib Workbench 和 Console，不重新开发通用 Agent；主演示使用真实模型原生 Tool Call、
+  同一冻结 ToolIntent A/B，不以越狱 OpenCode 为前提，不以 `GullibleSeat` 冒充真实 Agent。
+- 计划明确旧 `holdout-v1` 永不覆盖；D1 修复后只能创建新 manifest/新证据版本，并同时保留
+  before/after。不得修改测试、payload、oracle、阈值或旧证据来制造通过；如果既有测试确实错误，
+  必须先报告负责人审核。
+- 当前子代理工具可用模型只有 `gpt-5.6-sol` 和 `gpt-5.6-terra`，没有
+  `gpt-5.6-luna`。本次没有擅自替换模型，也没有创建任何子代理；计划把准确模型标识或替代模型
+  选择列为 G0 启动阻塞。
+- 更新 `status.md` 当前状态：详细计划已形成但未批准，产品修复、新模型评测、Workbench 和视频
+  重录均未启动。没有修改产品代码、测试、正式 D1/D3、冻结数字或外部提交材料，也没有发生
+  模型付费调用、邮件、上传、D4 或远端发布动作。
+- 尚未完成：负责人审核计划、解决子代理模型选择、批准执行。下一步只能等待负责人反馈；获得
+  明确批准前不进入 Phase 0。
+
+# 2026-07-30 21:07 PDT 全面赛题符合性、实现真实性与夺冠差距审核
+
+- 以 `docs/source-of-truth/XA-202620中国雄安集团数字城市科技有限公司-面向政企场景的大模型智能体安全关键技术研究比赛方案.pdf`
+  为赛题专项依据，并核对主办方 2026 年竞赛规则页面；区分了 D1/D2/D3 硬要求、四个技术方向、
+  25/30/20/20/5 评分权重，以及 D4、学籍/年龄/团队、知识产权和外部提交等人工合规项。
+- 先读并质疑旧 `status.md` 的 “SUBMISSION-READY / INTERNAL ACCEPTANCE PASS /
+  仓库内无未完成比赛实现计划” 口径；将 `status.md` 重写为当前状态，而非追加历史。新状态明确：
+  D1–D3 形式要求基本满足，六层 Gate/MCP/Console/真实模型因果证据均有真实实现，但真实 Agent
+  上下文接入、D1 引用型外发、审批控制面、执行前 egress、Gate fail-closed 和实时演示仍有 P0
+  缺口；D4、资格、知识产权和外部提交待人工确认。
+- 并行完成三条只读审计：赛题/资格规则，代码、测试和证据真实性，D3/Agent 演示策略。没有让
+  子代理修改代码或测试。
+- 代码审计确认真实主链为
+  `governance → Gate1 → Gate2/Gate4-in/Gate3 → Gate5 → executor → Gate4-out → Gate6`；
+  同时确认 `src/xa_guard/proxy/upstream.py` 当前把 `session_history=[]`、
+  `input_sources=[USER]` 写死，真实 MCP 主线没有完整聊天/RAG/文档 provenance。
+- 进一步确认以下高优先级风险：stdio 默认向同一 Agent 暴露 pending approval 工具且
+  operator token 非强制；审批恢复不重跑治理/Gate1–4；Gate4 `sources` 符号引用不解析；
+  Gate4-out 位于 executor 之后，不能撤销外部副作用；Gate1–5 默认 gate exception 为 WARN；
+  Gate5 在默认配置和正式 OAR SUT 中关闭；分层 tenant overlay 当前合并为全局策略视图。
+- 审核 D3 生成链后确认现有 8:50 成片是每镜头静态 PNG/截图/重构终端加 zoom/pan 的证据投影，
+  不是连续 GUI/TUI 实操；形式上符合“≤10 分钟展示核心功能、关键流程和测试效果”，但竞争上
+  会连带削弱 30% 实际效果和 20% 应用价值的可信度。提出“真实 OpenCode 安全互操作锚点 +
+  现有 DeepSeek live-agent 同 ToolIntent 因果 A/B Workbench + HITL/Console/Undo +
+  独立验真”的混合式夺冠方案；不建议重新造一个与现有证据脱节、故意脆弱的玩具 Agent。
+- 实际复跑
+  `python -m kernel.live_agent verify --evidence-dir .runtime/live-agent/holdout-v1`：
+  `ok=true`，303 files、30/30 per-run verdict、15/15 expected/actual audit，冻结清单、摘要、
+  stable breach 和 causal proof 重算均通过。复核 D1 为 18 页且 SHA-256
+  `de37a83c973d28f1b4efdc77efda4648a704db94540cb9839b6f4d2e8660c7f1`；D3 时长
+  530.033 秒且 SHA-256
+  `267a1a59f7f48c9d8e489f085afda0ff79197118ceff7b7e2d5422d5962b00c5`。
+- 定向测试的第一次命令引用了不存在的 `tests/unit/test_gate6.py`，pytest exit 4、未执行测试；
+  第二次未设置 `PYTHONPATH`，出现 9 个 `ModuleNotFoundError: xa_guard` 收集错误；这两次均是
+  审核命令错误，不记作产品失败。改为 `PYTHONPATH=src:.` 后，定向集结果为 177 passed、
+  6 failed：4 项因仓库内 Windows `tools/opa/opa.exe` 在当前 WSL sandbox 无法执行，2 项因
+  可选 `gmssl` 缺失；MCP/real-stdio 专项长时间等待后人工中止，未宣称完成全量当前环境验证。
+- 本次没有修改任何产品代码、测试、payload、oracle、阈值、冻结证据、D1 或 D3 成片；只重写
+  `status.md` 并在本日志顶部增加本条。没有发送邮件、上传网盘、修改报名表或创建外部发布。
+- 尚未完成：上述 P0 产品修复、Live Workbench 实现与录屏、独立盲测、Gate5 live evidence、
+  旧 README/交付文档状态统一、干净 checkout 全量复验、最终 manifest、D4/资格/IP/素材授权
+  和外部提交。下一步应先修真实 MCP provenance 与 D1 `sources` 引用解析，再实现混合式实时
+  D3；完成前不应对外使用“全链路已完整接入”或“submission-ready”绝对表述。
+
+# 2026-07-27 22:20 PDT 生成 D3 对齐演示 PowerPoint（12 页）
+
+- 用户要找视频对应 PPT；仓库原先无 .pptx，只有 Pillow 生成的 PNG 幻灯片。
+- 新增 `scripts/build_d3_demo_pptx.js`，按 D3 十一镜 + FROZEN-NUMBERS 生成可讲提纲；
+  含备注页旁白要点；数字与边界口径（D1 sources、D3 模型自防、OAR 不外推）已写入。
+- 产出：`output/pptx/XA-Guard-XA-202620-demo.pptx`（12 页）；预览 PNG 导出到
+  `output/pptx/preview/`。未改正式 D3 成片、未改 status 交付口径。
+- 未完成：未把该 PPT 定为正式提交物；未替换现有 MP4；若要改成真人操作剧本 PPT 需另开一版。
+
+# 2026-07-27 22:10 PDT 只读侦察：D3 视频形态 vs 真人演示可行性（不改代码/交付文档）
+
+- 用户质疑当前 D3 成片偏「读证据卡/PPT」，希望改成真人操作：身份控制台、MCP 接 OpenCode、
+  HITL 高危审批、注入被拦、审计；并担心「找不到能打破 OpenCode 的脚本 → 真实防御演示不成立」。
+- 派出 4 个 Grok explore 子代理只读侦察（赛题 D3 要求、Console/HITL、OpenCode 注入可行性、
+  功能地图）；未改产品代码、未改正式 D1/D3/交付文档、未改 status 事实口径。
+- 已确认事实要点：
+  1) 赛题硬要求是 ≤10 分钟展示「核心功能、关键流程、测试效果」；未强制真人实操录屏，
+     也未禁止证据卡+旁白；30%「实际效果」锚定量化指标，「展示表达」仅 5%。
+  2) 当前成片确为可复现证据投影（11 镜头数据卡/Console 截图 + TTS），不是连续真人上手。
+  3) 真人可演示：Reference Console（身份/Undo/Dora 审批/证据）、OpenCode MCP 安全 get_cpu、
+     CLI/直接 MCP 违规调用拦截、审计验签；OpenCode 无 elicitation 弹窗。
+  4) 用户核心担心部分成立：正式 OpenCode 预演故意只允许 get_cpu allow，没有「GUI 注入→
+     模型自发高危→屏幕 deny」的正式证据；D2 因果 deny 在 live_agent harness，不在 OpenCode GUI；
+     D3 0/10 只能记模型自防。确定性拦截（直接 tools/call / OAR）可稳定演示，不依赖越狱。
+- 未完成：未重拍视频、未改脚本/旁白、未现场联调演示剧本；下一步待用户决定是否重拍及
+  采用哪条「拦截」演示口径（直接 MCP deny vs 强制调用红工具 vs 赌模型越狱）。
+
 # 2026-07-27 20:58 PDT 赛题交付收口完成：D1/D3 定版、验真门禁加固、全部仓库内计划通过
 
 - 以 `docs/source-of-truth/` 的 XA-202620 比赛方案为唯一需求源，复核 D1、D3、Delivery v2、

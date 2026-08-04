@@ -1,6 +1,6 @@
 {
   "schema_version": "xa-guard-evidence-index/v1",
-  "snapshot_utc": "2026-07-26T13:04:00Z",
+  "snapshot_utc": "2026-08-04T05:45:00Z",
   "delivery_authority": "docs/acceptance/DELIVERY-v2.md",
   "canonical": {
     "run_id": "oar-delivery-v2-20260711T123124Z-win-local",
@@ -59,6 +59,17 @@
     "reason": "local runtime result is not a clean final-commit provenance manifest"
   },
   "supporting": [
+    {
+      "id": "live-agent-holdout-v2-2026-08-03",
+      "classification": "supporting-private-dirty-worktree",
+      "path": "docs/evidence/live-agent-holdout-v2-2026-08-03.md",
+      "runtime_path": "open-agent-range/.runtime/live-agent/holdout-v2-formal-20260803",
+      "source_manifest_sha256": "f96c02f17e3c012bac0ffd4a0f9ca299bc9dd62d3672400d755c575106a33c2d",
+      "artifact_manifest_sha256": "4402852257c4aae218a71ca77876108dcf99e0a5f0770bf478b4c972473c68b9",
+      "verification": "22/22 PASS; 303 files; 30/30 runs; 15/15 live audit; tampered copy FAIL",
+      "publish": false,
+      "reason": "raw transcripts stay in gitignored runtime; run used a dirty worktree and is not a clean release manifest"
+    },
     {
       "id": "agent-identity-undo-acceptance-2026-07-16",
       "classification": "tier-b-current-partial",
