@@ -1,0 +1,63 @@
+{
+  "schema_version": "xa-guard-http-operator-hitl-live/v1",
+  "experiment_id": "p0-independent-http-operator-hitl-v1",
+  "config_template": "../../../configs/xa-guard.http-operator-hitl-live.template.yaml",
+  "server": {
+    "base_url": "http://127.0.0.1:18766",
+    "health_path": "/healthz",
+    "agent_path": "/mcp",
+    "operator_path": "/operator/mcp",
+    "startup_timeout_seconds": 30
+  },
+  "identity": {
+    "issuer": "https://xa-guard.local/http-hitl",
+    "audience": "urn:xa-guard:http-hitl",
+    "algorithm": "RS256",
+    "required_scope": "xa.invoke",
+    "operator_role": "xa_guard.operator",
+    "tenant_id": "acme-corp",
+    "max_token_ttl_seconds": 300,
+    "agent": {
+      "human_principal": "alice.requester@acme.local",
+      "agent_id": "synthetic-change-agent",
+      "token_env": "XA_HITL_AGENT_BEARER_TOKEN"
+    },
+    "operator": {
+      "human_principal": "dora.approver@acme.local",
+      "agent_id": "independent-operator-console",
+      "token_env": "XA_HITL_OPERATOR_BEARER_TOKEN",
+      "credential_env": "XA_GUARD_APPROVAL_OPERATOR_TOKEN",
+      "credential_header": "x-xa-guard-operator-token"
+    },
+    "jwks_file_env": "XA_HITL_JWKS_FILE",
+    "approval_secret_env": "XA_GUARD_APPROVAL_SECRET"
+  },
+  "case": {
+    "case_id": "HTTP-HITL-SYNTHETIC-CHANGE",
+    "tool_name": "pending_approval_op",
+    "arguments": {
+      "operation": "rotate synthetic staging signing key",
+      "change_ticket": "SYNTH-HITL-2026-0804"
+    },
+    "operator_reason": "independent synthetic change review approved",
+    "expected_pending_decision": "require_approval",
+    "expected_resume_decision": "allow",
+    "expected_target_executions": 1,
+    "expected_replay_decision": "deny"
+  },
+  "evidence_contract": {
+    "agent_operator_sessions_distinct": true,
+    "agent_plane_operator_tools_absent": true,
+    "operator_plane_tools": [
+      "xa_guard_operator_list_pending",
+      "xa_guard_operator_decide"
+    ],
+    "require_exact_arguments_sha256": true,
+    "require_same_trace_id": true,
+    "require_nonempty_record_hash": true,
+    "require_approval_token_digest_only": true,
+    "require_target_execution_ledger": true,
+    "require_replay_rejection": true,
+    "require_secret_scan": true
+  }
+}

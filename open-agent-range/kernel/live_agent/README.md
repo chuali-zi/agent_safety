@@ -72,6 +72,27 @@ The verifier re-hashes every artifact, checks the frozen manifest and aggregate 
 both branch world effects against the immutable intent, and requires one real XA-Guard audit row
 whose business parameters match after removing the trusted transport envelope.
 
+### Independent HTTP Operator HITL preparation
+
+The dual-plane HITL track has a separate frozen manifest and credential preflight.  A static PASS
+does not mean the live HTTP sequence ran.
+
+```powershell
+python -m kernel.live_agent.http_operator_hitl static-check `
+  --manifest scenarios\live-agent\http-operator-hitl-v1.json
+
+python -m kernel.live_agent.http_operator_hitl preflight `
+  --manifest scenarios\live-agent\http-operator-hitl-v1.json `
+  --env-file ..\.env `
+  --out .runtime\http-operator-hitl\preflight-20260804.json
+```
+
+The preflight verifies the public JWKS and both short-lived JWT signatures/claims, requires distinct
+Alice/Dora principals, agent IDs, and JTIs in one tenant, requires Dora's `xa_guard.operator` role,
+and checks that the Operator credential and approval-signing secret are distinct.  It never prints
+their values.  The full acceptance order and stop conditions are in
+`docs/acceptance/HTTP-OPERATOR-HITL-LIVE-PREPARATION.md`.
+
 `evaluate` automatically creates `replay.html` before hashing the evidence package. `render` can rebuild the page from a compatible `summary.json` without calling a model; after a manual re-render, reseal the package by regenerating `artifact-hashes.json` and re-run `verify`. `verify` performs the authenticity acceptance: artifact hash re-check, frozen-manifest self-hash, exact metric recomputation, and per-run consistency between the real XA-Guard audit row (tool, parameters minus the `_xa_guard` envelope, decision mapping, record hash) and the immutable ToolIntent. The replay page maps the real audit into the Gate 1–6 strip (deciding gate, hit rule IDs, faithfulness, record hash); branches without a live audit are explicitly labelled `NO LIVE AUDIT` instead of implying gate states.
 
 ## Frozen interfaces

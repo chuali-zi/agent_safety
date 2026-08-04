@@ -34,6 +34,11 @@ XA-Guard live stdio 均 5/5 branch allow、downstream=1（Gate6 audit 为 Gate2 
 0 infra，3/5 稳定门通过；verifier 4/4、
 93 文件一致，篡改副本 FAIL。这证明当前链路不是 deny-all。
 
+独立 HTTP Operator HITL 已完成静态准备：冻结 `/mcp` 与 `/operator/mcp`、Alice/Dora 双 JWT、
+Operator header credential、red pending 工具、单次执行计数靶子和 replay/audit/secret 证据契约；
+static-check 12/12 PASS。`.env` 尚缺两枚 JWT、公共 JWKS、Operator credential 与 approval
+secret，credential preflight 退出 2，`live_result=NOT_RUN`。
+
 但“比赛最终发布/擂主态”仍未成立：v2 与 PUBLIC 包均来自 dirty worktree/internal run；
 独立 HTTP Operator/Dora HITL live、Gate5、实际 GUI、连续录屏、新版 D3、独立盲测、
 clean checkout release 和人工外部提交仍未完成。
@@ -66,7 +71,7 @@ clean checkout release 和人工外部提交仍未完成。
 |---|---|---|
 | Gate1 | 多 detector、spotlighting、UNKNOWN 来源风险；unexpected detector crash 按 effect 安全矩阵处理 | 模型 detector 可选；自建 60/60 不是独立盲测；read-only 可 WARN 降级 |
 | Gate2/HITL | bound token、过期/漂移/replay、批准后重验证；正式 stdio/HTTP Agent plane 隐藏审批 | token 消费仅单进程；源码仍有 demo 默认 approval secret，生产必须显式配置；私有 `_build_app` 保留显式兼容入口 |
-| Operator | `/operator/mcp` 独立 manager；共享 pending；verified identity/role/tenant/SoD/header credential；拒绝不污染 pending | 网络实传与真人 OIDC 录屏待支持环境；无配置 credential 时 fail-closed |
+| Operator | `/operator/mcp` 独立 manager；共享 pending；verified identity/role/tenant/SoD/header credential；拒绝不污染 pending；HTTP live manifest/template/preflight 12/12 静态通过 | 两 JWT/JWKS/两 secret 未配置；HTTP 请求、批准、单次执行和 replay live 尚未发生；无 credential 时 fail-closed |
 | Pending | ledger 不保存 token、provenance、工具结果或 history 正文；旧 ledger 缺安全标记默认 fail-closed | 非 schema/非敏感键的参数仍是 best-effort 持久化；不是生产工作流/多实例队列 |
 | Gate3 | Python/Rego、热更新、baseline+当前 tenant overlay、effective SHA | 当前 WSL 不能运行仓库 Windows `opa.exe`；正式 Linux/Windows 支持环境待复验 |
 | Gate4 | 字面扫描、taint、capability、schema-aware 引用、执行前 external egress preflight、出向结果扫描；v2 D1 neutral-tool 5/5 执行前 deny、0 harm；PUBLIC live 5/5 allow/downstream=1 | Gate4-out 不能撤销已发生副作用；clean release 仍待 |
@@ -145,6 +150,14 @@ XA-Guard live allow/downstream=1 5/5；3/5 threshold PASS
 verifier 4/4 PASS；93 files；tampered copy FAIL（预期）
 ```
 
+独立 HTTP Operator HITL 准备：
+
+```text
+static-check 12/12 PASS
+credential preflight exit 2：缺 5 项 identity/secret 环境输入
+ready_for_live_execution=false；live_result=NOT_RUN
+```
+
 广泛分批回归（组间有重叠，不得相加为全量总数）：
 
 | 测试组 | 结果 |
@@ -188,7 +201,8 @@ verifier 4/4 PASS；93 files；tampered copy FAIL（预期）
 
 ### 提交前硬门
 
-1. 在允许本地进程/网络的支持环境复验真实 stdio 与 HTTP Agent/Operator 双端点。
+1. 补齐两枚短 TTL JWT、公共 JWKS、Operator credential 与 approval secret；credential
+   preflight 通过后，在允许本地进程/网络的支持环境复验 HTTP Agent/Operator 双端点。
 2. 完成 Agent pending → 独立 HTTP Operator/Dora → exact-hash 单次执行 → replay 拒绝的
    HITL live；PUBLIC 双成功 live 已完成，不能用它替代 HITL。
 3. 负责人实现 GUI 并连续录制；重做 D3，不能用 synthetic fixture 当 live。

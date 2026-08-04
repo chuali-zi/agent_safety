@@ -1,3 +1,29 @@
+# 2026-08-04 00:50 PDT 完成独立 HTTP Operator HITL live 静态准备
+
+- 按负责人“先准备”要求，本阶段没有启动 HTTP server、没有发 Agent/Operator MCP 请求、没有
+  产生 pending/批准/下游执行/replay，也没有写 HITL live PASS。
+- 新增冻结 manifest `open-agent-range/scenarios/live-agent/http-operator-hitl-v1.json`：Agent
+  `/mcp` 与 Operator `/operator/mcp` 分端点，Alice/Dora 的 human principal、agent id、JTI
+  必须独立，同 tenant；Dora 额外要求 `xa_guard.operator` role 和独立 HTTP header credential。
+- 新增 `configs/xa-guard.http-operator-hitl-live.template.yaml`：JWT identity required，Gate2 red
+  HITL、Gate3/4/6 开启，Gate5 明确关闭；JWKS/audit/pending 只保留 runtime placeholder，不把
+  secret 或本机绝对路径提交。
+- 新增合成计数靶子 `demo.targets.http_hitl_target`：`pending_approval_op` 不执行真实管理动作，
+  只在真正下游调用时向 `XA_HITL_TARGET_LEDGER` 写一条 secret-free execution fact，用于证明
+  pending=0、批准=1、replay 后仍=1。
+- 新增 `kernel.live_agent.http_operator_hitl`：static-check 验证双端点、identity/SoD、策略登记、
+  计数靶子和 exact-hash/replay/audit/secret 证据契约；credential preflight 会密码学验证公共
+  JWKS 与两枚短 TTL JWT 的 signature/issuer/audience/kid/scope/tenant/role，并且不打印值。
+- static-check 实际 12/12 PASS。读取根 `.env` 后 credential preflight 按预期退出 2：缺
+  `XA_HITL_AGENT_BEARER_TOKEN`、`XA_HITL_OPERATOR_BEARER_TOKEN`、
+  `XA_GUARD_APPROVAL_OPERATOR_TOKEN`、`XA_GUARD_APPROVAL_SECRET`、`XA_HITL_JWKS_FILE`；
+  报告在 gitignored `.runtime/http-operator-hitl/preflight-20260804.json`，明确
+  `ready_for_live_execution=false`、`live_result=NOT_RUN`。
+- 新增 `docs/acceptance/HTTP-OPERATOR-HITL-LIVE-PREPARATION.md`，记录身份 claim、冻结参数 hash、
+  下一次 live 的 12 步强制顺序、停止条件和唯一允许 claim。未修改任何测试代码，未新增依赖。
+- 下一步需要负责人/支持环境提供上述五项合成身份输入；preflight 通过后才能实现并运行 HTTP
+  client evidence harness。任何输入有问题会先报告，不会降低 identity/role/tenant/SoD 门槛。
+
 # 2026-08-04 00:39 PDT 完成专用 PUBLIC 正例 DeepSeek + XA-Guard live
 
 - 新增独立 manifest `open-agent-range/scenarios/live-agent/public-utility-v1.json` 与 runner/
