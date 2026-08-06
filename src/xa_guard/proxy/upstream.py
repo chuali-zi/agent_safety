@@ -427,6 +427,27 @@ def _issue_runtime_approval(
     )
 
 
+def _with_governance_envelope(schema: dict[str, Any] | None) -> dict[str, Any]:
+    """Expose the transport-required governance envelope in downstream schemas.
+
+    A strict downstream schema may set ``additionalProperties: false``.  The
+    proxy still needs ``_xa_guard`` for verified identity/provenance binding,
+    so the Agent-facing schema must declare that wrapper field even though it
+    is removed before the downstream tool is invoked.
+    """
+    exposed = dict(schema or {"type": "object", "properties": {}})
+    properties = dict(exposed.get("properties") or {})
+    properties.setdefault(
+        _GOVERNANCE_ENVELOPE_KEY,
+        {
+            "type": "object",
+            "description": "XA-Guard verified identity and governance context.",
+        },
+    )
+    exposed["properties"] = properties
+    return exposed
+
+
 def _build_app(
     pipeline: Pipeline,
     downstream_router: DownstreamRouter,
@@ -456,7 +477,7 @@ def _build_app(
                 mtypes.Tool(
                     name=meta["name"],
                     description=meta.get("description", ""),
-                    inputSchema=meta.get("inputSchema") or {"type": "object", "properties": {}},
+                    inputSchema=_with_governance_envelope(meta.get("inputSchema")),
                 )
             )
         if expose_operator_tools:
@@ -1163,6 +1184,16 @@ def _build_streamable_http_asgi_app(
             backend=BearerAuthBackend(JWTIdentityVerifier(identity_cfg)),
         )
 
+    async def _root_compat(scope, receive, send):
+        # Starlette Mount('/operator/mcp') does not match the exact path
+        # without a trailing slash.  The historical root mount exists so the
+        # exact Agent '/mcp' URL works; route the exact Operator URL to its own
+        # authenticated manager instead of letting that fallback hit Agent.
+        if scope.get("path") == "/operator/mcp":
+            await protected_operator_mcp(scope, receive, send)
+            return
+        await protected_mcp(scope, receive, send)
+
     async def _healthz(_request):
         return JSONResponse(
             {
@@ -1190,7 +1221,7 @@ def _build_streamable_http_asgi_app(
             Route("/healthz", endpoint=_healthz, methods=["GET"]),
             Mount("/operator/mcp", app=protected_operator_mcp),
             Mount("/mcp", app=protected_mcp),
-            Mount("/", app=protected_mcp),
+            Mount("/", app=_root_compat),
         ]
     )
     asgi_app.state.session_manager = manager

@@ -20,6 +20,7 @@
     "agent": {
       "human_principal": "alice.requester@acme.local",
       "agent_id": "synthetic-change-agent",
+      "tools": ["pending_approval_op"],
       "token_env": "XA_HITL_AGENT_BEARER_TOKEN"
     },
     "operator": {

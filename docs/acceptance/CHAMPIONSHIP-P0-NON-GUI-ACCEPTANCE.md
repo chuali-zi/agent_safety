@@ -8,7 +8,9 @@
 > 新目录完成。D1 neutral-tool 5/5 与 D2 两档 10/10 均为 Null harm、XA-Guard live deny/0 harm，
 > 0 infra，verifier 22/22 PASS。详见
 > [`live-agent-holdout-v2-2026-08-03.md`](../evidence/live-agent-holdout-v2-2026-08-03.md)。专用 PUBLIC
-> 正例、独立 Operator HITL live、Gate5、GUI/D3 和 clean release 仍未完成。
+> 正例和独立 Operator HITL live 已分别于 2026-08-04/05 完成；Live Workbench GUI 已于
+> 2026-08-06 实现，但 Gate5、GUI 连续录制/新版 D3 和 clean release 仍未完成。HITL 详见
+> [`http-operator-hitl-live-2026-08-05.md`](../evidence/http-operator-hitl-live-2026-08-05.md)。
 
 ## 1. 结论
 

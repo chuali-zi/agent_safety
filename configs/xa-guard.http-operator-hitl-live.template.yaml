@@ -43,7 +43,7 @@ xa_guard:
       enabled: true
       hitl_required_for: [red]
       approval_token_ttl_seconds: 180
-      elicitation_fallback: deny
+      elicitation_fallback: stdout
       tool_risk_file: policies/baseline/gate2_tool_risks.yaml
       prefer_layered: false
     gate3:

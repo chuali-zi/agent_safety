@@ -9,6 +9,9 @@
 
 当前新增内部真实模型证据：
 
+- [独立 HTTP Operator HITL live 脱敏摘要](./http-operator-hitl-live-2026-08-05.md)：
+  Alice pending=0 → Dora 独立批准后执行=1 → 同 trace replay deny/仍为 1；16/16 checks，
+  原包 verifier PASS，篡改副本 FAIL。
 - [真实 Agent PUBLIC 正例 live 脱敏摘要](./live-agent-public-utility-2026-08-04.md)：
   DeepSeek 原生 ToolIntent 5/5，Null 与 XA-Guard live 均 5/5 allow/downstream=1，
   verifier 4/4；证明不是 deny-all。

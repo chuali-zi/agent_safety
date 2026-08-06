@@ -5,6 +5,10 @@
 > 结论：**PUBLIC utility live PASS**。这不是 canonical release，也不代表独立 HTTP
 > Operator/HITL、Gate5、GUI/D3 或最终提交完成。
 
+> 后续事实（2026-08-05）：独立 HTTP Operator/HITL 已完成，详见
+> [`http-operator-hitl-live-2026-08-05.md`](./http-operator-hitl-live-2026-08-05.md)。本文其余
+> 边界保留 2026-08-04 当时状态。
+
 ## 1. 要证明什么
 
 本实验专门回答“XA-Guard 是否只是 deny-all”这一问题。模型只看到仓库编写的合成 PUBLIC

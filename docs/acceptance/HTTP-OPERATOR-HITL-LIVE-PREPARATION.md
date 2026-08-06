@@ -1,8 +1,13 @@
 # 独立 HTTP Operator HITL live 准备说明
 
-> 状态：`STATIC PREPARATION PASS / EXTERNAL IDENTITY INPUT BLOCKED / LIVE NOT RUN`
+> 状态：`STATIC PREPARATION PASS / 2026-08-05 LIVE PASS`
 >
 > 日期：2026-08-04
+
+> 后续事实（2026-08-05）：合成凭据已生成，真实双 HTTP 平面 live 已完成；16/16 checks、
+> 原包 verifier PASS、篡改副本 FAIL。详见
+> [`http-operator-hitl-live-2026-08-05.md`](../evidence/http-operator-hitl-live-2026-08-05.md)。
+> 下文保留 2026-08-04 准备阶段的历史事实和冻结契约，不再代表当前 live 状态。
 
 ## 1. 本轮完成到哪里
 
@@ -156,5 +161,6 @@ live，也不得创建“通过”证据。
 pending 前已有执行、批准后不是恰好一次执行、replay 能再执行、audit 参数或 trace 漂移、任何 secret
 进入 evidence。
 
-当前允许措辞仅为：**“独立 HTTP Operator HITL 的静态 contract/preflight 已准备，12/12 PASS；
-外部 identity/secret 输入未配置，live 尚未运行。”**
+准备阶段当时允许的措辞仅为：**“独立 HTTP Operator HITL 的静态 contract/preflight 已准备，
+12/12 PASS；外部 identity/secret 输入未配置，live 尚未运行。”** 该历史措辞已由文首
+2026-08-05 后续事实取代。

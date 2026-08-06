@@ -145,8 +145,9 @@ def static_check(config: HitlConfig) -> dict[str, Any]:
         bool(config.agent.get("human_principal"))
         and config.agent.get("human_principal") != config.operator.get("human_principal")
         and config.agent.get("agent_id") != config.operator.get("agent_id")
+        and config.case.get("tool_name") in config.agent.get("tools", [])
         and config.identity.get("operator_role") == "xa_guard.operator",
-        "Alice and Dora use distinct human and agent identities",
+        "Alice and Dora are distinct and Alice is scoped to the frozen tool",
     )
     command = downstream[0].get("command", []) if len(downstream) == 1 else []
     _add(
@@ -161,11 +162,12 @@ def static_check(config: HitlConfig) -> dict[str, Any]:
         checks,
         "gate_contract",
         dict(gates.get("gate2", {})).get("hitl_required_for") == ["red"]
+        and dict(gates.get("gate2", {})).get("elicitation_fallback") == "stdout"
         and dict(gates.get("gate3", {})).get("enabled") is True
         and dict(gates.get("gate4", {})).get("enabled") is True
         and dict(gates.get("gate5", {})).get("enabled") is False
         and dict(gates.get("gate6", {})).get("enabled") is True,
-        "Gate2 HITL and Gate3/4/6 are enabled; Gate5 remains explicitly disabled",
+        "Gate2 uses pending-capable stdout fallback; Gate3/4/6 enabled and Gate5 disabled",
     )
     policy_files = [
         root / "policies/baseline/gate2_tool_risks.yaml",
@@ -326,6 +328,7 @@ def _verify_token(
         actor = claims.get("act") if isinstance(claims.get("act"), dict) else {}
         agent_id = str(actor.get("sub") or claims.get("azp") or "")
         scopes = _strings(claims.get("scope") or claims.get("scopes"), split=True)
+        tools = _strings(claims.get("tools"))
         roles = set(_strings(dict(claims.get("realm_access", {})).get("roles")))
         resources = claims.get("resource_access", {})
         if isinstance(resources, dict):
@@ -343,6 +346,9 @@ def _verify_token(
             raise ValueError("JWT tenant differs from frozen tenant")
         if str(config.identity["required_scope"]) not in scopes:
             raise ValueError("JWT required scope is missing")
+        expected_tools = set(_strings(expected.get("tools")))
+        if expected_tools and not expected_tools.issubset(set(tools)):
+            raise ValueError("JWT tool allowlist lacks a frozen Agent tool")
         if expires_at - issued_at > int(config.identity["max_token_ttl_seconds"]):
             raise ValueError("JWT lifetime exceeds frozen maximum")
         if require_operator_role and required_role not in roles:
@@ -357,6 +363,7 @@ def _verify_token(
             "kid": kid,
             "algorithm": algorithm,
             "scopes": sorted(scopes),
+            "tools": sorted(tools),
             "roles": sorted(roles),
             "jti_sha256": hashlib.sha256(str(claims["jti"]).encode("utf-8")).hexdigest(),
             "token_sha256": hashlib.sha256(token.encode("utf-8")).hexdigest(),

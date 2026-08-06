@@ -1,6 +1,6 @@
 {
   "schema_version": "xa-guard-evidence-index/v1",
-  "snapshot_utc": "2026-08-04T07:36:30Z",
+  "snapshot_utc": "2026-08-05T07:44:00Z",
   "delivery_authority": "docs/acceptance/DELIVERY-v2.md",
   "canonical": {
     "run_id": "oar-delivery-v2-20260711T123124Z-win-local",
@@ -59,6 +59,17 @@
     "reason": "local runtime result is not a clean final-commit provenance manifest"
   },
   "supporting": [
+    {
+      "id": "http-operator-hitl-live-2026-08-05",
+      "classification": "supporting-private-dirty-worktree",
+      "path": "docs/evidence/http-operator-hitl-live-2026-08-05.md",
+      "runtime_path": "open-agent-range/.runtime/http-operator-hitl/run-20260805T074229138249Z",
+      "source_manifest_sha256": "b9767a1ddd22bc6916a0aca5cfa38f9889c689a2e7de9757b6a45d653cb395d9",
+      "artifact_manifest_sha256": "e4d7c615ea2543e1f3a1763613fb6f2e8780ed9a155976b445ff1ac6c7745f44",
+      "verification": "16/16 PASS; pending=0, approved execution=1, same-trace replay deny and still 1; Gate6 chain PASS; 9 files; tampered copy FAIL",
+      "publish": false,
+      "reason": "raw JWT-authenticated HTTP artifacts stay in gitignored runtime; run used an uncommitted runner/fixes and is not a clean release manifest"
+    },
     {
       "id": "live-agent-public-utility-2026-08-04",
       "classification": "supporting-private-dirty-worktree",
