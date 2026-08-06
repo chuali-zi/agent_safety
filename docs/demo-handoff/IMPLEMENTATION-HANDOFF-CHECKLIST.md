@@ -1,6 +1,7 @@
 # GUI 实现与真实 v2 录制交接清单
 
-> 本文件只交接已经完成的安全后端、数据来源和后续操作顺序。它不包含 GUI 代码，
+> 本文件原用于交接安全后端、数据来源和后续操作顺序。2026-08-06 后 GUI 代码已落在
+> 仓库根 `workbench/`；
 > 正式 v2 的 D1/D2 因果包已于 2026-08-03 完成；它不表示专用 PUBLIC 正例、真人审批录屏或
 > 新 D3 已完成。
 
@@ -16,7 +17,8 @@
 | HITL 重验证 | `pipeline.py`、`proxy/operator.py` | approval 绑定、Gate1–4 重评、一次消费、漂移/过期/自批/毒化回归 |
 | GUI 数据契约 | `schemas/*.json`、`contracts.md` | schema 与合成样例仅供开发；不是实跑数据 |
 
-尚不存在：`/api/live/*` handler、实时事件总线、Workbench GUI、正式 GUI 自动化测试。
+已补齐：`/api/live/*` handler、轮询事件流、Workbench GUI 与定向自动化测试。仍不存在
+SSE 推送、多用户服务、真人连续录屏和新的正式 D3；当前服务仅用于本机演示。
 
 ## 2. 支持环境的安全配置
 

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>XA-Guard Live Workbench — Gate1–Gate6 防御可视化</title>
+<link rel="stylesheet" href="/static/workbench.css">
+</head>
+<body>
+<div id="app">
+  <!-- 顶栏 -->
+  <div id="topbar">
+    <span id="mode-badge">IDLE</span>
+    <div id="run-meta">
+      <div id="run-id">run_--------</div>
+      <div id="run-detail">选择场景开始。LIVE RUN = 真实模型+真实 Guard；SEALED REPLAY = 封存证据回放；EXAMPLE/SYNTHETIC = 合成演示（非证据）。</div>
+    </div>
+    <div id="scenario-picker">
+      <select id="scenario-select" style="min-width:420px"></select>
+      <button id="btn-preflight">PREFLIGHT</button>
+      <button id="btn-run" class="primary">▶ RUN</button>
+    </div>
+  </div>
+
+  <!-- 第二行：transcript + intent -->
+  <div id="row2">
+    <div class="panel" id="transcript-panel">
+      <h2>Agent Transcript <span id="transcript-hint" class="tag gray">等待</span></h2>
+      <div class="body" id="transcript"></div>
+    </div>
+    <div class="panel" id="intent-panel">
+      <h2>Frozen ToolIntent <span id="intent-hint" class="tag gray">未冻结</span></h2>
+      <div class="body">
+        <dl class="kv" id="intent-kv">
+          <dt>tool</dt><dd id="intent-tool">—</dd>
+          <dt>arguments_sha256</dt><dd id="intent-args">—</dd>
+          <dt>world_before_sha256</dt><dd id="intent-world">—</dd>
+          <dt>property / target</dt><dd id="intent-target">—</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- A/B 行 -->
+  <div id="row3">
+    <div class="panel" id="null-panel">
+      <h2>NULL / 无防护对照 <span id="null-hint" class="tag gray">NOT_REACHED</span></h2>
+      <div class="body">
+        <div id="null-msg" style="color:var(--muted)">同一冻结 intent 直接执行（无 XA-Guard）。</div>
+        <div class="branch-stats">
+          <div class="stat"><div class="num" id="null-decision">—</div><div class="lbl">decision</div></div>
+          <div class="stat"><div class="num" id="null-downstream">—</div><div class="lbl">downstream</div></div>
+          <div class="stat"><div class="num" id="null-harm">—</div><div class="lbl">harm oracle</div></div>
+        </div>
+        <dl class="kv" style="margin-top:12px">
+          <dt>world before</dt><dd id="null-world-before">—</dd>
+          <dt>world after</dt><dd id="null-world-after">—</dd>
+          <dt>ledger</dt><dd id="null-ledger">—</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="panel" id="guard-panel">
+      <h2>XA-GUARD / 受防护执行 <span id="guard-hint" class="tag gray">NOT_REACHED</span></h2>
+      <div class="body">
+        <div id="gate-rail">
+          <div class="gate st-UNKNOWN" data-gate="GATE1"><div class="gid">GATE1</div><div class="gstatus">·</div><div class="ghash"></div></div>
+          <div class="gate st-UNKNOWN" data-gate="GATE2"><div class="gid">GATE2</div><div class="gstatus">·</div><div class="ghash"></div></div>
+          <div class="gate st-UNKNOWN" data-gate="GATE3"><div class="gid">GATE3</div><div class="gstatus">·</div><div class="ghash"></div></div>
+          <div class="gate st-UNKNOWN" data-gate="GATE4"><div class="gid">GATE4</div><div class="gstatus">·</div><div class="ghash"></div></div>
+          <div class="gate st-UNKNOWN" data-gate="GATE5"><div class="gid">GATE5</div><div class="gstatus">·</div><div class="ghash"></div></div>
+          <div class="gate st-UNKNOWN" data-gate="GATE6"><div class="gid">GATE6</div><div class="gstatus">·</div><div class="ghash"></div></div>
+        </div>
+        <div class="branch-stats">
+          <div class="stat"><div class="num" id="guard-decision">—</div><div class="lbl">decision</div></div>
+          <div class="stat"><div class="num" id="guard-downstream">—</div><div class="lbl">downstream</div></div>
+          <div class="stat"><div class="num" id="guard-harm">—</div><div class="lbl">harm oracle</div></div>
+        </div>
+        <dl class="kv" style="margin-top:12px">
+          <dt>world before</dt><dd id="guard-world-before">—</dd>
+          <dt>world after</dt><dd id="guard-world-after">—</dd>
+          <dt>audit</dt><dd id="guard-audit">—</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- 因果条 -->
+  <div id="causal">
+    <span class="title">CAUSAL DELTA</span>
+    <div class="causal-item" id="c-intent"><div class="big">?</div><div class="sub">SAME intent SHA</div></div>
+    <div class="causal-item" id="c-world"><div class="big">?</div><div class="sub">SAME world SHA</div></div>
+    <div class="causal-item" id="c-sut"><div class="big">?</div><div class="sub">ONLY SUT CHANGED</div></div>
+    <div class="causal-item" id="c-harm"><div class="big">?</div><div class="sub">harm</div></div>
+    <div class="causal-item" id="c-downstream"><div class="big">?</div><div class="sub">downstream</div></div>
+    <span id="causal-verdict"></span>
+  </div>
+
+  <!-- 底栏 -->
+  <div id="bottombar">
+    <div class="panel" id="artifacts">
+      <h2>Artifacts（点击查看脱敏摘要 + JSON pointer）</h2>
+      <div class="body" id="artifact-list"></div>
+    </div>
+    <div class="panel" id="verifier">
+      <h2>Verifier <span id="verify-hint" class="tag gray">仅 SEALED 可用</span></h2>
+      <div class="body">
+        <div class="verify-row">
+          <button id="btn-verify" disabled>验证原包</button>
+          <select id="tamper-artifact">
+            <option value="summary.json">summary.json</option>
+            <option value="verdict.json">verdict.json</option>
+            <option value="tool-intent.json">tool-intent.json</option>
+          </select>
+          <input id="tamper-pointer" value="/scheduled_runs" style="width:150px;background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px">
+          <button id="btn-tamper" class="danger" disabled>篡改副本并验证</button>
+        </div>
+        <div id="verify-result"></div>
+        <div class="verify-checks" id="verify-checks"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HITL Operator 卡片 -->
+<div id="operator-card">
+  <h3>OPERATOR 控制面（独立通道）</h3>
+  <div id="operator-msg" style="font-size:13px">pending 审批：Dora 以独立身份审批；Agent/Alice 不能自批。</div>
+  <div class="ops">
+    <button id="btn-approve" class="primary">Dora 批准</button>
+    <button id="btn-reject" class="danger">Dora 拒绝</button>
+    <button id="btn-replay" style="display:none">replay 重放</button>
+  </div>
+</div>
+
+<!-- artifact 弹层 -->
+<div id="modal"><div class="box">
+  <div class="head"><span id="modal-title"></span><button id="modal-close">关闭</button></div>
+  <pre id="modal-body"></pre>
+</div></div>
+
+<div id="corner-badge">XA-Guard Workbench · <span id="corner-run">idle</span></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

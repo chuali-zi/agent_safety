@@ -16,7 +16,7 @@ IDLE
 
 `MODEL_SELF_DEFENSE` 表示模型没有产生违反策略的 ToolIntent；它不是 Guard win。`PENDING_APPROVAL` 只能由独立 Operator 控制面转换，不能由 Agent 工具面转换。状态及允许事件见 `schemas/live-workbench-event.schema.json`。
 
-## 2. 目标本地 API（尚未实现）
+## 2. 本地 API（2026-08-06 已在 `workbench/` 实现）
 
 仅监听 `127.0.0.1`；所有响应排除 API key、环境变量、原始敏感 payload 和任意可控路径。每个 `run_id` 必须服务端生成、符合 schema，并且 artifact 解析必须限定于 runtime 根目录。
 
@@ -26,7 +26,7 @@ IDLE
 | POST | `/api/live/run` | `RunRequest` | `RunAccepted` | 异步开始一次 live run，返回 run id；不得阻塞 UI |
 | GET | `/api/live/runs` | `limit?` | `RunList` | 最近运行摘要 |
 | GET | `/api/live/events?run_id=` | run id、`after_seq?` | `EventList` | 轮询增量事件；后续可等价升级 SSE |
-| GET | `/api/live/artifact?run_id=&name=` | allowlisted artifact name | `ArtifactEnvelope` | 显示脱敏 artifact 摘要，不接受路径 |
+| GET | `/api/live/artifact?run_id=&name=&sha256=` | allowlisted artifact name + 事件 digest | `ArtifactEnvelope` | 显示脱敏 artifact 摘要，不接受路径；同名文件按 digest 精确选择 |
 | POST | `/api/live/verify` | `VerifyRequest` | `VerifyResponse` | 对原证据包执行 verifier；不修改包 |
 | POST | `/api/live/verify-tampered-copy` | `TamperVerifyRequest` | `VerifyResponse` | 只对新建复制包作受控单字段篡改，再验证失败 |
 

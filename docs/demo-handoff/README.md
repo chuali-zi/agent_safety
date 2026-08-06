@@ -1,14 +1,20 @@
 # Live Workbench GUI 交接包
 
-**用途**：给后续录制者/GUI 实现者的材料包。它不实现网页、GUI、录屏或正式 D3，也不构成新的实跑证据。
+**用途**：Live Workbench 的数据契约、实现说明和后续录制材料。GUI 已在仓库根
+`workbench/` 实现；本材料本身仍不等于真人录屏或新的正式 D3，也不构成新的实跑证据。
 
-**事实边界（更新至 2026-08-03）**：`open-agent-range/kernel/live_agent` 已能产生真实模型
+**事实边界（更新至 2026-08-06）**：`open-agent-range/kernel/live_agent` 已能产生真实模型
 ToolIntent、冻结参数哈希、Null/XA-Guard 分叉、world/ledger/audit 工件及封存验真。
 XA-Guard 已实现独立 `/operator/mcp` 后端、身份/角色/租户校验、自批阻断和批准后重验证；
-正式 v2 已完成 D1/D2 真实模型因果包与 verifier；专用 PUBLIC 正例和独立 Operator HITL
-仍只有受控测试证据，尚无真人连续录屏。计划中的 `/api/live/*`、实时事件流和
-1920×1080 Workbench 仍待负责人实现。所有 `examples/` 内容均为
+正式 v2 已完成 D1/D2 真实模型因果包与 verifier，专用 PUBLIC 正例和独立 HTTP Operator
+HITL live 也已完成，但仍属于 dirty-worktree/internal supporting evidence，尚无真人连续录屏。
+`/api/live/*`、轮询事件流和 1920×1080 Workbench 已实现。所有 `examples/` 内容均为
 **SYNTHETIC / EXAMPLE ONLY**，不能截图后称为实跑。
+
+**2026-08-06 更新**：`/api/live/*` 与 1920×1080 Workbench 已在仓库根 `workbench/`
+实现（Python stdlib server + 静态 HTML/JS，见 `workbench/README.md`）。LIVE/SEALED/SYNTHETIC
+三模式、Gate rail 诚实映射、verifier/tamper UI 均可用；2026-08-06 已在支持环境完成一次真实
+LIVE RUN（D2 case，Gate3 deny，因果 1→0）。真人连续录屏（新 D3）仍待录制。
 
 ## 阅读顺序
 
